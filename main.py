@@ -97,7 +97,7 @@ def main():
             trend = str(row["Xu hướng"]).strip().upper()
 
             # Chỉ giữ "TĂNG MẠNH" và "GIẢM MẠNH"
-            if trend not in ["TĂNG MẠNH", "GIẢM MẠNH"]:
+            if trend not in ["Tăng mạnh", "Giảm mạnh"]:
                 continue
 
             # Bỏ qua nếu Coin hoặc suggestion không hợp lệ
@@ -106,7 +106,11 @@ def main():
 
             inst_id = f"{coin}USDT"
             create_grid_bot(inst_id, suggestion)
-
+        
+        except KeyError as e:
+            print(f"⚠️ Lỗi key không tồn tại: {e}")        
+        except IndexError:
+            print(f"⚠️ Lỗi: list index out of range (có dòng bị thiếu dữ liệu?)")
         except Exception as e:
             print(f"⚠️ Lỗi đọc dòng: {e}")
 if __name__ == "__main__":
