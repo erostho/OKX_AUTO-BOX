@@ -92,7 +92,7 @@ def main():
             if now - dt > timedelta(minutes=60):
                 continue
 
-            coin = str(row["coin"]).strip().replace("-USDT", "").upper()
+            coin = str(row["Coin"]).strip().replace("-USDT", "").upper()
             suggestion = str(row["Gợi ý"]).strip().upper()
             trend = str(row["Xu hướng"]).strip().upper()
 
@@ -100,7 +100,7 @@ def main():
             if trend not in ["TĂNG MẠNH", "GIẢM MẠNH"]:
                 continue
 
-            # Bỏ qua nếu coin hoặc suggestion không hợp lệ
+            # Bỏ qua nếu Coin hoặc suggestion không hợp lệ
             if coin == "" or coin == "NAN" or suggestion not in ["LONG", "SHORT"]:
                 continue
 
