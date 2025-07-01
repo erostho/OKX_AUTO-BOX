@@ -1,3 +1,4 @@
 ccxt # không chỉ định phiên bản
+pandas
 gspread
 oauth2client
