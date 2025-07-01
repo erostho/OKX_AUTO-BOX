@@ -6,7 +6,7 @@ import requests
 from datetime import datetime, timedelta
 
 # === Cấu hình ===
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCysJkec0WdulNX9LyOY/export?format=csv"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 GRID_NUM = 20
 LEVERAGE = 5
 TRADE_AMOUNT_USDT = 10
