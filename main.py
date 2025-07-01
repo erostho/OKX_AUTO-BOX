@@ -81,11 +81,11 @@ def create_grid_bot(symbol, side, investment_usdt=10, leverage=5, grid_num=20, m
 
 def main():
     df = fetch_sheet_data()
-    now = datetime.utcnow() + timedelta(hours=7)
+    now = datetime.now(timezone.utc) + timedelta(hours=7)
     for _, row in df.iterrows():
         try:
             raw_time = str(row["Thời gian"]).strip()
-            dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
+            dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year, tzinfo=timezone.utc)
 
             if now - dt <= timedelta(minutes=60):
                 coin = str(row["coin"]).strip().replace("-USDT", "").upper()
