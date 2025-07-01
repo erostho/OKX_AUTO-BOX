@@ -98,7 +98,7 @@ def main():
             trend = str(row["Xu hướng"]).strip().upper()
 
             # Chỉ giữ "TĂNG MẠNH" và "GIẢM MẠNH"
-            if trend not in ["Tăng mạnh", "Giảm mạnh"]:
+            if trend not in ["TĂNG MẠNH", "GIẢM MẠNH"]:
                 continue
 
             # Bỏ qua nếu Coin hoặc suggestion không hợp lệ
