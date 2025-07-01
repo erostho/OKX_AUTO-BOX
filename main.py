@@ -104,7 +104,7 @@ def main():
             if coin == "" or coin == "NAN" or suggestion not in ["LONG", "SHORT"]:
                 continue
 
-            inst_id = f"{coin}-USDT-SWAP"
+            inst_id = f"{coin}USDT"
             create_grid_bot(inst_id, suggestion)
 
         except Exception as e:
