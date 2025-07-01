@@ -86,7 +86,7 @@ def main():
     for _, row in df.iterrows():
         try:
             raw_time = str(row["Thời gian"]).strip()
-            dt = datetime.strptime(raw_time, "%d/%m/%y %H:%M:%s")
+            dt = datetime.strptime(raw_time, "%d/%m/%y %H:%M:%S")
 
             # Bỏ qua nếu quá 60 phút
             if now - dt > timedelta(minutes=60):
