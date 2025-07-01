@@ -86,8 +86,7 @@ def main():
     for _, row in df.iterrows():
         try:
             raw_time = str(row["Thời gian"]).strip()
-            raw_time_full = f"{now.year}/{raw_time}"
-            dt = datetime.strptime(raw_time_full, "%Y/%d/%m %H:%M").replace(year=now.year, tzinfo=timezone.utc)
+            dt = datetime.strptime(raw_time, "%d/%m/%y %H:%M:%s")
 
             # Bỏ qua nếu quá 60 phút
             if now - dt > timedelta(minutes=60):
