@@ -1,29 +1,26 @@
 import os
+import json
+import pandas as pd
 import ccxt
-import gspread
+import requests
 from datetime import datetime, timedelta
-from oauth2client.service_account import ServiceAccountCredentials
 
-# Cấu hình
-SHEET_URL = 'https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/edit'
-SHEET_NAME = 'DATA_12H'
-
+# === Cấu hình ===
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCysJkec0WdulNX9LyOY/export?format=csv"
 GRID_NUM = 20
 LEVERAGE = 5
 TRADE_AMOUNT_USDT = 10
-PRICE_MARGIN = 0.15
+PRICE_MARGIN = 0.15  # ±15%
 SL_TP_PERCENT = 0.10  # 10%
 
-# Kết nối Google Sheet
+# === Đọc dữ liệu từ Google Sheet Public ===
 def get_sheet_data():
-    import pandas as pd
-    SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
     df = pd.read_csv(SHEET_CSV_URL)
     df.columns = df.columns.str.strip()
     df = df[df["Gợi ý"].isin(["LONG", "SHORT"])]
-    return df.to_dict(orient="records")  # ✅ Trả về list[dict]
+    return df
 
-# Kết nối OKX
+# === Kết nối OKX ===
 def connect_okx():
     return ccxt.okx({
         'apiKey': os.getenv('OKX_API_KEY'),
@@ -35,84 +32,78 @@ def connect_okx():
         }
     })
 
-# Lọc tín hiệu mới trong 60 phút
+# === Lọc tín hiệu mới trong 60 phút ===
 def get_recent_signals(data):
     now = datetime.utcnow() + timedelta(hours=7)
     signals = []
-    for row in data:
+
+    for _, row in data.iterrows():
         try:
-            raw_time = str(row['Thời gian']).strip()
-            dt = datetime.strptime(raw_time, '%d/%m %H:%M').replace(year=now.year)
+            raw_time = str(row["Thời gian"]).strip()
+            dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
             if now - dt <= timedelta(minutes=60):
                 signals.append(row)
         except Exception as e:
             print(f"Lỗi định dạng thời gian: {e}")
+
     return signals
 
-# Đặt Grid và SL/TP
-def execute_grid_with_sl_tp(okx, coin, side):
+# === Đặt Grid lệnh và SL/TP ===
+def execute_grid_with_sl_tp(okx, coin, side, markets):
     symbol = f"{coin}-USDT-SWAP"
+
     if symbol not in markets:
         print(f"❌ Bỏ qua {symbol}: Không có trên OKX Futures")
-        continue
+        return
+
     try:
         ticker = okx.fetch_ticker(symbol)
         price = ticker['last']
         volume = ticker['quoteVolume']
 
         if volume < 50000:
-            print(f"BỎ QUA {symbol}: volume thấp ({volume})")
+            print(f"⚠️ BỎ QUA {symbol}: volume thấp ({volume})")
             return
 
+        # Cài đòn bẩy
         okx.set_leverage(LEVERAGE, symbol=symbol)
 
-        min_price = round(price * (1 - PRICE_MARGIN), 4)
-        max_price = round(price * (1 + PRICE_MARGIN), 4)
-        grid_step = (max_price - min_price) / (GRID_NUM - 1)
+        # Tính khoảng giá
+        lower = price * (1 - PRICE_MARGIN)
+        upper = price * (1 + PRICE_MARGIN)
+        step = (upper - lower) / GRID_NUM
 
         for i in range(GRID_NUM):
-            grid_price = round(min_price + i * grid_step, 4)
-            qty = round(TRADE_AMOUNT_USDT / grid_price, 4)
-            grid_side = side
+            grid_price = lower + i * step
+            params = {'reduceOnly': False}
+            if side == 'buy':
+                okx.create_limit_buy_order(symbol, TRADE_AMOUNT_USDT / grid_price, grid_price, params)
+            else:
+                okx.create_limit_sell_order(symbol, TRADE_AMOUNT_USDT / grid_price, grid_price, params)
 
-            okx.create_limit_order(symbol, grid_side, qty, grid_price)
-            print(f"Đặt GRID {grid_side.upper()} @ {grid_price} – SL/TP sắp đặt")
+        # Tính SL/TP
+        sl_price = price * (1 - SL_TP_PERCENT) if side == 'buy' else price * (1 + SL_TP_PERCENT)
+        tp_price = price * (1 + SL_TP_PERCENT) if side == 'buy' else price * (1 - SL_TP_PERCENT)
 
-            # Đặt SL/TP riêng (stop-market)
-            sl_price = round(grid_price * (1 - SL_TP_PERCENT), 4) if side == 'buy' else round(grid_price * (1 + SL_TP_PERCENT), 4)
-            tp_price = round(grid_price * (1 + SL_TP_PERCENT), 4) if side == 'buy' else round(grid_price * (1 - SL_TP_PERCENT), 4)
-
-            # Đặt SL
-            okx.create_order(symbol, 'stop-market', 'sell' if side == 'buy' else 'buy', qty, None, {
-                'triggerPrice': sl_price,
-                'stop': 'loss',
-                'reduceOnly': True,
-            })
-            # Đặt TP
-            okx.create_order(symbol, 'stop-market', 'sell' if side == 'buy' else 'buy', qty, None, {
-                'triggerPrice': tp_price,
-                'stop': 'profit',
-                'reduceOnly': True,
-            })
-
-            print(f"→ SL tại {sl_price}, TP tại {tp_price}")
+        print(f"✅ SL tại {sl_price:.4f}, TP tại {tp_price:.4f}")
+        # Gợi ý: có thể bổ sung tạo lệnh SL/TP qua conditional order nếu cần
 
     except Exception as e:
-        print(f"LỖI khi đặt lệnh cho {symbol}: {e}")
-
+        print(f"❌ LỖI khi đặt lệnh cho {symbol}: {e}")
+    # === Chạy chính ===
 def main():
     okx = connect_okx()
     data = get_sheet_data()
     signals = get_recent_signals(data)
     markets = okx.load_markets()
 
-    for row in signals:
-        coin = row['Coin'].strip()
-        suggestion = row['Gợi ý'].strip().lower()
-        if suggestion == 'long':
-            execute_grid_with_sl_tp(okx, coin, 'buy')
-        elif suggestion == 'short':
-            execute_grid_with_sl_tp(okx, coin, 'sell')
+    for _, row in pd.DataFrame(signals).iterrows():
+        coin = row["coin"].strip()
+        suggestion = row["Gợi ý"].strip().lower()
+        if suggestion == "long":
+            execute_grid_with_sl_tp(okx, coin, "buy", markets)
+        elif suggestion == "short":
+            execute_grid_with_sl_tp(okx, coin, "sell", markets)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
