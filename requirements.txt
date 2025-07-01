@@ -1,3 +1,4 @@
-okx==2.1.2
 pandas
 requests
+python-dateutil
+ccxt
