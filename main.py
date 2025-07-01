@@ -50,12 +50,13 @@ def get_recent_signals(data):
 
 # === Đặt Grid lệnh và SL/TP ===
 def execute_grid_with_sl_tp(okx, coin, side, markets):
-    symbol = f"{coin}-USDT-SWAP"
+    # Chuyển đổi từ coin kiểu "CVX-USDT" → "CVXUSDT"
+    coin_clean = coin.replace('-', '').upper()
+    symbol = f"{coin_clean}-USDT-SWAP"
 
     if symbol not in markets:
         print(f"❌ Bỏ qua {symbol}: Không có trên OKX Futures")
         return
-
     try:
         ticker = okx.fetch_ticker(symbol)
         price = ticker['last']
