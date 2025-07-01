@@ -3,7 +3,7 @@ import os
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
-from okx.Trade import Trade as OkxTrade
+from okx.v5.trade import Trade as OkxTrade
 
 # ==== 1. ĐỌC SHEET PUBLIC ====
 def read_public_google_sheet(sheet_url, sheet_name):
