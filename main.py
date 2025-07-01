@@ -52,6 +52,9 @@ def get_recent_signals(data):
 # Đặt Grid và SL/TP
 def execute_grid_with_sl_tp(okx, coin, side):
     symbol = f"{coin}-USDT-SWAP"
+    if symbol not in markets:
+        print(f"❌ Bỏ qua {symbol}: Không có trên OKX Futures")
+        continue
     try:
         ticker = okx.fetch_ticker(symbol)
         price = ticker['last']
@@ -101,6 +104,11 @@ def main():
     okx = connect_okx()
     data = get_sheet_data()
     signals = get_recent_signals(data)
+    if not signals:
+            print(" không có tín hiệu trong 60 phút")
+            return
+        okx = conect_okx()
+        markets = okx.load_markets()
 
     for row in signals:
         coin = row['Coin'].strip()
