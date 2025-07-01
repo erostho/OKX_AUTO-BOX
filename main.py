@@ -16,10 +16,12 @@ SL_TP_PERCENT = 0.10  # 10%
 
 # Kết nối Google Sheet
 def get_sheet_data():
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
+             "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+    creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url(SHEET_URL).worksheet(SHEET_NAME)
+    sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("DATA_12H")
     return sheet.get_all_records()
 
 # Kết nối OKX
