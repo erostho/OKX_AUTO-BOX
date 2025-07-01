@@ -80,18 +80,26 @@ def create_grid_bot(symbol, side, investment_usdt=10, leverage=5, grid_num=20, m
 
 def main():
     df = fetch_sheet_data()
-    now = datetime.utcnow() + timedelta(hours=7)
+    now = datetime.now(timezone.utc) + timedelta(hours=7)
     for _, row in df.iterrows():
         try:
-            raw_time = str(row["Thời gian"]).strip()
-            dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
-            if now - dt <= timedelta(minutes=60):
-                coin = str(row["coin"]).strip().replace("-USDT", "")
-                suggestion = row["Gợi ý"].strip().upper()
-                inst_id = f"{coin.upper()}-USDT-SWAP"
-                create_grid_bot(inst_id, suggestion)
-        except Exception as e:
-            print(f"⚠️ Lỗi đọc dòng: {e}")
+    raw_time = str(row["Thời gian"]).strip()
+    dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
+
+    if now - dt <= timedelta(minutes=60):
+        coin = str(row["coin"]).strip().replace("-USDT", "").upper()
+        suggestion = str(row["Gợi ý"]).strip().upper()
+
+        # ✅ Lọc dữ liệu không hợp lệ
+        if coin == "" or coin == "NAN" or suggestion not in ["LONG", "SHORT"]:
+            print(f"⛔ Bỏ qua dòng lỗi: coin={coin}, suggestion={suggestion}")
+            continue
+
+        inst_id = f"{coin}-USDT-SWAP"
+        create_grid_bot(inst_id, suggestion)
+
+except Exception as e:
+    print(f"⚠️ Lỗi đọc dòng: {e}")
 
 if __name__ == "__main__":
     main()
