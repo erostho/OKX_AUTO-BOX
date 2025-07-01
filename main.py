@@ -16,11 +16,13 @@ SL_TP_PERCENT = 0.10  # 10%
 
 # Kết nối Google Sheet
 def get_sheet_data():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
-             "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
-    creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
-    creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=scope)
-    client = gspread.authorize(creds)
+    import pandas as pd
+    # Lấy ID từ URL
+    SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv&gid=0"
+    df = pd.read_csv(SHEET_CSV_URL)
+    df.columns = df.columns.str.strip()
+    df = df[df["Gợi ý"].isin(["LONG", "SHORT"])]
+    return df
     sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("DATA_12H")
     return sheet.get_all_records()
 
