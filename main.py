@@ -53,7 +53,7 @@ def calculate_sl_tp(side, price):
 def execute_trades(df, okx):
     markets = okx.load_markets()
     for _, row in df.iterrows():
-        symbol = row["Coin"].replace("-USDT", "/USDT")
+        symbol = row["Coin"].replace("-USDT", "") + "/USDT"
         if symbol not in markets:
             print(f"⛔ Không tìm thấy cặp {symbol}")
             continue
