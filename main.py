@@ -9,7 +9,7 @@ OKX_API_KEY = os.getenv("OKX_API_KEY")
 OKX_API_SECRET = os.getenv("OKX_API_SECRET")
 OKX_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCysJkec0WdulNX9LyOY/export?format=csv&gid=2037044718"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 
 HEADERS = {
     "Content-Type": "application/json",
