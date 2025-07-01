@@ -1,3 +1,3 @@
-cctx # không chỉ định phiên bản
+ccxt # không chỉ định phiên bản
 gspread
 oauth2client
