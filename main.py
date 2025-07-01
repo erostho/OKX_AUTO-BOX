@@ -23,8 +23,6 @@ def get_sheet_data():
     df.columns = df.columns.str.strip()
     df = df[df["Gợi ý"].isin(["LONG", "SHORT"])]
     return df
-    sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("DATA_12H")
-    return sheet.get_all_records()
 
 # Kết nối OKX
 def connect_okx():
