@@ -84,23 +84,23 @@ def main():
     now = datetime.now(timezone.utc) + timedelta(hours=7)
     for _, row in df.iterrows():
         try:
-    raw_time = str(row["Thời gian"]).strip()
-    dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
+            raw_time = str(row["Thời gian"]).strip()
+            dt = datetime.strptime(raw_time, "%d/%m %H:%M").replace(year=now.year)
 
-    if now - dt <= timedelta(minutes=60):
-        coin = str(row["coin"]).strip().replace("-USDT", "").upper()
-        suggestion = str(row["Gợi ý"]).strip().upper()
+            if now - dt <= timedelta(minutes=60):
+                coin = str(row["coin"]).strip().replace("-USDT", "").upper()
+                suggestion = str(row["Gợi ý"]).strip().upper()
 
-        # ✅ Lọc dữ liệu không hợp lệ
-        if coin == "" or coin == "NAN" or suggestion not in ["LONG", "SHORT"]:
-            print(f"⛔ Bỏ qua dòng lỗi: coin={coin}, suggestion={suggestion}")
-            continue
+     # Bỏ qua nếu thiếu dữ liệu hoặc sai format
+                if coin == "" or coin == "NAN" or suggestion not in ["LONG", "SHORT"]:
+                    print(f"⛔ Bỏ qua dòng lỗi: coin={coin}, suggestion={suggestion}")
+                    continue
 
-        inst_id = f"{coin}-USDT-SWAP"
-        create_grid_bot(inst_id, suggestion)
+                inst_id = f"{coin}-USDT-SWAP"
+                create_grid_bot(inst_id, suggestion)
 
-except Exception as e:
-    print(f"⚠️ Lỗi đọc dòng: {e}")
+        except Exception as e:
+            print(f"⚠️ Lỗi đọc dòng: {e}")
 
 if __name__ == "__main__":
     main()
