@@ -18,8 +18,13 @@ def fetch_signals():
     df = df[df["Gợi ý"].isin(["LONG", "SHORT"])]
 
     now = datetime.now(VIETNAM_TZ)
+# Parse cột thời gian
     df["Thời gian"] = pd.to_datetime(df["Thời gian"], format="%d/%m %H:%M")
-    df["Thời gian"] = df["Thời gian"].apply(lambda x: x.replace(year=now.year))
+
+# Gán năm hiện tại và thêm timezone cho từng dòng
+    df["Thời gian"] = df["Thời gian"].apply(lambda x: x.replace(year=now.year).replace(tzinfo=VIETNAM_TZ))
+
+# Lọc các tín hiệu trong vòng 60 phút
     df = df[(now - df["Thời gian"]) <= timedelta(minutes=60)]
     return df
 
