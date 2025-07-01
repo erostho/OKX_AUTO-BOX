@@ -104,11 +104,7 @@ def main():
     okx = connect_okx()
     data = get_sheet_data()
     signals = get_recent_signals(data)
-    if not signals:
-            print(" không có tín hiệu trong 60 phút")
-            return
-        okx = conect_okx()
-        markets = okx.load_markets()
+    markets = okx.load_markets()
 
     for row in signals:
         coin = row['Coin'].strip()
