@@ -81,7 +81,7 @@ def create_grid_bot(symbol, side, investment_usdt=10, leverage=5, grid_num=20, m
 
 def main():
     df = fetch_sheet_data()
-    now = datetime.now(timezone.utc) + timedelta(hours=7)
+    now = datetime.utcnow() + timedelta(hours=7)
 
     for _, row in df.iterrows():
         try:
