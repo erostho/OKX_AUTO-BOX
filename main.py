@@ -17,12 +17,11 @@ SL_TP_PERCENT = 0.10  # 10%
 # Kết nối Google Sheet
 def get_sheet_data():
     import pandas as pd
-    # Lấy ID từ URL
-    SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv&gid=0"
+    SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
     df = pd.read_csv(SHEET_CSV_URL)
     df.columns = df.columns.str.strip()
     df = df[df["Gợi ý"].isin(["LONG", "SHORT"])]
-    return df
+    return df.to_dict(orient="records")  # ✅ Trả về list[dict]
 
 # Kết nối OKX
 def connect_okx():
