@@ -21,6 +21,7 @@ df = pd.read_csv(sheet_url)
 
 # Chuẩn hoá dữ liệu và lọc theo điều kiện
 df = df.dropna()
+df["Thời gian"] = df["Thời gian"].astype(str).str.replace(r"\u202f", " ", regex=True)
 df["Thời gian"] = pd.to_datetime(df["Thời gian"], dayfirst=True, errors="coerce")
 now = datetime.now().replace(tzinfo=None)
 df = df[df['Thời gian'] > now - timedelta(minutes=60)]
