@@ -1,12 +1,13 @@
 import requests
 import ccxt
 import pandas as pd
+import json
 from datetime import datetime, timedelta
 
 # Thiết lập thông tin API OKX
-API_KEY = "fd0e2ebd-c4fb-4bb3-b23b-c39806de594e"
-API_SECRET = "1636F2E197978055B964D2DACABEF9EC"
-API_PASSPHRASE = "Panda@2402"
+API_KEY = os.getenv("OKX_API_KEY)
+API_SECRET = os.getenv("OKX_API_SECRET")
+API_PASSPHRASE = =os.getenv("OKX_PASSPHRASE)
 
 # Thiết lập headers cho API OKX
 headers = {
