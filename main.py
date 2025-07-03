@@ -74,31 +74,30 @@ exchange = ccxt.okx()
 from datetime import datetime, timedelta
 print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
 exchange = ccxt.okx()
-exchange.load_markets()  # Tải danh sách market hợp lệ
+markets = exchange.load_markets()
 
 for index, row in df.iterrows():
     try:
         raw_coin = row['Coin'].strip().upper().replace("-", "")
-        symbol = None
+        found_symbol = None
 
-        # Tìm đúng Futures PERP trong exchange.markets
-        for market in exchange.markets:
-            if raw_coin in market and market.endswith(':USDT'):
-                symbol = market
-                break
+        for sym, market in markets.items():
+            if market.get('linear') and market.get('contract') and ':USDT' in sym:
+                if raw_coin in sym.replace("/", "").replace(":", ""):
+                    found_symbol = sym
+                    break
 
-        if not symbol:
+        if not found_symbol:
             print(f"⚠️ Không tìm thấy symbol hợp lệ cho: {raw_coin}")
             continue
 
-        # In ra để kiểm tra
-        print(f"✅ Đã khớp symbol: {symbol}")
-
-        ticker = exchange.fetch_ticker(symbol)
+        print(f"✅ Symbol OKX hợp lệ: {found_symbol}")
+        
+        # Lấy giá và thực hiện logic như trước
+        ticker = exchange.fetch_ticker(found_symbol)
         price = ticker['last']
 
-        # Tạo inst_id chuẩn OKX Futures
-        inst_id = symbol.replace("/", "").replace(":", "").upper() + "-PERP"
+        inst_id = found_symbol.replace("/", "").replace(":", "").upper() + "-PERP"
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
         lower_price = round(price * 0.85, 4)
@@ -111,7 +110,7 @@ for index, row in df.iterrows():
             "maxPx": upper_price,
         }
 
-        # Thực hiện tiếp theo như gửi lệnh...
+        # gửi lệnh...
 
     except Exception as e:
         print(f"❌ Lỗi dòng {index + 1}: {e}")
