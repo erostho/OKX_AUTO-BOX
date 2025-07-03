@@ -11,12 +11,22 @@ API_SECRET = os.getenv("OKX_API_SECRET")
 API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 
 # Thiết lập headers cho API OKX
+timestamp = str(time.time())
+method = "POST"
+request_path = "/api/v5/tradingBot/grid/orderAlgo"
+body = json.dumps(payload)
+
+message = timestamp + method + request_path + body
+signature = base64.b64encode(
+    hmac.new(API_SECRET.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
+).decode()
+
 headers = {
     'Content-Type': 'application/json',
     'OK-ACCESS-KEY': API_KEY,
-    'OK-ACCESS-SIGN': '',  # Sẽ được tính bằng HMAC SHA256
-    'OK-ACCESS-TIMESTAMP': '',
-    'OK-ACCESS-PASSPHRASE': API_PASSPHRASE,
+    'OK-ACCESS-SIGN': signature,
+    'OK-ACCESS-TIMESTAMP': timestamp,
+    'OK-ACCESS-PASSPHRASE': API_PASSPHRASE
 }
 
 # Đọc dữ liệu từ Google Sheet public CSV
