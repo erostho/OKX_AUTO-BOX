@@ -97,7 +97,7 @@ for index, row in df.iterrows():
         ticker = exchange.fetch_ticker(found_symbol)
         price = ticker['last']
 
-        inst_id = found_symbol.upper() + ":USDT"
+        inst_id = found_symbol.upper()
         print(f"📦 inst_id dùng để đặt lệnh: {inst_id}")
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
