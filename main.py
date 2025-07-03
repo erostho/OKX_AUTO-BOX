@@ -10,6 +10,18 @@ import os
 API_KEY = os.getenv("OKX_API_KEY")
 API_SECRET = os.getenv("OKX_API_SECRET")
 API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
+
+# Payload tạo Grid Bot đơn giản (cần API OKX hỗ trợ)
+payload = {
+    "instId": row['Coin'].replace('-', '').upper(),
+    "algoType": "grid",
+    "minPx": lower_price,
+    "maxPx": upper_price,
+    "gridNum": 20,
+    "lever": "5",
+    "direction": side,
+    "investment": "10"
+}
 body = json.dumps(payload)
 # Thiết lập headers cho API OKX
 timestamp = str(time.time())
@@ -53,18 +65,7 @@ for index, row in df.iterrows():
         lower_price = round(price * 0.85, 4)
         upper_price = round(price * 1.15, 4)
 
-        # Payload tạo Grid Bot đơn giản (cần API OKX hỗ trợ)
-        payload = {
-            "instId": row['Coin'].replace('-', '').upper(),
-            "algoType": "grid",
-            "minPx": lower_price,
-            "maxPx": upper_price,
-            "gridNum": 20,
-            "lever": "5",
-            "direction": side,
-            "investment": "10"
-        }
-        body = json.dumps(payload)
+
         print(f"Tạo bot cho {coin}: {side.upper()} tại giá {price} | Vùng {lower_price} - {upper_price}")
         response = requests.post('https://www.okx.com/api/v5/trade/order-algo', headers=headers, data=json.dumps(payload))
         print(response.json())
