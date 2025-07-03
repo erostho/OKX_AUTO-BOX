@@ -21,28 +21,32 @@ API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 df = pd.read_csv(sheet_url)
 from datetime import datetime, timedelta
+# =============================================
+# ✅ Làm sạch và chuẩn hóa cột "Thời gian"
+# =============================================
 
-# Ép kiểu cột "Thời gian" về string, loại bỏ ký tự đặc biệt và chuẩn hóa
-df["Thời gian"] = df["Thời gian"].astype(str).str.replace("\u202f", " ").str.strip()
+# Loại bỏ dòng null
+df = df.dropna(subset=["Thời gian"])
 
-# Chuyển sang datetime với định dạng chuẩn (dựa theo Google Sheet)
-df["Thời gian"] = pd.to_datetime(df["Thời gian"], format="%d/%m/%Y %H:%M:%S", errors="coerce")
+# Làm sạch chuỗi thời gian
+df["Thời gian"] = df["Thời gian"].astype(str).str.strip().str.replace(r"\u202f", " ", regex=True)
 
-# Debug 5 dòng đầu
-print("🔎 5 dòng đầu sau khi chuẩn hóa thời gian:", df["Thời gian"].head())
-print("🧯 Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
+# Chuyển đổi datetime với nhiều định dạng
+def try_parse_datetime(val):
+    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d-%m-%Y %H:%M:%S"):
+        try:
+            return datetime.strptime(val, fmt)
+        except:
+            continue
+    return pd.NaT
 
-# Giờ hệ thống hiện tại (UTC+7)
-now = datetime.now()
-print("⏰ Giờ hệ thống (UTC+7):", now)
+df["Thời gian"] = df["Thời gian"].apply(try_parse_datetime)
 
-# Kiểm tra thời gian trong dữ liệu
+# In test 5 dòng đầu tiên sau chuẩn hóa
+print("🔍 5 dòng đầu sau khi chuẩn hóa thời gian:", df["Thời gian"].head())
+print("❗ Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
 print("🟡 Thời gian nhỏ nhất trong sheet:", df["Thời gian"].min())
 print("🟢 Thời gian lớn nhất trong sheet:", df["Thời gian"].max())
-
-# Lọc các dòng trong 60 phút gần nhất
-df = df[df["Thời gian"] > now - timedelta(minutes=60)]
-print("✅ Sau khi lọc thời gian 60 phút:", len(df))
 # Lấy giờ hệ thống UTC+7
 now = datetime.now(timezone('Asia/Ho_Chi_Minh')).replace(tzinfo=None)
 print("🕒 Giờ hệ thống (UTC+7):", now)
