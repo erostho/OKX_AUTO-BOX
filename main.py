@@ -7,9 +7,10 @@ import time
 import hmac
 import base64
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from pytz import timezone
 import os
-from pytz import time zone
+from pytz import timezone
 
 # Thiết lập thông tin API OKX từ biến môi trường
 API_KEY = os.getenv("OKX_API_KEY")
