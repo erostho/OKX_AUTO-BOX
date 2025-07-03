@@ -15,7 +15,6 @@ API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 timestamp = str(time.time())
 method = "POST"
 request_path = "/api/v5/tradingBot/grid/orderAlgo"
-body = json.dumps(payload)
 
 message = timestamp + method + request_path + body
 signature = base64.b64encode(
@@ -65,7 +64,7 @@ for index, row in df.iterrows():
             "direction": side,
             "investment": "10"
         }
-
+        body = json.dumps(payload)
         print(f"Tạo bot cho {coin}: {side.upper()} tại giá {price} | Vùng {lower_price} - {upper_price}")
         response = requests.post('https://www.okx.com/api/v5/trade/order-algo', headers=headers, data=json.dumps(payload))
         print(response.json())
