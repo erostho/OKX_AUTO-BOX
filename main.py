@@ -28,6 +28,8 @@ df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
 print(f"Sau khi lọc null: {len(df)}")
 print(f"Sau khi lọc xu hướng: {len(df)}")
 print(f"Sau khi lọc thời gian 60': {len(df)}")
+print(df[["Thời gian"]].head())  # In thử 5 dòng
+print("Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
 # Khởi tạo ccxt để lấy giá coin từ OKX
 exchange = ccxt.okx()
 from datetime import datetime, timedelta
