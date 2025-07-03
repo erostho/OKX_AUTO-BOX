@@ -21,37 +21,41 @@ API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 df = pd.read_csv(sheet_url)
 # =============================================
-# ✅ Làm sạch và chuẩn hóa cột "Thời gian"
-# =============================================
+# ================== Làm sạch và chuẩn hoá cột Thời gian ==================
 
-# Loại bỏ dòng null
+# Bước 1: loại bỏ dòng null trong cột "Thời gian"
 df = df.dropna(subset=["Thời gian"])
 
-# Làm sạch chuỗi thời gian
+# Bước 2: chuyển về chuỗi và làm sạch ký tự ẩn (Unicode space)
 df["Thời gian"] = df["Thời gian"].astype(str).str.strip().str.replace(r"\u202f", " ", regex=True)
 
-# Chuyển đổi datetime với nhiều định dạng
-def try_parse_datetime(val):
-    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d-%m-%Y %H:%M:%S"):
-        try:
-            return datetime.strptime(val, fmt)
-        except:
-            continue
-    return pd.NaT
+# Bước 3: cố gắng parse datetime linh hoạt nhất
+from dateutil import parser
 
-df["Thời gian"] = df["Thời gian"].apply(try_parse_datetime)
+def try_parse(x):
+    try:
+        return parser.parse(x, dayfirst=True)
+    except:
+        return pd.NaT
 
-# In test 5 dòng đầu tiên sau chuẩn hóa
-print("🔍 5 dòng đầu sau khi chuẩn hóa thời gian:", df["Thời gian"].head())
-print("❗ Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
+df["Thời gian"] = df["Thời gian"].apply(try_parse)
+
+# In test
+print("🕵️‍♂️ 5 dòng đầu sau khi chuẩn hoá thời gian:", df["Thời gian"].head())
+print("❌ Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
 print("🟡 Thời gian nhỏ nhất trong sheet:", df["Thời gian"].min())
 print("🟢 Thời gian lớn nhất trong sheet:", df["Thời gian"].max())
-# Lấy giờ hệ thống UTC+7
-now = datetime.now(timezone('Asia/Ho_Chi_Minh')).replace(tzinfo=None)
-print("🕒 Giờ hệ thống (UTC+7):", now)
 
-# Lọc trong vòng 60 phút
+# ================== Lấy giờ hệ thống UTC+7 ==================
+
+from pytz import timezone
+now = datetime.now(timezone("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
+print("🕓 Giờ hệ thống (UTC+7):", now)
+
+# ================== Lọc trong 60 phút gần nhất ==================
+
 df = df[df["Thời gian"] > now - timedelta(minutes=60)]
+print("✅ Sau khi lọc thời gian 60 phút:", len(df))
 
 # Tiếp tục lọc theo xu hướng nếu muốn
 df = df[df["Xu hướng"].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
