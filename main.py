@@ -2,6 +2,7 @@ import requests
 import ccxt
 import pandas as pd
 import json
+import time
 from datetime import datetime, timedelta
 import os
 
