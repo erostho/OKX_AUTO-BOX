@@ -97,7 +97,7 @@ for index, row in df.iterrows():
         ticker = exchange.fetch_ticker(found_symbol)
         price = ticker['last']
 
-        inst_id = found_symbol.replace("/", "").replace(":", "").upper() + "-PERP"
+        inst_id = found_symbol.upper() + ":USDT"
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
         lower_price = round(price * 0.85, 4)
@@ -133,6 +133,8 @@ for index, row in df.iterrows():
         }
 
         # In log tạo bot (có thể thay bằng requests.post nếu muốn gọi thật)
+        print(f"🔧 Payload: {body}")
+        print(f"🔧 Endpoint: https://www.okx.com{request_path}")
         response = requests.post("https://www.okx.com" + request_path, headers=headers, data=body)
         print(response.json())
 
