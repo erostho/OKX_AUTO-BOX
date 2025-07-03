@@ -20,7 +20,6 @@ API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 # Thiết lập đường dẫn sheet CSV công khai
 sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 df = pd.read_csv(sheet_url)
-from datetime import datetime, timedelta
 # =============================================
 # ✅ Làm sạch và chuẩn hóa cột "Thời gian"
 # =============================================
