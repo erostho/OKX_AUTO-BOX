@@ -10,7 +10,7 @@ import os
 API_KEY = os.getenv("OKX_API_KEY")
 API_SECRET = os.getenv("OKX_API_SECRET")
 API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
-
+body = json.dumps(payload)
 # Thiết lập headers cho API OKX
 timestamp = str(time.time())
 method = "POST"
