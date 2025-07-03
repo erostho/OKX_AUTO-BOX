@@ -9,6 +9,7 @@ import base64
 import hashlib
 from datetime import datetime, timedelta, timezone
 import os
+from pytz import time zone
 
 # Thiết lập thông tin API OKX từ biến môi trường
 API_KEY = os.getenv("OKX_API_KEY")
@@ -19,15 +20,27 @@ API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
 df = pd.read_csv(sheet_url)
 
-# Chuẩn hoá dữ liệu và lọc theo điều kiện
-df = df.dropna()
-# Loại bỏ ký tự ẩn nếu có (đã đúng)
-df["Thời gian"] = df["Thời gian"].astype(str).str.replace(r"\u202f", " ", regex=True)
-# Parse lại đúng cách
-df["Thời gian"] = pd.to_datetime(df["Thời gian"], errors="coerce", infer_datetime_format=True)
-now = datetime.now().replace(tzinfo=None)
-df = df[df['Thời gian'] > now - timedelta(minutes=60)]
-df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
+# Làm sạch và chuẩn hóa dữ liệu
+df = df.dropna(subset=["Thời gian"])  # loại bỏ dòng null thời gian nếu có
+df["Thời gian"] = df["Thời gian"].astype(str).str.strip()
+df["Thời gian"] = pd.to_datetime(df["Thời gian"], format="%d/%m/%Y %H:%M:%S", errors="coerce")
+
+# In test xem thời gian parse ra đúng chưa
+print("🕒 Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
+print("🕒 Thời gian nhỏ nhất:", df["Thời gian"].min())
+print("🕒 Thời gian lớn nhất:", df["Thời gian"].max())
+
+# Lấy giờ hệ thống UTC+7
+now = datetime.now(timezone('Asia/Ho_Chi_Minh')).replace(tzinfo=None)
+print("🕒 Giờ hệ thống (UTC+7):", now)
+
+# Lọc trong vòng 60 phút
+df = df[df["Thời gian"] > now - timedelta(minutes=60)]
+
+# Tiếp tục lọc theo xu hướng nếu muốn
+df = df[df["Xu hướng"].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
+
+print("✅ Số coin hợp lệ sau lọc:", len(df))
 print(f"Sau khi lọc null: {len(df)}")
 print(f"Sau khi lọc xu hướng: {len(df)}")
 print(f"Sau khi lọc thời gian 60': {len(df)}")
