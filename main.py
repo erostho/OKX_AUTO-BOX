@@ -97,9 +97,10 @@ for index, row in df.iterrows():
         ticker = exchange.fetch_ticker(found_symbol)
         price = ticker['last']
 
-        inst_id = found_symbol.replace("/", "-").replace(":", "-").upper()
-        if not inst_id.endswith("-SWAP"):
-            inst_id += "-SWAP"
+        # Cắt bỏ phần đuôi sau dấu ":" nếu có (ví dụ: AVAX/USDT:USDT → AVAX/USDT)
+        base_symbol = found_symbol.split(":")[0]
+        # Chuyển thành inst_id hợp lệ theo OKX (AVAX-USDT-SWAP)
+        inst_id = base_symbol.replace("/", "-").upper() + "-SWAP"
         print(f"📦 inst_id dùng để đặt lệnh: {inst_id}")
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
