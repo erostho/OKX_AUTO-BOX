@@ -30,7 +30,7 @@ print(f"Sau khi lọc xu hướng: {len(df)}")
 print(f"Sau khi lọc thời gian 60': {len(df)}")
 print(df[["Thời gian"]].head())  # In thử 5 dòng
 print("Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
-print("Giờ hệ thống (UTC+7):", now)
+print("Giờ hệ thống (UTC+2):", now)
 print("Thời gian nhỏ nhất trong sheet:", df["Thời gian"].min())
 print("Thời gian lớn nhất trong sheet:", df["Thời gian"].max())
 # Khởi tạo ccxt để lấy giá coin từ OKX
