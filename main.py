@@ -110,11 +110,7 @@ for index, row in df.iterrows():
             "minPx": lower_price,
             "maxPx": upper_price,
         }
-
-        # gửi lệnh...
-
-    except Exception as e:
-        print(f"❌ Lỗi dòng {index + 1}: {e}")
+    # gửi lệnh...
         body = json.dumps(payload)
         timestamp = str(time.time())
         method = "POST"
@@ -142,3 +138,4 @@ for index, row in df.iterrows():
     except Exception as e:
         print(f"⚠️ Lỗi khi xử lý {row['Coin']}: {e}")
         print(f"⚠️ Lỗi tổng quát: {e}")
+        print(f"❌ Lỗi dòng {index + 1}: {e}")
