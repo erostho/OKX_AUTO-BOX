@@ -28,10 +28,10 @@ df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
 
 # Khởi tạo ccxt để lấy giá coin từ OKX
 exchange = ccxt.okx()
-
+print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
 for _, row in df.iterrows():
     print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
-    print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
+    
     try:
         coin = row['Coin'].replace("-USDT", "/USDT").upper()
         inst_id = row['Coin'].replace("-", "").upper()
