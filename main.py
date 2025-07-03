@@ -4,9 +4,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 # Thiết lập thông tin API OKX
-API_KEY = 'YOUR_API_KEY'
-API_SECRET = 'YOUR_API_SECRET'
-API_PASSPHRASE = 'YOUR_API_PASSPHRASE'
+API_KEY = fd0e2ebd-c4fb-4bb3-b23b-c39806de594e
+API_SECRET = 1636F2E197978055B964D2DACABEF9EC
+API_PASSPHRASE = Panda@2402
 
 # Thiết lập headers cho API OKX
 headers = {
@@ -54,8 +54,8 @@ for index, row in df.iterrows():
         }
 
         print(f"Tạo bot cho {coin}: {side.upper()} tại giá {price} | Vùng {lower_price} - {upper_price}")
-        # response = requests.post('https://www.okx.com/api/v5/trade/order-algo', headers=headers, data=json.dumps(payload))
-        # print(response.json())
+        response = requests.post('https://www.okx.com/api/v5/trade/order-algo', headers=headers, data=json.dumps(payload))
+        print(response.json())
 
     except Exception as e:
         print(f"Lỗi khi xử lý {coin}: {e}")
