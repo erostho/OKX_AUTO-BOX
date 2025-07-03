@@ -30,6 +30,8 @@ df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
 exchange = ccxt.okx()
 
 for _, row in df.iterrows():
+    print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
+    print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
     try:
         coin = row['Coin'].replace("-USDT", "/USDT").upper()
         inst_id = row['Coin'].replace("-", "").upper()
@@ -77,3 +79,4 @@ for _, row in df.iterrows():
 
     except Exception as e:
         print(f"⚠️ Lỗi khi xử lý {row['Coin']}: {e}")
+        print(f"⚠️ Lỗi tổng quát: {e}")
