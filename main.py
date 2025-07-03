@@ -23,9 +23,12 @@ df = pd.read_csv(sheet_url)
 
 # Làm sạch và chuẩn hóa dữ liệu
 df = df.dropna(subset=["Thời gian"])  # loại bỏ dòng null thời gian nếu có
-df["Thời gian"] = df["Thời gian"].astype(str).str.strip()
+# Làm sạch chuỗi thời gian
+df["Thời gian"] = df["Thời gian"].astype(str).str.strip().str.replace(r"\u202f", " ", regex=True)
+# Chuyển về datetime
 df["Thời gian"] = pd.to_datetime(df["Thời gian"], format="%d/%m/%Y %H:%M:%S", errors="coerce")
-
+print("5 dòng đầu cột Thời gian sau chuyển:", df["Thời gian"].head())
+print("5 dòng đầu cột Thời gian sau chuyển:", df["Thời gian"].head())
 # In test xem thời gian parse ra đúng chưa
 print("🕒 Dòng bị lỗi thời gian (NaT):", df["Thời gian"].isna().sum())
 print("🕒 Thời gian nhỏ nhất:", df["Thời gian"].min())
