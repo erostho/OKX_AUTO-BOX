@@ -25,18 +25,13 @@ df['Thời gian'] = pd.to_datetime(df['Thời gian'], format="%d/%m/%Y %H:%M:%S"
 now = datetime.now()
 df = df[df['Thời gian'] > now - timedelta(minutes=60)]
 df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
-
+print(f"Tổng dòng ban đầu: {len(df_raw)}")
+print(f"Sau khi lọc null: {len(df)}")
+print(f"Sau khi lọc xu hướng: {len(df)}")
+print(f"Sau khi lọc thời gian 60': {len(df)}")
 # Khởi tạo ccxt để lấy giá coin từ OKX
 exchange = ccxt.okx()
 from datetime import datetime, timedelta
-
-# Chuẩn hóa cột thời gian
-df['Thời gian'] = pd.to_datetime(df['Thời gian'], format="%d/%m/%Y %H:%M:%S", errors='coerce')
-
-# Giữ lại các dòng có thời gian nằm trong 60 phút gần nhất
-now = datetime.now()
-df = df[df['Thời gian'] >= now - timedelta(minutes=60)]
-
 print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
 for _, row in df.iterrows():
     print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
