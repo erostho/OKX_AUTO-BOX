@@ -73,32 +73,48 @@ print("Thời gian lớn nhất trong sheet:", df["Thời gian"].max())
 exchange = ccxt.okx()
 from datetime import datetime, timedelta
 print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
+exchange = ccxt.okx()
+exchange.load_markets()  # Tải danh sách market hợp lệ
+
 for index, row in df.iterrows():
-    print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
-    
     try:
-        coin = row['Coin'].strip().upper().replace("-", "")
-        inst_id = f"{coin}-PERP"
+        raw_coin = row['Coin'].strip().upper().replace("-", "")
+        symbol = None
+
+        # Tìm đúng Futures PERP trong exchange.markets
+        for market in exchange.markets:
+            if raw_coin in market and market.endswith(':USDT'):
+                symbol = market
+                break
+
+        if not symbol:
+            print(f"⚠️ Không tìm thấy symbol hợp lệ cho: {raw_coin}")
+            continue
+
+        # In ra để kiểm tra
+        print(f"✅ Đã khớp symbol: {symbol}")
+
+        ticker = exchange.fetch_ticker(symbol)
+        price = ticker['last']
+
+        # Tạo inst_id chuẩn OKX Futures
+        inst_id = symbol.replace("/", "").replace(":", "").upper() + "-PERP"
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
-        # Lấy giá hiện tại
-        ticker = exchange.fetch_ticker(coin)
-        price = ticker['last']
         lower_price = round(price * 0.85, 4)
         upper_price = round(price * 1.15, 4)
 
-        # Tạo payload
         payload = {
             "instId": inst_id,
             "algoType": "grid",
             "minPx": lower_price,
             "maxPx": upper_price,
-            "gridNum": 20,
-            "lever": "5",
-            "direction": side,
-            "investment": "10"
         }
 
+        # Thực hiện tiếp theo như gửi lệnh...
+
+    except Exception as e:
+        print(f"❌ Lỗi dòng {index + 1}: {e}")
         body = json.dumps(payload)
         timestamp = str(time.time())
         method = "POST"
