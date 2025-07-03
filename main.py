@@ -21,8 +21,10 @@ df = pd.read_csv(sheet_url)
 
 # Chuẩn hoá dữ liệu và lọc theo điều kiện
 df = df.dropna()
+# Loại bỏ ký tự ẩn nếu có (đã đúng)
 df["Thời gian"] = df["Thời gian"].astype(str).str.replace(r"\u202f", " ", regex=True)
-df["Thời gian"] = pd.to_datetime(df["Thời gian"], dayfirst=True, errors="coerce")
+# Parse lại đúng cách
+df["Thời gian"] = pd.to_datetime(df["Thời gian"], errors="coerce", infer_datetime_format=True)
 now = datetime.now().replace(tzinfo=None)
 df = df[df['Thời gian'] > now - timedelta(minutes=60)]
 df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
