@@ -26,7 +26,7 @@ df = df.dropna(subset=["Thời gian"])  # loại bỏ dòng null thời gian n�
 # Làm sạch chuỗi thời gian
 df["Thời gian"] = df["Thời gian"].astype(str).str.strip().str.replace(r"\u202f", " ", regex=True)
 # Chuyển về datetime
-df["Thời gian"] = pd.to_datetime(df["Thời gian"], format="%d/%m/%Y %H:%M:%S", errors="coerce")
+df["Thời gian"] = pd.to_datetime(df["Thời gian"], dayfirst=True, errors="coerce")
 print("5 dòng đầu cột Thời gian sau chuyển:", df["Thời gian"].head())
 print("5 dòng đầu cột Thời gian sau chuyển:", df["Thời gian"].head())
 # In test xem thời gian parse ra đúng chưa
