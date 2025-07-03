@@ -3,6 +3,7 @@ import ccxt
 import pandas as pd
 import json
 from datetime import datetime, timedelta
+import os
 
 # Thiết lập thông tin API OKX
 API_KEY = os.getenv("OKX_API_KEY")
