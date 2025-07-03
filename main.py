@@ -25,7 +25,6 @@ df['Thời gian'] = pd.to_datetime(df['Thời gian'], format="%d/%m/%Y %H:%M:%S"
 now = datetime.now()
 df = df[df['Thời gian'] > now - timedelta(minutes=60)]
 df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
-print(f"Tổng dòng ban đầu: {len(df_raw)}")
 print(f"Sau khi lọc null: {len(df)}")
 print(f"Sau khi lọc xu hướng: {len(df)}")
 print(f"Sau khi lọc thời gian 60': {len(df)}")
