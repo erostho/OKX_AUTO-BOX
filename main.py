@@ -73,8 +73,8 @@ for _, row in df.iterrows():
 
         # In log tạo bot (có thể thay bằng requests.post nếu muốn gọi thật)
         print(f"Tạo bot cho {inst_id}: {side.upper()} tại giá {price} | Vùng {lower_price} - {upper_price}")
-        # response = requests.post("https://www.okx.com" + request_path, headers=headers, data=body)
-        # print(response.json())
+        response = requests.post("https://www.okx.com" + request_path, headers=headers, data=body)
+        print(response.json())
 
     except Exception as e:
         print(f"⚠️ Lỗi khi xử lý {row['Coin']}: {e}")
