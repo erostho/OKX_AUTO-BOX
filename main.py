@@ -22,9 +22,7 @@ df = pd.read_csv(sheet_url)
 # Chuẩn hoá dữ liệu và lọc theo điều kiện
 df = df.dropna()
 df["Thời gian"] = pd.to_datetime(df["Thời gian"], dayfirst=True, errors="coerce")
-# Giờ Việt Nam (UTC+7)
-vietnam_tz = timezone(timedelta(hours=7))
-now = datetime.now(vietnam_tz)
+now = datetime.now().replace(tzinfo=None)
 df = df[df['Thời gian'] > now - timedelta(minutes=60)]
 df = df[df['Xu hướng'].str.upper().isin(["TĂNG MẠNH", "GIẢM MẠNH"])]
 print(f"Sau khi lọc null: {len(df)}")
