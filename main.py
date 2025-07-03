@@ -73,7 +73,7 @@ print("Thời gian lớn nhất trong sheet:", df["Thời gian"].max())
 exchange = ccxt.okx()
 from datetime import datetime, timedelta
 print(f"📊 Số coin hợp lệ sau lọc: {len(df)}")
-for _, row in df.iterrows():
+for index, row in df.iterrows():
     print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
     
     try:
