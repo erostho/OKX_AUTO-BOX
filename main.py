@@ -21,11 +21,11 @@ headers = {
 sheet_url = 'https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/gviz/tq?tqx=out:csv&sheet=DATA_12H'
 df = pd.read_csv(sheet_url)
 
-# Chuẩn hoá dữ liệu và lọc theo điều kiện
+# Chuẩn hoá dữ liệu và lọc theo điều kiện, Thêm năm hiện tại vào chuỗi thời gian
 df = df.dropna()
-df['Thời gian'] = pd.to_datetime(df['Thời gian'], format='%d/%m/%Y %H:%M:%S')
-now = datetime.now()
-df = df[df['Thời gian'] > now - timedelta(minutes=60)]
+current_year = datetime.now().year
+df['Thời gian'] = df['Thời gian'].apply(lambda x: f"{current_year}/{x.strip()}")
+df['Thời gian'] = pd.to_datetime(df['Thời gian'], format='%Y/%d/%m %H:%M')
 df = df[df['Xu hướng'].str.upper().isin(['TĂNG MẠNH', 'GIẢM MẠNH'])]
 
 # Khởi tạo ccxt để lấy giá
