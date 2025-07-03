@@ -77,7 +77,7 @@ for index, row in df.iterrows():
     print(f"⏳ Đang xử lý dòng {index + 1} - Coin: {row['Coin']}")
     
     try:
-        coin = row['Coin'].replace("-USDT", "/USDT").upper()
+        coin = row['Coin'].replace("-", "").upper()
         inst_id = row['Coin'].replace("-", "").upper()
         side = "long" if row['Xu hướng'].strip().upper() == "TĂNG MẠNH" else "short"
 
