@@ -7,7 +7,7 @@ import time
 import hmac
 import base64
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 
 # Thiết lập thông tin API OKX từ biến môi trường
