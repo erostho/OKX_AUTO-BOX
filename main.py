@@ -5,9 +5,9 @@ import json
 from datetime import datetime, timedelta
 
 # Thiết lập thông tin API OKX
-API_KEY = os.getenv("OKX_API_KEY)
+API_KEY = os.getenv("OKX_API_KEY")
 API_SECRET = os.getenv("OKX_API_SECRET")
-API_PASSPHRASE = =os.getenv("OKX_PASSPHRASE)
+API_PASSPHRASE = =os.getenv("OKX_PASSPHRASE")
 
 # Thiết lập headers cho API OKX
 headers = {
