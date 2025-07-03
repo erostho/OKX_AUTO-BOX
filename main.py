@@ -18,7 +18,7 @@ API_SECRET = os.getenv("OKX_API_SECRET")
 API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 
 # Thiết lập đường dẫn sheet CSV công khai
-sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv"
+sheet_url = "https://docs.google.com/spreadsheets/d/1AmnD1ekwTZeZrp8kGRCymMDwCySJkec0WdulNX9LyOY/export?format=csv&gid=1662610713"
 df = pd.read_csv(sheet_url)
 # =============================================
 # ================== Làm sạch và chuẩn hoá cột Thời gian ==================
