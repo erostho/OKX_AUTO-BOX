@@ -2,3 +2,4 @@ ccxt # không chỉ định phiên bản
 requests
 pandas
 okx
+gspread
