@@ -146,13 +146,15 @@ def run_bot():
                 tp_percent=0.15,        # TP 15%
                 sl_percent=0.1         # SL 10%
             )
+
             def create_tp_sl_orders(exchange, symbol, side, amount, order_id, tp_percent, sl_percent):
-                try:
-                    # Lấy thông tin khớp lệnh
-                    order_detail = exchange.private_get_trade_order({'ordId': order_id})
-                    if not order_detail or 'data' not in order_detail or not order_detail['data']:
-                        logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
-                        return
+            try:
+                # Lấy thông tin khớp lệnh
+                order_detail = exchange.private_get_trade_order({'ordId': order_id})
+                if not order_detail or 'data' not in order_detail or not order_detail['data']:
+                    logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
+                    return
+
 
                     avg_price = float(order_detail['data'][0]['avgPx'])
             
