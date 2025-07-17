@@ -122,7 +122,7 @@ def run_bot():
                 "slTriggerPx": round(sl_price, 6),
                 "slOrdPx": "-1"
             })
-              exchange.private_post_trade_order_algo({
+            exchange.private_post_trade_order_algo({
                 "instId": symbol,
                 "tdMode": "cross",
                 "side": "sell" if signal == "LONG" else "buy",
