@@ -82,8 +82,8 @@ def run_bot():
                 return
 
             base_usdt = 20
-            max_order_value = 1000000  # giới hạn OKX là 1 triệu
-            safe_usdt = min(base_usdt, max_order_value * 0.9)  # chỉ dùng tối đa 90% ngưỡng
+            max_order_value = 1000000  # Giới hạn OKX: 1 triệu
+            safe_usdt = min(base_usdt, max_order_value * 0.9)  # buffer 90%
 
             amount = round(safe_usdt / mark_price, 6)
             estimated_value = amount * mark_price
@@ -92,16 +92,22 @@ def run_bot():
                 logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
                 return
 
+            # Ghi log và gửi lệnh
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
-            order = exchange.create_market_order(
-                symbol=symbol,
-                side=side,
-                amount=amount,
-                params={
-                    "sz": str(amount),
-                    "tdMode": "isolated",
-                }
-            )
+
+            try:
+                order = exchange.create_market_order(
+                    symbol=symbol,
+                    side=side,
+                    amount=amount,
+                    params={
+                        "sz": str(amount),
+                        "tdMode": "isolated"
+                    }
+                )
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi đặt lệnh: {e}")
+
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
             # Lấy order ID sau khi đặt lệnh chính
