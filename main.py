@@ -93,7 +93,7 @@ def run_bot():
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=20,
+                amount=amount,
                 params={
                     "sz": str(amount),
                     "tdMode": "isolated",
