@@ -1,163 +1,101 @@
-
 import os
-import csv
-import logging
 import requests
-from datetime import datetime
+import pandas as pd
+from datetime import datetime, timedelta
 import ccxt
+import time
 
-# Logging setup
-logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
+# Lấy API từ biến môi trường
+api_key = os.getenv("OKX_API_KEY")
+api_secret = os.getenv("OKX_API_SECRET")
+api_passphrase = os.getenv("OKX_API_PASSPHRASE")
+spreadsheet_url = os.getenv("SPREADSHEET_URL")
 
-# Đọc biến môi trường
-SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
-OKX_API_KEY = os.environ.get("OKX_API_KEY")
-OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
-OKX_API_PASSPHRASE = os.environ.get("OKX_API_PASSPHRASE")
-
-# Khởi tạo OKX
+# Thiết lập OKX
 exchange = ccxt.okx({
-    'apiKey': OKX_API_KEY,
-    'secret': OKX_API_SECRET,
-    'password': OKX_API_PASSPHRASE,
+    'apiKey': api_key,
+    'secret': api_secret,
+    'password': api_passphrase,
     'enableRateLimit': True,
     'options': {
         'defaultType': 'swap'
     }
 })
 
-def fetch_sheet():
-    try:
-        csv_url = SPREADSHEET_URL.replace("/edit#gid=", "/export?format=csv&gid=")
-        res = requests.get(csv_url)
-        res.raise_for_status()
-        return list(csv.reader(res.content.decode("utf-8").splitlines()))
-    except Exception as e:
-        logging.error(f"❌ Không thể tải Google Sheet: {e}")
-        return []
+def fetch_signal_data():
+    df = pd.read_csv(spreadsheet_url)
+    df = df[df['Tín hiệu'].isin(['LONG', 'SHORT'])]
 
-def run_bot():
     now = datetime.utcnow()
-    rows = fetch_sheet()
-    if not rows:
-        return
-    rows = rows[1:]
+    df['Thời gian'] = pd.to_datetime(df['Thời gian'], errors='coerce')
+    df = df[df['Thời gian'].notna()]
+    df = df[df['Thời gian'] > now - timedelta(minutes=60)]
+    return df
 
-    for row in rows:
-        try:
-            logging.info(f"🔍 Kiểm tra dòng: {row}")
-            if len(row) < 7:
-                logging.warning("⚠️ Dòng thiếu dữ liệu")
-                continue
+def place_order(symbol, signal):
+    try:
+        market = exchange.market(symbol)
+        price = exchange.fetch_ticker(symbol)['last']
+        usdt_amount = 20
+        leverage = 5
+        quantity = round(usdt_amount / price * leverage, 4)
 
-            symbol, signal, entry_price, sl_str, tp_str, created_at_str, interval = row
-            entry_price = float(entry_price)
-            sl = float(sl_str.strip('%')) / 100
-            tp = float(tp_str.strip('%')) / 100
-            interval = int(interval)
-            created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H:%M:%S")
+        print(f"--- Đang đặt lệnh {signal} cho {symbol} ---")
+        print(f"📉 Giá hiện tại: {price}")
+        print(f"🎯 Số lượng đặt: {quantity}")
 
-            elapsed_minutes = (now - created_at).total_seconds() / 60
-            if elapsed_minutes > interval:
-                logging.info(f"⏱ Lệnh quá hạn: {symbol}")
-                continue
+        exchange.set_leverage(leverage, symbol)
 
-            if signal not in ["LONG", "SHORT"]:
-                logging.warning("⚠️ Tín hiệu không hợp lệ")
-                continue
+        side = 'buy' if signal == 'LONG' else 'sell'
+        order = exchange.create_market_order(symbol, 'swap', side, quantity, {
+            'tdMode': 'isolated'
+        })
 
-            side = "buy" if signal == "LONG" else "sell"
-            pos_side = "long" if signal == "LONG" else "short"
+        print(f"✅ Đặt lệnh {side} thành công: {order['id']}")
 
-            # Đặt đòn bẩy 5x
-            exchange.set_leverage(5, symbol)
-            logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
+        # Tính TP và SL
+        tp_price = round(price * 1.2, 4) if side == 'buy' else round(price * 0.8, 4)
+        sl_price = round(price * 0.9, 4) if side == 'buy' else round(price * 1.1, 4)
 
-            # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
-            market = exchange.market(symbol)
-            ticker = exchange.fetch_ticker(symbol)
-            mark_price = float(ticker['last']) if ticker['last'] else 0
+        # Đặt TP
+        tp = exchange.create_order(symbol, 'take_profit_market', 'sell' if side == 'buy' else 'buy',
+                                   quantity, None, {
+            'tdMode': 'isolated',
+            'tpTriggerPx': tp_price,
+            'tpOrdPx': -1,
+            'reduceOnly': True
+        })
 
-            if mark_price <= 0:
-                logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
-                return
+        # Đặt SL
+        sl = exchange.create_order(symbol, 'stop_market', 'sell' if side == 'buy' else 'buy',
+                                   quantity, None, {
+            'tdMode': 'isolated',
+            'slTriggerPx': sl_price,
+            'slOrdPx': -1,
+            'reduceOnly': True
+        })
 
-            amount = round((20 * 5) / mark_price, 6)
+        print(f"🎯 Đã đặt TP tại: {tp_price}, SL tại: {sl_price}")
+    except Exception as e:
+        print(f"❌ Lỗi đặt lệnh {symbol}: {str(e)}")
 
-            if amount <= 0:
-                logging.error("⚠️ Không thể tính được số lượng hợp lệ để đặt lệnh")
-                return
+def main():
+    try:
+        df = fetch_signal_data()
+        if df.empty:
+            print("⚠️ Không có tín hiệu mới trong 60 phút.")
+            return
 
-            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
-
-            order = exchange.create_market_order(
-                symbol=symbol,
-                side=side,
-                amount=None,
-                params={
-                    "tdMode": "isolated",
-                }
-            )
-            logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
-            
-            # Lấy order ID sau khi đặt lệnh chính
-            order_id = order['data'][0]['ordId']
-
-            # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
-            order_detail = exchange.private_get_trade_order({'ordId': order_id})
-            avg_price = float(order_detail['data'][0]['avgPx'])
-
-            # Tính TP và SL theo % nhập từ Google Sheet
-            tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
-            sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
-
-            # Tạo TP (Take Profit)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "take_profit",
-                "sz": str(amount),
-                "tpTriggerPx": round(tp_price, 6),
-                "tpOrdPx": "-1"
-            })
-
-            # Tạo SL (Stop Loss)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "stop_loss",
-                "sz": str(amount),
-                "slTriggerPx": round(sl_price, 6),
-                "slOrdPx": "-1"
-            })
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "take_profit",
-                "sz": str(amount),
-                "tpTriggerPx": round(tp_price, 6),
-                "tpOrdPx": "-1",
-            })
-
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "stop",
-                "sz": str(amount),
-                "slTriggerPx": round(sl_price, 6),
-                "slOrdPx": "-1",
-                "posSide": pos_side
-            })
-
-            logging.info(f"🎯 TP/SL đặt xong cho {symbol}: TP={round(tp_price,6)} | SL={round(sl_price,6)}")
-
-        except Exception as e:
-            logging.error(f"❌ Lỗi xử lý dòng: {e}")
+        print(f"📊 Số tín hiệu hợp lệ: {len(df)}")
+        for _, row in df.iterrows():
+            coin = row['Coin']
+            signal = row['Tín hiệu']
+            symbol = f"{coin.upper()}/USDT:USDT"
+            print(f"📦 Xử lý coin: {symbol} với tín hiệu: {signal}")
+            place_order(symbol, signal)
+            time.sleep(1)
+    except Exception as e:
+        print(f"‼️ Lỗi tổng: {str(e)}")
 
 if __name__ == "__main__":
-    logging.info("🚀 Bắt đầu chạy script main.py")
-    run_bot()
+    main()
