@@ -76,15 +76,24 @@ def run_bot():
             # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
             market = exchange.market(symbol)
             ticker = exchange.fetch_ticker(symbol)
-            mark_price = ticker['last']
-            amount = round((20 * 5) / mark_price, 6)
-            if not amount or amount <=0:
-                looging.error("⚠️ không thể tính được số")
+            mark_price = float(ticker['last']) if ticker['last'] else 0
+
+            if mark_price <= 0:
+                logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
+
+            amount = round((20 * 5) / mark_price, 6)
+
+            if amount <= 0:
+                logging.error("⚠️ Không thể tính được số lượng hợp lệ để đặt lệnh")
+                return
+
+            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
+
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=None,
+                amount=amount,
                 params={
                     "tdMode": "isolated",
                     "posSide": pos_side,
