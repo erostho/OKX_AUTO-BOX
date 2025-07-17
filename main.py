@@ -78,7 +78,9 @@ def run_bot():
             ticker = exchange.fetch_ticker(symbol)
             mark_price = ticker['last']
             amount = round((20 * 5) / mark_price, 6)
-
+            if not amount or amount <=0:
+                looging.error("⚠️ không thể tính được số")
+                return
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
