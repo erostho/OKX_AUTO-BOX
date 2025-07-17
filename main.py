@@ -74,9 +74,8 @@ def run_bot():
             logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
 
             # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
-            market = exchange.market(symbol)
             ticker = exchange.fetch_ticker(symbol)
-            mark_price = float(ticker['last']) if ticker['last'] else 0
+            mark_price = float(ticker['last']) if ticker.get('last') else 0
 
             if mark_price <= 0:
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
@@ -86,13 +85,10 @@ def run_bot():
             max_order_value = 98765  # hoặc 99999 nếu bạn muốn sát giới hạn
             amount = round(base_usdt / mark_price, 6)
             max_amount = round(max_order_value / mark_price, 6)
+
             if amount > max_amount:
                 logging.warning(f"⚠️ amount quá lớn ({amount}), giảm xuống còn {max_amount} để tránh lỗi vượt giới hạn OKX")
                 amount = max_amount
-
-            if amount <= 0:
-                logging.error("⚠️ Không thể tính được số lượng hợp lệ để đặt lệnh")
-                return
 
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
 
