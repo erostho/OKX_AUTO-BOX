@@ -82,7 +82,7 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
-            amount = 20
+            amount = round(20 / mark_price, 6)
 
             if amount <= 0:
                 logging.error("⚠️ Không thể tính được số lượng hợp lệ để đặt lệnh")
@@ -93,7 +93,7 @@ def run_bot():
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=20,
+                amount=amount,
                 params={
                     "sz": str(amount),
                     "tdMode": "isolated",
