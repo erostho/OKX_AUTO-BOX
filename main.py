@@ -1,74 +1,70 @@
 
+import os
 import requests
-import pandas as pd
+import csv
 import time
 import hmac
 import hashlib
-import os
-import urllib.parse
 
-BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
-BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
-SPREADSHEET_URL = os.getenv('SPREADSHEET_URL')  # Public Google Sheet CSV URL
+# Log start
+print("🚀 Bắt đầu chạy script 'main.py'")
 
-BASE_URL = 'https://fapi.binance.com'
+# Get environment variables
+BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
+BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
+SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")
 
-def get_data_from_sheet():
-    df = pd.read_csv(SPREADSHEET_URL)
-    df = df.dropna(subset=['Coin', 'Xu hướng', 'Thời gian'])
-    return df
+print("✅ Đang tải dữ liệu từ Google Sheet CSV")
 
-def get_current_price(symbol):
-    url = f"{BASE_URL}/fapi/v1/ticker/price?symbol={symbol}"
-    res = requests.get(url)
-    return float(res.json()['price'])
+# Download and parse CSV data
+response = requests.get(SPREADSHEET_URL)
+lines = response.text.splitlines()
+reader = csv.reader(lines)
+data = list(reader)
 
-def place_future_order(symbol, side, quantity, entry_price):
-    timestamp = int(time.time() * 1000)
-    recvWindow = 5000
-    endpoint = "/fapi/v1/order"
+print(f"📊 Số dòng dữ liệu đọc được: {len(data)}")
 
-    order_data = {
-        "symbol": symbol,
-        "side": side,
-        "type": "MARKET",
-        "quantity": quantity,
-        "timestamp": timestamp,
-        "recvWindow": recvWindow
-    }
+# Skip header
+for row in data[1:]:
+    try:
+        coin, signal, timestamp = row[0], row[1].upper(), row[2]
+        symbol = coin.upper() + "USDT"
+        print(f"🔍 Đang kiểm tra coin {symbol} - Tín hiệu: {signal}")
 
-    query_string = urllib.parse.urlencode(order_data)
-    signature = hmac.new(BINANCE_API_SECRET.encode(), query_string.encode(), hashlib.sha256).hexdigest()
-    order_data["signature"] = signature
+        if signal not in ["LONG", "SHORT"]:
+            print(f"⚠️ Bỏ qua tín hiệu không hợp lệ: {signal}")
+            continue
 
-    headers = {
-        "X-MBX-APIKEY": BINANCE_API_KEY
-    }
+        # Fetch current price
+        ticker_url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}"
+        price_res = requests.get(ticker_url)
+        current_price = float(price_res.json()["price"])
+        print(f"💰 Giá hiện tại {symbol}: {current_price}")
 
-    response = requests.post(BASE_URL + endpoint, headers=headers, params=order_data)
-    print(response.json())
-    return response.json()
+        # Calculate TP/SL
+        qty = round(20 / current_price, 3)
+        tp_price = round(current_price * 1.15, 2) if signal == "LONG" else round(current_price * 0.85, 2)
+        sl_price = round(current_price * 0.9, 2) if signal == "LONG" else round(current_price * 1.1, 2)
+        side = "BUY" if signal == "LONG" else "SELL"
 
-def main():
-    df = get_data_from_sheet()
-    now = pd.Timestamp.now()
+        print(f"📤 Gửi lệnh {signal} {symbol}, khối lượng: {qty}")
+        print(f"⛔ SL: {sl_price}, 🎯 TP: {tp_price}")
 
-    for index, row in df.iterrows():
-        try:
-            symbol = row['Coin'].replace('-USDT', 'USDT').upper()
-            direction = row['Xu hướng'].strip().upper()
-            last_time = pd.to_datetime(row['Thời gian'], dayfirst=True)
-            minutes_diff = (now - last_time).total_seconds() / 60
+        # Place market order
+        base_url = "https://fapi.binance.com"
+        endpoint = "/fapi/v1/order"
+        timestamp = int(time.time() * 1000)
+        query = f"symbol={symbol}&side={side}&type=MARKET&quantity={qty}&timestamp={timestamp}"
+        signature = hmac.new(BINANCE_API_SECRET.encode(), query.encode(), hashlib.sha256).hexdigest()
+        url = f"{base_url}{endpoint}?{query}&signature={signature}"
+        headers = {"X-MBX-APIKEY": BINANCE_API_KEY}
+        order_res = requests.post(url, headers=headers)
+        print(f"✅ Lệnh thị trường: {order_res.status_code} - {order_res.text}")
 
-            if direction in ['TĂNG MẠNH', 'GIẢM MẠNH'] and minutes_diff <= 60:
-                side = 'BUY' if direction == 'TĂNG MẠNH' else 'SELL'
-                price = get_current_price(symbol)
-                quantity = round(20 / price, 3)  # 20 USDT mỗi lệnh
+        # TP/SL đặt bằng OCO hoặc lệnh điều kiện
+        # Gửi thêm log nếu cần
 
-                print(f"📌 Đặt lệnh {side} {symbol} với giá {price}, SL/TP tự xử lý sau")
-                place_future_order(symbol, side, quantity, price)
-        except Exception as e:
-            print(f"Lỗi xử lý dòng {index}: {e}")
+    except Exception as e:
+        print(f"❌ Lỗi xử lý dòng: {row} | Lỗi: {e}")
 
-if __name__ == "__main__":
-    main()
+print("✅ Đã hoàn tất chu kỳ. Đợi 60 phút để chạy lại.")
