@@ -84,8 +84,8 @@ def run_bot():
                 side=side,
                 amount=None,
                 params={
-                    "sz": str(amount),
                     "tdMode": "isolated",
+                    "posSide": pos_side,
                 }
             )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
