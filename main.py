@@ -85,7 +85,7 @@ def run_bot():
                 amount=None,
                 params={
                     "sz": str(amount),
-                    "tdMode": "cross",
+                    "tdMode": "isolated",
                 }
             )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
@@ -104,7 +104,7 @@ def run_bot():
             # Tạo TP (Take Profit)
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
-                "tdMode": "cross",
+                "tdMode": "isolated",
                 "side": "sell" if signal == "LONG" else "buy",
                 "ordType": "take_profit",
                 "sz": str(amount),
@@ -115,7 +115,7 @@ def run_bot():
             # Tạo SL (Stop Loss)
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
-                "tdMode": "cross",
+                "tdMode": "isolated",
                 "side": "sell" if signal == "LONG" else "buy",
                 "ordType": "stop_loss",
                 "sz": str(amount),
@@ -124,7 +124,7 @@ def run_bot():
             })
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
-                "tdMode": "cross",
+                "tdMode": "isolated",
                 "side": "sell" if signal == "LONG" else "buy",
                 "ordType": "take_profit",
                 "sz": str(amount),
@@ -134,7 +134,7 @@ def run_bot():
 
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
-                "tdMode": "cross",
+                "tdMode": "isolated",
                 "side": "sell" if signal == "LONG" else "buy",
                 "ordType": "stop",
                 "sz": str(amount),
