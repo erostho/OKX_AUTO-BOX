@@ -91,39 +91,6 @@ def run_bot():
                 }
             )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
-
-            # Lấy order ID sau khi đặt lệnh chính
-            order_id = order['data'][0]['ordId']
-
-            # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
-            order_detail = exchange.private_get_trade_order({'ordId': order_id})
-            avg_price = float(order_detail['data'][0]['avgPx'])
-
-            # Tính TP và SL theo % nhập từ Google Sheet
-            tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
-            sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
-
-            # Tạo TP (Take Profit)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "take_profit",
-                "sz": str(amount),
-                "tpTriggerPx": round(tp_price, 6),
-                "tpOrdPx": "-1"
-            })
-
-            # Tạo SL (Stop Loss)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "stop_loss",
-                "sz": str(amount),
-                "slTriggerPx": round(sl_price, 6),
-                "slOrdPx": "-1"
-            })
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
                 "tdMode": "isolated",
