@@ -98,6 +98,7 @@ def run_bot():
             if estimated_value > max_order_value:
                 logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
                 return
+           
             # Lấy danh sách vị thế
             positions = exchange.fetch_positions()
             # Chuẩn hóa instId
@@ -129,6 +130,9 @@ def run_bot():
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
             # Lấy order ID sau khi đặt lệnh chính
+            if not order or 'data' not in order or not order['data']:
+                logging.error("❌ Không thể lấy order ID vì order không hợp lệ.")
+                return
             order_id = order['data'][0]['ordId']
 
             # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
