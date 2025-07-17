@@ -1,93 +1,112 @@
 
-import ccxt
-import csv
 import requests
 import time
-from datetime import datetime
+import hmac
+import base64
+import json
+import logging
 import os
+from datetime import datetime, timedelta
+from urllib.parse import urljoin
 
-# Cấu hình biến môi trường (sử dụng trên Render)
-api_key = os.getenv("BINANCE_API_KEY")
-api_secret = os.getenv("BINANCE_API_SECRET")
-spreadsheet_url = os.getenv("SPREADSHEET_URL")
+# Logging setup
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
-# Khởi tạo Binance Futures
-exchange = ccxt.binance({
-    'apiKey': api_key,
-    'secret': api_secret,
-    'options': {
-        'defaultType': 'future'
+# ENV variables
+API_KEY = os.getenv("OKX_API_KEY")
+API_SECRET = os.getenv("OKX_API_SECRET")
+API_PASSPHRASE = os.getenv("OKX_API_PASSPHRASE")
+SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")
+
+BASE_URL = "https://www.okx.com"
+
+# Request headers for OKX API
+def get_headers(timestamp, method, request_path, body=""):
+    message = f"{timestamp}{method.upper()}{request_path}{body}"
+    signature = base64.b64encode(
+        hmac.new(API_SECRET.encode(), message.encode(), digestmod="sha256").digest()
+    ).decode()
+    return {
+        "OK-ACCESS-KEY": API_KEY,
+        "OK-ACCESS-SIGN": signature,
+        "OK-ACCESS-TIMESTAMP": timestamp,
+        "OK-ACCESS-PASSPHRASE": API_PASSPHRASE,
+        "Content-Type": "application/json"
     }
-})
 
-def fetch_csv_data():
-    print("🟢 Đang tải dữ liệu từ Google Sheet CSV...")
+# Place future order
+def place_future_order(symbol, side, size, sl_price, tp_price):
+    timestamp = datetime.utcnow().isoformat("T", "milliseconds") + "Z"
+    request_path = "/api/v5/trade/order"
+    url = urljoin(BASE_URL, request_path)
+    order_data = {
+        "instId": symbol,
+        "tdMode": "isolated",
+        "side": side.lower(),
+        "ordType": "market",
+        "posSide": side.upper(),
+        "sz": str(size)
+    }
+    headers = get_headers(timestamp, "POST", request_path, json.dumps(order_data))
+    response = requests.post(url, headers=headers, json=order_data)
+    logging.info(f"Gửi lệnh {side} {symbol} với {size} USDT")
+    if response.status_code != 200:
+        logging.error(f"Lỗi API: {response.text}")
+    else:
+        logging.info(f"Phản hồi: {response.text}")
+
+# Load Google Sheet CSV
+def fetch_signals():
     try:
-        response = requests.get(spreadsheet_url)
-        response.raise_for_status()
-        lines = response.text.splitlines()
-        reader = csv.reader(lines)
-        data = list(reader)
-        print(f"📊 Số dòng dữ liệu đọc được: {len(data)-1}")
-        return data[1:]  # Bỏ dòng header
+        res = requests.get(SPREADSHEET_URL)
+        rows = [r.split(",") for r in res.text.strip().split("\n")]
+        return rows[1:]  # Skip header
     except Exception as e:
-        print("❌ Lỗi khi tải Google Sheet:", e)
+        logging.error(f"Lỗi tải sheet: {e}")
         return []
 
-def place_order(symbol, side, amount, sl_percent, tp_percent):
-    print(f"🚀 Mở lệnh {side} {symbol} với {amount} USDT, SL: {sl_percent}%, TP: {tp_percent}%")
+# Get latest price from OKX
+def get_latest_price(symbol):
+    url = f"{BASE_URL}/api/v5/market/ticker?instId={symbol}"
+    res = requests.get(url).json()
     try:
-        markets = exchange.load_markets()
-        symbol_clean = symbol.replace("-", "").upper()
-        market = exchange.market(symbol_clean)
-        price = market['info'].get('lastPrice')
+        return float(res["data"][0]["last"])
+    except:
+        return None
 
-        if price is None:
-            print(f"⚠️ Không lấy được giá cho {symbol_clean}. Bỏ qua.")
-            return
-
-        price = float(price)
-        sl_price = price * (1 - sl_percent / 100) if side == 'LONG' else price * (1 + sl_percent / 100)
-        tp_price = price * (1 + tp_percent / 100) if side == 'LONG' else price * (1 - tp_percent / 100)
-        order_side = 'buy' if side == 'LONG' else 'sell'
-
-        exchange.create_order(
-            symbol=symbol_clean,
-            type='market',
-            side=order_side,
-            amount=amount / price,
-            params={
-                'stopPrice': sl_price,
-                'takeProfitPrice': tp_price
-            }
-        )
-        print(f"✅ Đã đặt lệnh {side} thành công.")
-    except Exception as e:
-        print(f"❌ Lỗi xử lý lệnh: [{symbol}, {side}] - {e}")
-
+# Main handler
 def main():
-    print("🔁 Bắt đầu chạy script `main.py`")
-    rows = fetch_csv_data()
-    for row in rows:
-        try:
-            symbol = row[0].replace("-", "").upper()
-            side = row[1].strip().upper()
-            amount = float(row[2].replace("%", "").replace("USDT", "").strip())
-            sl = float(row[3].replace("%", "").strip())
-            tp = float(row[4].replace("%", "").strip())
-            date = row[5]
-            time_str = row[6]
+    signals = fetch_signals()
+    logging.info(f"📊 Đã tải {len(signals)} tín hiệu từ Google Sheet")
 
-            print(f"🔍 Đang kiểm tra coin {symbol} - Tín hiệu: {side}")
-            if side not in ['LONG', 'SHORT']:
-                print(f"⚠️ Bỏ qua tín hiệu không hợp lệ: {side}")
+    for s in signals:
+        try:
+            symbol = s[0].strip()
+            signal = s[1].strip().upper()
+            price = float(s[2])
+            sl = float(s[3].replace("%", "")) / 100
+            tp = float(s[4].replace("%", "")) / 100
+            time_str = s[5].strip()
+            freq = int(s[6]) if len(s) > 6 else 60
+
+            # Check time range
+            timestamp = datetime.strptime(time_str, "%Y-%m-%d")
+            if datetime.now() - timestamp > timedelta(minutes=freq):
                 continue
 
-            place_order(symbol, side, amount, sl, tp)
-        except Exception as e:
-            print(f"❌ Lỗi xử lý dòng: {row} - {e}")
+            logging.info(f"🔍 Đang kiểm tra {symbol} – Tín hiệu: {signal}")
 
-    print("✅ Đã hoàn tất chu kỳ. Đợi 60 phút để chạy lại.")
+            current_price = get_latest_price(symbol)
+            if not current_price:
+                logging.warning(f"⚠️ Không lấy được giá cho {symbol}")
+                continue
+
+            sl_price = current_price * (1 - sl) if signal == "LONG" else current_price * (1 + sl)
+            tp_price = current_price * (1 + tp) if signal == "LONG" else current_price * (1 - tp)
+
+            place_future_order(symbol, signal, 20, sl_price, tp_price)
+        except Exception as e:
+            logging.error(f"Lỗi xử lý {s}: {e}")
 
 if __name__ == "__main__":
     main()
