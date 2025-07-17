@@ -93,19 +93,6 @@ def run_bot():
                 return
 
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
-
-order = exchange.create_market_order(
-    symbol=symbol,
-    side=side,
-    amount=amount,
-    params={
-        "tdMode": "isolated",
-        "sz": str(amount)
-    }
-)
-
-            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
-
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
