@@ -128,7 +128,24 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Lỗi khi đặt lệnh: {e}")
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
+                        # Kiểm tra lệnh có hợp lệ không
+            if not order or 'data' not in order or not order['data']:
+                logging.error("❌ Không thể lấy order ID vì order không hợp lệ.")
+                return
             
+            # Lấy order_id để xử lý TP/SL
+            order_id = order['data'][0]['ordId']
+            
+            # Gọi hàm tạo TP/SL
+            create_tp_sl_orders(
+                exchange=exchange,
+                symbol=symbol,
+                side=side.upper(),      # "LONG" hoặc "SHORT"
+                amount=amount,
+                order_id=order_id,
+                tp_percent=0.15,        # TP 15%
+                sl_percent=0.1         # SL 10%
+            )
             def create_tp_sl_orders(exchange, symbol, side, amount, order_id, tp_percent, sl_percent):
                 try:
                     # Lấy thông tin khớp lệnh
@@ -186,25 +203,7 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Lỗi khi đặt lệnh chính: {e}")
                 return
-            
-            # Kiểm tra lệnh có hợp lệ không
-            if not order or 'data' not in order or not order['data']:
-                logging.error("❌ Không thể lấy order ID vì order không hợp lệ.")
-                return
-            
-            # Lấy order_id để xử lý TP/SL
-            order_id = order['data'][0]['ordId']
-            
-            # Gọi hàm tạo TP/SL
-            create_tp_sl_orders(
-                exchange=exchange,
-                symbol=symbol,
-                side=side.upper(),      # "LONG" hoặc "SHORT"
-                amount=amount,
-                order_id=order_id,
-                tp_percent=0.05,        # TP 5%
-                sl_percent=0.03         # SL 3%
-            )
+        
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
