@@ -86,7 +86,6 @@ def run_bot():
                 params={
                     "sz": str(amount),
                     "tdMode": "cross",
-                    "posSide": pos_side
                 }
             )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
@@ -103,7 +102,6 @@ def run_bot():
                 "sz": str(amount),
                 "tpTriggerPx": round(tp_price, 6),
                 "tpOrdPx": "-1",
-                "posSide": pos_side
             })
 
             exchange.private_post_trade_order_algo({
