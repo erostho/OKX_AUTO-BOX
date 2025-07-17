@@ -8,7 +8,7 @@ import time
 # Lấy API từ biến môi trường
 api_key = os.getenv("OKX_API_KEY")
 api_secret = os.getenv("OKX_API_SECRET")
-api_passphrase = os.getenv("OKX_API_PASSPHRASE")
+api_passphrase = os.getenv("OKX_PASSPHRASE")
 spreadsheet_url = os.getenv("SPREADSHEET_URL")
 
 # Thiết lập OKX
