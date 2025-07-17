@@ -147,60 +147,58 @@ def run_bot():
                 sl_percent=0.1         # SL 10%
             )
 
-def create_tp_sl_orders(exchange, symbol, side, amount, order_id, tp_percent, sl_percent):
-    try:
-        # Lấy thông tin khớp lệnh
-        order_detail = exchange.private_get_trade_order({'ordId': order_id})
-        if not order_detail or 'data' not in order_detail or not order_detail['data']:
-            logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
-            return
-
-        avg_price = float(order_detail['data'][0]['avgPx'])
-
-        # Tính giá TP và SL
-        tp_price = avg_price * (1 + tp_percent) if side.upper() == "LONG" else avg_price * (1 - tp_percent)
-        sl_price = avg_price * (1 - sl_percent) if side.upper() == "LONG" else avg_price * (1 + sl_percent)
-
-        # Gửi lệnh TP
-        exchange.private_post_trade_order_algo({
-            "instId": symbol,
-            "tdMode": "isolated",
-            "side": "sell" if side.upper() == "LONG" else "buy",
-            "ordType": "take_profit",
-            "sz": str(amount),
-            "tpTriggerPx": round(tp_price, 6),
-            "tpOrdPx": "-1"
-        })
-
-        # Gửi lệnh SL
-        exchange.private_post_trade_order_algo({
-            "instId": symbol,
-            "tdMode": "isolated",
-            "side": "sell" if side.upper() == "LONG" else "buy",
-            "ordType": "stop_loss",
-            "sz": str(amount),
-            "slTriggerPx": round(sl_price, 6),
-            "slOrdPx": "-1"
-        })
-
-    except Exception as e:
-        logging.error(f"❌ Lỗi khi tạo TP/SL cho lệnh {order_id}: {str(e)}")            
-            
-    # --- SAU KHI ĐẶT LỆNH CHÍNH XONG ---
-    try:
-        order = exchange.create_market_order(
-            symbol=symbol,
-            side=side,
-            amount=amount,
-            params={
+            # Lấy thông tin khớp lệnh
+            order_detail = exchange.private_get_trade_order({'ordId': order_id})
+            if not order_detail or 'data' not in order_detail or not order_detail['data']:
+                logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
+                return
+    
+            avg_price = float(order_detail['data'][0]['avgPx'])
+    
+            # Tính giá TP và SL
+            tp_price = avg_price * (1 + tp_percent) if side.upper() == "LONG" else avg_price * (1 - tp_percent)
+            sl_price = avg_price * (1 - sl_percent) if side.upper() == "LONG" else avg_price * (1 + sl_percent)
+    
+            # Gửi lệnh TP
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
                 "tdMode": "isolated",
+                "side": "sell" if side.upper() == "LONG" else "buy",
+                "ordType": "take_profit",
                 "sz": str(amount),
-                "posSide": pos_side
-            }
-            )
-    except Exception as e:
-        logging.error(f"❌ Lỗi khi đặt lệnh chính: {e}")
-        return
+                "tpTriggerPx": round(tp_price, 6),
+                "tpOrdPx": "-1"
+            })
+    
+            # Gửi lệnh SL
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
+                "tdMode": "isolated",
+                "side": "sell" if side.upper() == "LONG" else "buy",
+                "ordType": "stop_loss",
+                "sz": str(amount),
+                "slTriggerPx": round(sl_price, 6),
+                "slOrdPx": "-1"
+            })
+    
+        except Exception as e:
+            logging.error(f"❌ Lỗi khi tạo TP/SL cho lệnh {order_id}: {str(e)}")            
+                
+        # --- SAU KHI ĐẶT LỆNH CHÍNH XONG ---
+        try:
+            order = exchange.create_market_order(
+                symbol=symbol,
+                side=side,
+                amount=amount,
+                params={
+                    "tdMode": "isolated",
+                    "sz": str(amount),
+                    "posSide": pos_side
+                }
+                )
+        except Exception as e:
+            logging.error(f"❌ Lỗi khi đặt lệnh chính: {e}")
+            return
         
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
