@@ -1,93 +1,102 @@
-
+import csv
 import os
 import requests
 import logging
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-import time
+import ccxt
 
 # Cấu hình log
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 
 # Lấy biến môi trường
 OKX_API_KEY = os.getenv("OKX_API_KEY")
 OKX_API_SECRET = os.getenv("OKX_API_SECRET")
-OKX_API_PASSPHRASE = os.getenv("OKX_API_PASSPHRASE")
+OKX_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
 SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")
 
-# Hàm tạo chữ ký OKX
-def create_okx_headers(api_key, api_secret, passphrase, method, endpoint, body=""):
-    import base64, hmac, hashlib
-    timestamp = str(int(time.time()))
-    prehash = timestamp + method + endpoint + body
-    sign = base64.b64encode(hmac.new(api_secret.encode(), prehash.encode(), hashlib.sha256).digest()).decode()
-    return {
-        "OK-ACCESS-KEY": api_key,
-        "OK-ACCESS-SIGN": sign,
-        "OK-ACCESS-TIMESTAMP": timestamp,
-        "OK-ACCESS-PASSPHRASE": passphrase,
-        "Content-Type": "application/json"
+# Khởi tạo kết nối OKX
+exchange = ccxt.okx({
+    "apiKey": OKX_API_KEY,
+    "secret": OKX_API_SECRET,
+    "password": OKX_API_PASSPHRASE,
+    "enableRateLimit": True,
+    "options": {
+        "defaultType": "swap"
     }
+})
 
-# Hàm đặt đòn bẩy 5x
-def set_leverage(symbol, leverage):
-    instId = symbol.upper().replace('-', '-')
-    endpoint = f"/api/v5/account/set-leverage"
-    url = "https://www.okx.com" + endpoint
-    body = {
-        "instId": instId,
-        "lever": str(leverage),
-        "mgnMode": "isolated"
-    }
-    import json
-    headers = create_okx_headers(OKX_API_KEY, OKX_API_SECRET, OKX_API_PASSPHRASE, "POST", endpoint, json.dumps(body))
-    res = requests.post(url, headers=headers, json=body)
-    logging.info(f"⚙️ Set đòn bẩy {leverage}x cho {symbol} | Trạng thái: {res.status_code} | Trả về: {res.text}")
-    return res.status_code == 200
+def download_csv(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
 
-# Hàm xử lý tín hiệu
+def parse_csv(text):
+    rows = []
+    reader = csv.reader(text.strip().split("\n"))
+    next(reader)  # bỏ dòng tiêu đề
+    for row in reader:
+        if len(row) >= 7:
+            rows.append(row)
+    return rows
+
 def run_bot():
-    import re
+    now = datetime.utcnow()
     try:
-        sheet = gspread.service_account().open_by_url(SPREADSHEET_URL).worksheet("DATA_12H")
-        rows = sheet.get_all_values()[1:]
-        logging.info(f"📥 Đã tải {len(rows)} tín hiệu từ Google Sheet")
+        logging.info("📥 Bắt đầu chạy script main.py")
+        csv_text = download_csv(SPREADSHEET_URL)
+        rows = parse_csv(csv_text)
+        logging.info(f"📊 Đã tải {len(rows)} tín hiệu từ Google Sheet")
     except Exception as e:
-        logging.error(f"Không thể tải dữ liệu Google Sheet: {e}")
+        logging.error(f"❌ Không thể tải dữ liệu Google Sheet: {e}")
         return
 
-    now = datetime.utcnow()
     for row in rows:
         try:
+            logging.info(f"🔍 Đang kiểm tra dòng: {row}")
             if len(row) < 7:
-                logging.warning(f"⚠️ Bỏ qua dòng thiếu dữ liệu: {row}")
+                logging.warning(f"⚠️ Bỏ qua dòng không đủ 7 cột: {row}")
                 continue
-            symbol, signal, price_str, sl_str, tp_str, date_str, interval = row
-            entry_price = float(price_str)
+
+            symbol, signal, entry_price, sl_str, tp_str, created_at_str, interval = row
+
+            # Ép kiểu
+            entry_price = float(entry_price)
             sl = float(sl_str.strip('%')) / 100
             tp = float(tp_str.strip('%')) / 100
             interval = int(interval)
-            created_at = datetime.strptime(date_str.strip(), "%Y-%m-%d %H:%M:%S")
-            minutes_passed = (now - created_at).total_seconds() / 60
-            if minutes_passed > interval:
-                logging.info(f"⏰ Bỏ qua tín hiệu quá hạn cho {symbol}")
+
+            created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H:%M:%S")
+            elapsed_minutes = (now - created_at).total_seconds() / 60
+
+            if elapsed_minutes > interval:
+                logging.info(f"⏩ Bỏ qua lệnh quá hạn cho {symbol} - {signal}")
                 continue
 
             if signal not in ["LONG", "SHORT"]:
-                logging.warning(f"⚠️ Tín hiệu không hợp lệ: {signal}")
+                logging.warning(f"⚠️ Bỏ qua tín hiệu không hợp lệ: {signal}")
                 continue
 
-            # Set đòn bẩy 5x
-            set_leverage(symbol, 5)
+            # Thiết lập đòn bẩy 5x
+            try:
+                exchange.set_leverage(5, symbol)
+                logging.info(f"🎯 Đã thiết lập đòn bẩy 5x cho {symbol}")
+            except Exception as e:
+                logging.warning(f"⚠️ Không thể thiết lập đòn bẩy cho {symbol}: {e}")
 
-            # Gửi log đặt lệnh (mockup - vì không gọi real order ở đây)
-            logging.info(f"✅ Mở lệnh {signal} {symbol} với {entry_price} USDT, SL: {sl*100:.1f}%, TP: {tp*100:.1f}%")
+            usdt_amount = 20
+            mark_price = exchange.fetch_ticker(symbol)['last']
+            amount = round(usdt_amount / mark_price, 4)
 
+            logging.info(f"🟢 Mở lệnh {signal} {symbol} với {usdt_amount} USDT, SL: {sl*100}%, TP: {tp*100}%")
+
+            if signal == "LONG":
+                order = exchange.create_market_buy_order(symbol, amount)
+            else:
+                order = exchange.create_market_sell_order(symbol, amount)
+
+            logging.info(f"✅ Đặt lệnh thành công cho {symbol}: {signal}")
         except Exception as e:
-            logging.error(f"❌ Lỗi xử lý dòng: {row} | {e}")
+            logging.error(f"❌ Lỗi xử lý dòng: {row} | Lỗi: {e}")
 
-# Chạy
 if __name__ == "__main__":
-    logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
