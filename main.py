@@ -91,7 +91,7 @@ def run_bot():
                 tp = float(tp_str.strip('%')) / 100
                 interval = int(interval)
 
-                created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H-%m-%S")
+                created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H-%M-%S")
                 elapsed_minutes = (now - created_at).total_seconds() / 60
 
                 if elapsed_minutes > interval:
