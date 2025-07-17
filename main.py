@@ -75,20 +75,22 @@ def run_bot():
 
             # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
             ticker = exchange.fetch_ticker(symbol)
-            mark_price = float(ticker['last']) if ticker.get('last') else 0
+            mark_price = float(ticker.get('last') or 0)
 
             if mark_price <= 0:
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
             base_usdt = 20
-            max_order_value = 98765  # hoặc 99999 nếu bạn muốn sát giới hạn
-            amount = round(base_usdt / mark_price, 6)
-            max_amount = round(max_order_value / mark_price, 6)
+            max_order_value = 100000  # giới hạn OKX (1 triệu), nhưng để an toàn ta dùng 100k
+            safe_usdt = min(base_usdt, max_order_value * 0.9)  # buffer 90%
 
-            if amount > max_amount:
-                logging.warning(f"⚠️ amount quá lớn ({amount}), giảm xuống còn {max_amount} để tránh lỗi vượt giới hạn OKX")
-                amount = max_amount
+            amount = round(safe_usdt / mark_price, 6)
+
+            estimated_value = amount * mark_price
+            if estimated_value > max_order_value:
+                logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Huỷ lệnh.")
+                return
 
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
 
