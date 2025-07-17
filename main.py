@@ -82,7 +82,13 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
-            amount = round(20 / mark_price, 6)
+            base_usdt = 20
+            max_order_value = 50000  # hoặc 99999 nếu bạn muốn sát giới hạn
+            amount = round(base_usdt / mark_price, 6)
+            max_amount = round(max_order_value / mark_price, 6)
+            if amount > max_amount:
+                logging.warning(f"⚠️ amount quá lớn ({amount}), giảm xuống còn {max_amount} để tránh lỗi vượt giới hạn OKX")
+                amount = max_amount
 
             if amount <= 0:
                 logging.error("⚠️ Không thể tính được số lượng hợp lệ để đặt lệnh")
