@@ -67,7 +67,7 @@ def run_bot():
                 continue
 
             side = "buy" if signal == "LONG" else "sell"
-            pos_side = "long" if signal == "LONG" else "short"
+            pos_side = "long" if signal == "LONG" else "SHORT"
 
             # Đặt đòn bẩy 5x
             exchange.set_leverage(5, symbol)
