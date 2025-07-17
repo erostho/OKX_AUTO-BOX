@@ -129,67 +129,82 @@ def run_bot():
                 logging.error(f"❌ Lỗi khi đặt lệnh: {e}")
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
-            # Lấy order ID sau khi đặt lệnh chính
-            if not order or 'data' not in order or not order['data']:
-                logging.error("❌ Không thể lấy order ID vì order không hợp lệ.")
-                return
-            order_id = order['data'][0]['ordId']
+def create_tp_sl_orders(exchange, symbol, side, amount, order_id, tp_percent, sl_percent):
+    try:
+        # Lấy thông tin khớp lệnh
+        order_detail = exchange.private_get_trade_order({'ordId': order_id})
+        if not order_detail or 'data' not in order_detail or not order_detail['data']:
+            logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
+            return
 
-            # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
-            order_detail = exchange.private_get_trade_order({'ordId': order_id})
-            avg_price = float(order_detail['data'][0]['avgPx'])
+        avg_price = float(order_detail['data'][0]['avgPx'])
 
-            # Tính TP và SL theo % nhập từ Google Sheet
-            tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
-            sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
+        # Tính giá TP và SL
+        tp_price = avg_price * (1 + tp_percent) if side.upper() == "LONG" else avg_price * (1 - tp_percent)
+        sl_price = avg_price * (1 - sl_percent) if side.upper() == "LONG" else avg_price * (1 + sl_percent)
 
-            # Tạo TP (Take Profit)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "take_profit",
-                "sz": str(amount),
-                "tpTriggerPx": round(tp_price, 6),
-                "tpOrdPx": "-1"
-            })
+        # Gửi lệnh TP
+        exchange.private_post_trade_order_algo({
+            "instId": symbol,
+            "tdMode": "isolated",
+            "side": "sell" if side.upper() == "LONG" else "buy",
+            "ordType": "take_profit",
+            "sz": str(amount),
+            "tpTriggerPx": round(tp_price, 6),
+            "tpOrdPx": "-1"
+        })
 
-            # Tạo SL (Stop Loss)
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "stop_loss",
-                "sz": str(amount),
-                "slTriggerPx": round(sl_price, 6),
-                "slOrdPx": "-1"
-            })
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "take_profit",
-                "sz": str(amount),
-                "tpTriggerPx": round(tp_price, 6),
-                "tpOrdPx": "-1",
-            })
+        # Gửi lệnh SL
+        exchange.private_post_trade_order_algo({
+            "instId": symbol,
+            "tdMode": "isolated",
+            "side": "sell" if side.upper() == "LONG" else "buy",
+            "ordType": "stop_loss",
+            "sz": str(amount),
+            "slTriggerPx": round(sl_price, 6),
+            "slOrdPx": "-1"
+        })
 
-            exchange.private_post_trade_order_algo({
-                "instId": symbol,
-                "tdMode": "isolated",
-                "side": "sell" if signal == "LONG" else "buy",
-                "ordType": "stop",
-                "sz": str(amount),
-                "slTriggerPx": round(sl_price, 6),
-                "slOrdPx": "-1",
-                "posSide": pos_side
-            })
+        logging.info(f"✅ Đã tạo TP/SL cho {symbol} - TP: {tp_price:.6f}, SL: {sl_price:.6f}")
 
-            logging.info(f"🎯 TP/SL đặt xong cho {symbol}: TP={round(tp_price,6)} | SL={round(sl_price,6)}")
+    except Exception as e:
+        logging.error(f"❌ Lỗi khi tạo TP/SL: {e}")
 
-        except Exception as e:
-            logging.error(f"❌ Lỗi xử lý dòng: {e}")
 
+# --- SAU KHI ĐẶT LỆNH CHÍNH XONG ---
+try:
+    order = exchange.create_market_order(
+        symbol=symbol,
+        side=side,
+        amount=amount,
+        params={
+            "tdMode": "isolated",
+            "sz": str(amount),
+            "posSide": pos_side
+        }
+     )
+except Exception as e:
+    logging.error(f"❌ Lỗi khi đặt lệnh chính: {e}")
+    return
+
+# Kiểm tra lệnh có hợp lệ không
+if not order or 'data' not in order or not order['data']:
+    logging.error("❌ Không thể lấy order ID vì order không hợp lệ.")
+    return
+
+# Lấy order_id để xử lý TP/SL
+order_id = order['data'][0]['ordId']
+
+# Gọi hàm tạo TP/SL
+create_tp_sl_orders(
+    exchange=exchange,
+    symbol=symbol,
+    side=side.upper(),      # "LONG" hoặc "SHORT"
+    amount=amount,
+    order_id=order_id,
+    tp_percent=0.05,        # TP 5%
+    sl_percent=0.03         # SL 3%
+)
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
