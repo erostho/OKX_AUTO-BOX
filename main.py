@@ -83,7 +83,7 @@ def run_bot():
                 return
 
             base_usdt = 20
-            max_order_value = 50000  # hoặc 99999 nếu bạn muốn sát giới hạn
+            max_order_value = 98765  # hoặc 99999 nếu bạn muốn sát giới hạn
             amount = round(base_usdt / mark_price, 6)
             max_amount = round(max_order_value / mark_price, 6)
             if amount > max_amount:
