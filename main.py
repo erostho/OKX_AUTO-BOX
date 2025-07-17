@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(
 # Lấy biến môi trường
 OKX_API_KEY = os.getenv("OKX_API_KEY")
 OKX_API_SECRET = os.getenv("OKX_API_SECRET")
-OKX_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
+OKX_API_PASSPHRASE = os.getenv("OKX_API_PASSPHRASE")
 SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")
 
 # Khởi tạo kết nối OKX
