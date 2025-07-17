@@ -95,7 +95,6 @@ def run_bot():
                 side=side,
                 amount=None,
                 params={
-                    "sz": str(amount),
                     "tdMode": "isolated",
                 }
             )
