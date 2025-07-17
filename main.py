@@ -1,112 +1,120 @@
-
 import requests
+import csv
+import io
+import logging
 import time
 import hmac
+import hashlib
 import base64
 import json
-import logging
 import os
 from datetime import datetime, timedelta
-from urllib.parse import urljoin
+from urllib.parse import urlencode
 
-# Logging setup
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+# Cấu hình log
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 
-# ENV variables
+# ===== THÔNG TIN BIẾN MÔI TRƯỜNG =====
 API_KEY = os.getenv("OKX_API_KEY")
 API_SECRET = os.getenv("OKX_API_SECRET")
-API_PASSPHRASE = os.getenv("OKX_API_PASSPHRASE")
-SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")
+API_PASSPHRASE = os.getenv("OKX_PASSPHRASE")
+SPREADSHEET_URL = os.getenv("SPREADSHEET_URL")  # dạng CSV public
 
-BASE_URL = "https://www.okx.com"
+# ===== HÀM HỖ TRỢ =====
+def get_timestamp():
+    return datetime.utcnow().isoformat("T", "milliseconds") + "Z"
 
-# Request headers for OKX API
-def get_headers(timestamp, method, request_path, body=""):
-    message = f"{timestamp}{method.upper()}{request_path}{body}"
-    signature = base64.b64encode(
-        hmac.new(API_SECRET.encode(), message.encode(), digestmod="sha256").digest()
-    ).decode()
-    return {
-        "OK-ACCESS-KEY": API_KEY,
-        "OK-ACCESS-SIGN": signature,
-        "OK-ACCESS-TIMESTAMP": timestamp,
-        "OK-ACCESS-PASSPHRASE": API_PASSPHRASE,
-        "Content-Type": "application/json"
-    }
+def sign(request_path, method, body, timestamp):
+    message = f"{timestamp}{method}{request_path}{body}"
+    mac = hmac.new(bytes(API_SECRET, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod=hashlib.sha256)
+    d = mac.digest()
+    return base64.b64encode(d).decode()
 
-# Place future order
-def place_future_order(symbol, side, size, sl_price, tp_price):
-    timestamp = datetime.utcnow().isoformat("T", "milliseconds") + "Z"
-    request_path = "/api/v5/trade/order"
-    url = urljoin(BASE_URL, request_path)
-    order_data = {
-        "instId": symbol,
-        "tdMode": "isolated",
-        "side": side.lower(),
-        "ordType": "market",
-        "posSide": side.upper(),
-        "sz": str(size)
-    }
-    headers = get_headers(timestamp, "POST", request_path, json.dumps(order_data))
-    response = requests.post(url, headers=headers, json=order_data)
-    logging.info(f"Gửi lệnh {side} {symbol} với {size} USDT")
-    if response.status_code != 200:
-        logging.error(f"Lỗi API: {response.text}")
-    else:
-        logging.info(f"Phản hồi: {response.text}")
-
-# Load Google Sheet CSV
-def fetch_signals():
+def place_order(symbol, side, size, sl_price, tp_price):
     try:
-        res = requests.get(SPREADSHEET_URL)
-        rows = [r.split(",") for r in res.text.strip().split("\n")]
-        return rows[1:]  # Skip header
+        logging.info(f"🟩 Mở lệnh {side} {symbol} với {size} USDT, SL: {sl_price*100:.1f}%, TP: {tp_price*100:.1f}%")
+
+        url = "https://www.okx.com/api/v5/trade/order"
+        timestamp = get_timestamp()
+        body = {
+            "instId": symbol,
+            "tdMode": "isolated",
+            "side": "buy" if side == "LONG" else "sell",
+            "ordType": "market",
+            "sz": str(size)
+        }
+
+        body_json = json.dumps(body)
+        headers = {
+            "OK-ACCESS-KEY": API_KEY,
+            "OK-ACCESS-SIGN": sign("/api/v5/trade/order", "POST", body_json, timestamp),
+            "OK-ACCESS-TIMESTAMP": timestamp,
+            "OK-ACCESS-PASSPHRASE": API_PASSPHRASE,
+            "Content-Type": "application/json"
+        }
+
+        res = requests.post(url, headers=headers, data=body_json)
+        logging.info(f"📤 Kết quả đặt lệnh: {res.status_code} - {res.text}")
+        return res.status_code == 200
     except Exception as e:
-        logging.error(f"Lỗi tải sheet: {e}")
-        return []
+        logging.error(f"❌ Lỗi khi đặt lệnh: {e}")
+        return False
 
-# Get latest price from OKX
-def get_latest_price(symbol):
-    url = f"{BASE_URL}/api/v5/market/ticker?instId={symbol}"
-    res = requests.get(url).json()
+# ===== XỬ LÝ CHÍNH =====
+def run_bot():
     try:
-        return float(res["data"][0]["last"])
-    except:
-        return None
+        logging.info("🚀 Bắt đầu chạy script main.py")
 
-# Main handler
-def main():
-    signals = fetch_signals()
-    logging.info(f"📊 Đã tải {len(signals)} tín hiệu từ Google Sheet")
+        # 1. Lấy dữ liệu từ Google Sheet (CSV public)
+        logging.info("📥 Đang tải dữ liệu từ Google Sheet CSV")
+        response = requests.get(SPREADSHEET_URL)
+        response.raise_for_status()
+        decoded_content = response.content.decode("utf-8")
+        rows = list(csv.reader(io.StringIO(decoded_content)))
+        rows = rows[1:]  # bỏ header
 
-    for s in signals:
-        try:
-            symbol = s[0].strip()
-            signal = s[1].strip().upper()
-            price = float(s[2])
-            sl = float(s[3].replace("%", "")) / 100
-            tp = float(s[4].replace("%", "")) / 100
-            time_str = s[5].strip()
-            freq = int(s[6]) if len(s) > 6 else 60
+        logging.info(f"📊 Đã tải {len(rows)} tín hiệu từ Google Sheet")
 
-            # Check time range
-            timestamp = datetime.strptime(time_str, "%Y-%m-%d")
-            if datetime.now() - timestamp > timedelta(minutes=freq):
-                continue
+        now = datetime.utcnow()
+        for row in rows:
+            try:
+                logging.info(f"🔍 Đang kiểm tra dòng: {row}")
+                if len(row) < 7:
+                    logging.warning(f"⚠️ Bỏ qua dòng không đủ 7 cột: {row}")
+                    continue
 
-            logging.info(f"🔍 Đang kiểm tra {symbol} – Tín hiệu: {signal}")
+                symbol, signal, entry_price, sl_str, tp_str, created_at_str, interval = row
 
-            current_price = get_latest_price(symbol)
-            if not current_price:
-                logging.warning(f"⚠️ Không lấy được giá cho {symbol}")
-                continue
+                # Ép kiểu
+                entry_price = float(entry_price)
+                sl = float(sl_str.strip('%')) / 100
+                tp = float(tp_str.strip('%')) / 100
+                interval = int(interval)
 
-            sl_price = current_price * (1 - sl) if signal == "LONG" else current_price * (1 + sl)
-            tp_price = current_price * (1 + tp) if signal == "LONG" else current_price * (1 - tp)
+                created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d")
+                elapsed_minutes = (now - created_at).total_seconds() / 60
 
-            place_future_order(symbol, signal, 20, sl_price, tp_price)
-        except Exception as e:
-            logging.error(f"Lỗi xử lý {s}: {e}")
+                if elapsed_minutes > interval:
+                    logging.info(f"⏭ Bỏ qua lệnh quá hạn {symbol} - {signal}")
+                    continue
+
+                if signal not in ["LONG", "SHORT"]:
+                    logging.warning(f"⚠️ Tín hiệu không hợp lệ: {signal}")
+                    continue
+
+                # 2. Gọi hàm đặt lệnh
+                success = place_order(symbol, signal, 20, sl, tp)
+
+                if success:
+                    logging.info(f"✅ Đặt lệnh thành công cho {symbol}")
+                else:
+                    logging.warning(f"⚠️ Đặt lệnh thất bại cho {symbol}")
+
+            except Exception as e:
+                logging.error(f"❌ Lỗi xử lý dòng: {row} | Lỗi: {e}")
+
+    except Exception as e:
+        logging.error(f"❌ Lỗi tổng khi chạy bot: {e}")
 
 if __name__ == "__main__":
-    main()
+    run_bot()
