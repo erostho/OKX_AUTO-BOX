@@ -98,13 +98,16 @@ def run_bot():
             if estimated_value > max_order_value:
                 logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
                 return
-            # --- KIỂM TRA VỊ THẾ ĐANG MỞ ---
+            # Lấy danh sách vị thế
             positions = exchange.fetch_positions()
+            # Chuẩn hóa instId
+            symbol_swap = symbol + "-SWAP"
+            
+            # --- KIỂM TRA VỊ THẾ ĐANG MỞ ---
             existing_position = next(
                 (p for p in positions if p['symbol'] == symbol and p['info']['posSide'] == pos_side and float(p['info']['availPos']) > 0),
                 None
             )
-
             if existing_position:
                 logging.info(f"⚠️ Đã có vị thế {pos_side} đang mở cho {symbol}, bỏ qua không đặt lệnh trùng.")
                 return
