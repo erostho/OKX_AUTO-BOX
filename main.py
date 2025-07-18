@@ -112,15 +112,14 @@ def run_bot():
             logging.debug("---- START Vị thế fetch_positions ----")
             for pos in all_positions:
                 pos_symbol_raw = pos.get('symbol', '')
-                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
+                pos_symbol = pos_symbol_raw.replace("-", "").lower()
                 side_open = pos.get('side', '').lower()
                 size = float(pos.get('size', 0))
                 margin_mode = pos.get('marginMode', '')
             
-                logging.debug(
-                    f"[DEBUG_POS] raw={pos_symbol_raw} | cleaned={pos_symbol} | "
-                    f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
-                )
+                logging.debug(f"[CHECK] -> pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
+                              f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
+                logging.debug(f"→ So với: symbol_check={symbol_check}, side_check={side_check}")
             
                 # ✅ So sánh để phát hiện trùng vị thế
                 if (
