@@ -104,8 +104,8 @@ def run_bot():
                 side_check = 'short'
             
             try:
-                all_positions = exchange.fetch_positions()
-                for pos in all_positions:
+                open_positions = exchange.fetch_positions()
+                for pos in open_positions:
                     pos_symbol_raw = pos.get('symbol', '')
                     pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                     margin_mode = pos.get('marginMode', '').lower()
