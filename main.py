@@ -156,53 +156,42 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
 
-            # ✅ Load toàn bộ markets trước
+            # 📌 Lọc danh sách symbol hợp lệ ngay sau khi đọc Google Sheet
+            try:
+                df = pd.read_csv(SPREADSHEET_URL)
+                symbols_raw = df['symbol'].dropna().tolist()  # Loại bỏ NaN
+                symbols = [s.strip().upper().replace("/", "-") for s in symbols_raw if s.strip()]
+                logging.info(f"✅ Đọc {len(symbols)} SYMBOL từ Google Sheet thành công")
+            except Exception as e:
+                logging.error(f"❌ Lỗi đọc Google Sheet: {e}")
+                exit()
+            
+            # 📌 Load markets từ OKX
             try:
                 exchange.load_markets()
                 logging.info("✅ Load markets thành công")
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
-                return
-            # ✅ Đọc danh sách SYMBOL từ Google Sheet
-            spreadsheet_url = os.environ.get("SPREADSHEET_URL")
-            try:
-                df = pd.read_csv(spreadsheet_url)
-                logging.info(f"✅ Đọc Google Sheet thành công từ {spreadsheet_url}")
-            except Exception as e:
-                logging.error(f"❌ Lỗi đọc Google Sheet: {e}")
-                return
-
-            # ✅ Lấy danh sách symbol (viết hoa, loại bỏ rỗng và trùng)
-            symbols = list(set(df['symbol'].dropna().astype(str).str.upper()))
+                exit()
             
-            if not symbols:
-                logging.error("❌ Không có symbol nào để xử lý!")
-                return
-            
-            # ✅ BẮT ĐẦU DUYỆT DANH SÁCH SYMBOL
-            for symbol in symbols:
+            # 📌 Duyệt từng symbol đã lọc (không đụng lại df nữa)
+            for symbol_okx in symbols:
                 try:
-                    # ✅ Chuẩn hóa SYMBOL về dạng OKX
-                    symbol_okx = symbol.replace("/", "-").upper()
-            
-                    # ✅ Kiểm tra SYMBOL có trong exchange.markets không
                     market = exchange.markets.get(symbol_okx)
                     if not market:
-                        logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua...")
+                        logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
                         continue
             
-                    # ✅ Chỉ xử lý USDT-M futures hoặc swap
-                    if market.get('settle') != 'usdt' or not (market.get('future') or market.get('swap')):
-                        logging.warning(f"⚠️ {symbol} không phải là USDT-M futures/swap => Bỏ qua")
+                    # ✅ Kiểm tra đúng loại futures/swap
+                    if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
+                        logging.warning(f"⚠️ {symbol_okx} không phải USDT-M futures/swap => Bỏ qua")
                         continue
             
-                    # ✅ Nếu hợp lệ thì xử lý tiếp
-                    logging.info(f"✅ Symbol {symbol} hợp lệ => Tiếp tục xử lý...")
-            
-                    # (Tiếp tục phần đặt lệnh hoặc kiểm tra vị thế ở đây)
+                    # ✅ OK, tiếp tục xử lý lệnh
+                    logging.info(f"✅ {symbol_okx} hợp lệ => Tiếp tục đặt lệnh")
             
                 except Exception as e:
-                    logging.error(f"❌ Lỗi xử lý {symbol}: {e}")
+                    logging.error(f"❌ Lỗi xử lý SYMBOL {symbol_okx}: {e}")
                     continue
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
