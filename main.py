@@ -185,12 +185,12 @@ def run_bot():
             market = exchange.markets.get(symbol_okx)
             
             if not market:
-                logging.error(f"❌ Symbol {symbol_formatted} không tồn tại trong markets!")
+                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets!")
                 continue
             
             # ✅ Kiểm tra xem có đúng là hợp đồng USDT-M Futures không
             if not market.get('contract') or market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol_formatted} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
+                logging.error(f"❌ Symbol {symbol_okx} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
                 continue
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
