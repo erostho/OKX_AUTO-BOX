@@ -136,7 +136,7 @@ def run_bot():
                     logging.warning(
                         f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
                     )
-                    return
+                    continue
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
@@ -202,7 +202,7 @@ def run_bot():
                 or 'ordId' not in order['data'][0]
             ):
                 logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
-                return
+                continue
 
             order_id = order['data'][0]['ordId']
             logging.info(f"⚠️ Order ID: {order_id}")
@@ -214,7 +214,7 @@ def run_bot():
             # ✅ Kiểm tra dữ liệu trả về từ API
             if not order_detail or 'data' not in order_detail or not order_detail['data']:
                 logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
-                return
+                continue
 
             # ✅ Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
             avg_price = float(order_detail['data'][0].get('avgPx', 0))
@@ -222,7 +222,7 @@ def run_bot():
             # ✅ Nếu avg_price = 0 thì không nên tiếp tục
             if avg_price == 0:
                 logging.error(f"❌ Giá avgPx = 0 từ order_id = {order_id}, không tạo được TP/SL")
-                return
+                continue
                 
             # ✅ Tính TP và SL theo % nhập từ Google Sheet
             tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
