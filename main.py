@@ -92,12 +92,15 @@ def run_bot():
                 logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
                 return
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
+            
             # ✅ Kiểm tra vị thế đang mở
             open_positions = exchange.fetch_positions()
             for pos in open_positions:
-                if pos['symbol'] == symbol and pos['side'].lower() == side.lower():
-                    logging.info(f'⚠️ Đã có vị thế {side.upper()} đang mở với {symbol}, không đặt lệnh mới.')
-                    return
+                if pos['symbol'] == symbol and float(pos['contracts']) > 0:
+                    if pos['side'].lower() == side.lower():
+                        logging.info(f'⚠️ Đã có vị thế {side.upper()} đang mở với {symbol}, không đặt lệnh mới.')
+                        return
+            # ✅ Gửi lệnh thị trường
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
@@ -107,6 +110,12 @@ def run_bot():
                     "tdMode": "isolated",
                 }
             )
+            # ✅ Kiểm tra phản hồi hợp lệ
+            if not order or "data' not in order or not order['data']:
+                logging.error(f"❌ lệnh không hợp lệ, không tạo TP/SL: {order}")
+                return
+            order_id = order['data'][0]['ordId']
+            logging.info(f"⚠️ Order ID: {order_id}")
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
             # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
