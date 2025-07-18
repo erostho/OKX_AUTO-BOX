@@ -171,13 +171,13 @@ def run_bot():
                     side_input = row[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
             
                     # ✅ CHUẨN HÓA SYMBOL và SIDE
-                    symbol_check = symbol.upper().replace("-", "/")  # BTC-USDT -> BTC/USDT
+                    symbol_okx = symbol.upper().replace("/", "-")  # BTC/USDT -> BTC-USDT
                     side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else side_input
             
                     # ✅ Kiểm tra SYMBOL có tồn tại trong exchange.markets không
-                    market = exchange.markets.get(symbol_check)
+                    market = exchange.markets.get(symbol_okx)
                     if market is None:
-                        logging.error(f"❌ Symbol {symbol_check} không tồn tại trong markets! Bỏ qua...")
+                        logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
                         continue
             
                     # ✅ Kiểm tra phải là USDT-M futures hoặc swap
