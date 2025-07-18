@@ -93,7 +93,7 @@ def run_bot():
                 return
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             # ✅ Kiểm tra vị thế đang mở
-            open_positions = exchange.fetch_positions(symbol)
+            open_positions = exchange.fetch_positions()
             for pos in open_positions:
                 if pos['symbol'] == symbol and pos['side'].lower() == side.lower():
                     logging.info(f'⚠️ Đã có vị thế {side.upper()} đang mở với {symbol}, không đặt lệnh mới.')
