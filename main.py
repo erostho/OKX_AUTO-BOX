@@ -105,10 +105,10 @@ def run_bot():
 
                     if contracts > 0:
                         if side_open == side.lower():
-                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({contracts} hợp đồng). Bỏ qua.")
-                        return
-                    else:
-                        logging.info(f"⚠️ Đã có vị thế ngược chiều ({side.open}) đang mở với {symbol}, cho phép đặt mới")
+                            logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({contracts} hợp đồng). Bỏ qua.")
+                            return
+                        else:
+                            logging.info(f"⚠️ Đã có vị thế ngược chiều ({side.open}) đang mở với {symbol}, cho phép đặt mới")
             # ✅ Gửi lệnh thị trường
             order = exchange.create_market_order(
                 symbol=symbol,
