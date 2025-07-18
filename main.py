@@ -191,7 +191,7 @@ def run_bot():
                     "lever": "5"
                 }
             )
-            except Exception as e:
+        except Exception as e:
             logging.error(f"Lỗi xử lý {s}: {e}")
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
