@@ -100,14 +100,14 @@ def run_bot():
                 return
             order_id = order['data'][0]['ordId']
             logging.info(f"🔢 Order ID: {order_id}")
-                symbol=symbol,
-                side=side,
-                amount=amount,
-                params={
-                    "sz": str(amount),
-                    "tdMode": "isolated",
-                }
-            )
+                    symbol=symbol,
+                    side=side,
+                    amount=amount,
+                    params={
+                        "sz": str(amount),
+                        "tdMode": "isolated",
+                    }
+                )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
             # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
