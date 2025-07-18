@@ -131,7 +131,7 @@ def run_bot():
                 or 'data' not in order
                 or not order['data']
                 or ('code' in order and order['code'] not in [0, "0"])
-                or ('into' in order and 'code' in order['into'] and order['into']['code'] not in [0, "0"]
+                or ('info' in order and 'code' in order['info'] and order['info']['code'] not in [0, "0"])
             ):
                 logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
                 return
