@@ -156,47 +156,41 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # ✅ xử lý symbol
             
-            symbols = os.getenv('TARGET_SYMBOLS', 'BTC-USDT,ETH-USDT,PI-USDT').split(',')
+            # ✅ Load toàn bộ thị trường
+            try:
+                exchange.load_markets()
+                logging.info("✅ Load markets thành công")
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi load markets: {e}")
+                exit()
+            
+            # ✅ Danh sách coin cần kiểm tra
+            symbols = os.getenv("TARGET_SYMBOLS", "BTC-USDT,PI-USDT,TURBO-USDT").split(",")
             
             for symbol in symbols:
+                symbol = symbol.strip().upper()
+                symbol_okx = symbol.replace("/", "-")  # chuẩn hóa symbol
+            
                 try:
-                    market = exchange.market(symbol)  # Nếu không tồn tại, ném lỗi
+                    market = exchange.markets.get(symbol_okx)
+            
+                    # Nếu market không tồn tại
+                    if not market:
+                        logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua...")
+                        continue
+            
+                    # Nếu không phải FUTURES USDT-M
+                    if not market.get('future') or market.get('settle') != 'usdt':
+                        logging.error(f"❌ Symbol {symbol} KHÔNG phải USDT-M Futures! Bỏ qua...")
+                        continue
+            
+                    # ✅ Coin hợp lệ → Tiến hành xử lý (in ra log hoặc đặt lệnh...)
+                    logging.info(f"✅ Symbol hợp lệ: {symbol_okx} - USDT-M Futures")
+                                
                 except Exception as e:
-                    logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua... ({e})")
-                    continue
-            
-                if market['settle'] != 'USDT':  # chỉ đếm những coin đúng USDT‑margined
-                    logging.warning(f"⚠️ Symbol {symbol} không phải USDT‑M Futures! Bỏ qua...")
-                    continue
-            
-                # Lấy kích thước hợp đồng (lot size)
-                contract_size = market.get('contractSize')
-                logging.info(f"🔸 {symbol} là USDT‑M, contractSize = {contract_size}")
-            
-                # Tiếp tục xử lý đặt lệnh...
-                # VD:
-                side = 'buy'  # hoặc 'sell'
-                side_input = side.lower()
-                side_check = 'long' if side_input == 'buy' else 'short'
-                amount = 1 * contract_size
-            
-                order = exchange.create_order(
-                    symbol=symbol,
-                    type='market',
-                    side=side_input,
-                    amount=amount,
-                    params={
-                        'tgtCcy': 'quote_ccy',  # để dùng USDT làm lượng giao dịch
-                    }
-                )
-                logging.info(f"✅ Order đã đặt: {order['id']} → {symbol} {side_check} {amount}")
-            
-                except Exception as e:
-                logging.error(f"❗ Lỗi trong quá trình xử lý {symbol}: {e}")
-                # không break, tiếp tục với coin tiếp theo
-                continue
+                    logging.error(f"❌ Lỗi xử lý {symbol}: {e}")
+                    continue  # Quan trọng: vẫn chạy tiếp coin khác
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
