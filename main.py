@@ -156,24 +156,20 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
-            symbol_formatted = symbol.upper().replace("/", "-")
+            # ✅ CHUẨN HÓA SYMBOL (định dạng OKX cần để fetch market)
+            symbol_okx = symbol.upper().replace("/", "-")  # Ví dụ: BTC/USDT → BTC-USDT
             
-            # ✅ Load market list 1 lần duy nhất
-            if not exchange.markets:
-                exchange.load_markets()
+            # ✅ Tìm trong exchange.markets thay vì fetch từng cái
+            market = exchange.markets.get(symbol_okx)
             
-            # ✅ Lấy market từ danh sách đã load
-            market = exchange.markets.get(symbol_formatted)
+            if market is None:
+                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+                continue  # → QUAY VỀ COIN KẾ TIẾP, KHÔNG DỪNG CODE
             
-            if not market:
-                logging.error(f"❌ Symbol {symbol_formatted} không tồn tại trong markets!")
-                continue
-            
-            # ✅ Kiểm tra xem có đúng là hợp đồng USDT-M Futures không
-            if not market.get('contract') or market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol_formatted} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
-                continue
+            # ✅ Chỉ lấy lệnh nếu đúng là USDT-M Futures
+            if market.get('settle') != 'usdt' or market.get('future') != True:
+                logging.error(f"❌ Symbol {symbol_okx} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
+                continue  # → KHÔNG return, chỉ bỏ qua coin này
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
