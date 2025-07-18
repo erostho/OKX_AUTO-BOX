@@ -96,47 +96,38 @@ def run_bot():
                 return
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             
-            # ✅ CHUẨN HÓA symbol về dạng COIN/USDT (viết hoa)
-            symbol_check = symbol.replace("-", "/").upper()
+            # 🔍 Chuẩn hóa symbol cần kiểm tra
+            symbol_check = symbol.replace("-", "").replace("/", "").lower()
+            side_check = side.lower()
             
-            # ✅ CHUẨN HÓA side về long/short
-            side_input = side.lower()
-            if side_input == 'buy':
-                side_check = 'long'
-            elif side_input == 'sell':
-                side_check = 'short'
-            else:
-                logging.error(f"❌ Không xác định được side: {side}")
-                return
-            
-            logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol_check}, side = {side_check}")
-            
-            # ✅ LẤY DANH SÁCH VỊ THẾ
+            # ✅ Lấy danh sách vị thế từ OKX
             try:
                 all_positions = exchange.fetch_positions()
             except Exception as e:
-                logging.error(f"❌ Lỗi fetch vị thế: {e}")
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
-            # ✅ KIỂM TRA TỪNG VỊ THẾ
+            # 📋 Ghi log tất cả vị thế OKX trả về
+            logging.debug("---- START Vị thế fetch_positions ----")
             for pos in all_positions:
-                pos_symbol_raw = pos.get('symbol', '')           # Ví dụ: BTC/USDT
-                side_open = pos.get('side', '').lower()           # Ví dụ: long / short
-                margin_mode = pos.get('marginMode', '')           # isolated / cross
+                pos_symbol_raw = pos.get('symbol', '')
+                pos_symbol = pos_symbol_raw.replace("-", "").replace("/", "").lower()
+                side_open = pos.get('side', '').lower()
+                margin_mode = pos.get('marginMode', '')
             
-                # ✅ GHI LOG CHI TIẾT
-                logging.debug(f"[CHECK] pos_symbol={pos_symbol_raw}, side_open={side_open}, "
-                              f"margin_mode={margin_mode}, size={size}")
+                # 🧠 Log từng dòng kiểm tra
+                logging.debug(f"[CHECK] ➤ pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
+                              f"side_open={side_open}, margin_mode={margin_mode}")
                 logging.debug(f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}")
             
-                # ✅ SO SÁNH
+                # 🚫 Nếu trùng symbol + side + mode isolated thì dừng
                 if (
-                    pos_symbol_raw.upper() == symbol_check and
-                    side_open == side_check and
-                    margin_mode == 'isolated'
+                    pos_symbol == symbol_check and
+                    margin_mode == 'isolated' and
+                    side_open == side_check
                 ):
-                    logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check}) => BỎ QUA KHÔNG ĐẶT LỆNH")
-                    return
+                    logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} (isolated), bỏ qua đặt lệnh.")
+                    return  # ⛔ Không đặt lệnh nữa
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
