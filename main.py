@@ -164,7 +164,7 @@ def run_bot():
                 market = exchange.fetch_market(symbol)
             except Exception as e:
                 logging.error(f"❌ Không thể lấy market cho symbol {symbol}: {e}")
-                return
+                continue
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
