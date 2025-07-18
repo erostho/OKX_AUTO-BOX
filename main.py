@@ -95,8 +95,14 @@ def run_bot():
             
             # ✅ Kiểm tra vị thế đang mở
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}")
-            logging.debug(f"Chi tiết open_positions: {open_positions}")
-            open_positions = exchange.fetch_positions()
+
+            open_positions = []
+            try:
+                open_positions = exchange.fetch_positions()
+                logging.debug(f"Chi tiết open_positions: {open_positions}")
+            except Exception as e:
+                logging.error(f"❌ Không thể fetch open positions: {e}")
+                return
 
             for pos in open_positions:
                 if pos.get('symbol') == symbol:
