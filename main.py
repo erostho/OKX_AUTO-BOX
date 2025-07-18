@@ -122,7 +122,6 @@ def run_bot():
             for pos in all_positions:
                 pos_symbol_raw = pos.get('symbol', '')           # Ví dụ: BTC/USDT
                 side_open = pos.get('side', '').lower()           # Ví dụ: long / short
-                size = float(pos.get('size', 0))
                 margin_mode = pos.get('marginMode', '')           # isolated / cross
             
                 # ✅ GHI LOG CHI TIẾT
@@ -134,8 +133,7 @@ def run_bot():
                 if (
                     pos_symbol_raw.upper() == symbol_check and
                     side_open == side_check and
-                    margin_mode == 'isolated' and
-                    size > 0
+                    margin_mode == 'isolated'
                 ):
                     logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} (size={size}) => BỎ QUA KHÔNG ĐẶT LỆNH")
                     return
