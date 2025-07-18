@@ -99,7 +99,7 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
-            symbol_check = symbol.replace("-", "").lower()
+            symbol_check = symbol.replace("-", "").replace("/", "").lower()
             side_check = side.lower()
             
             try:
@@ -112,7 +112,7 @@ def run_bot():
             logging.debug("---- START Vị thế fetch_positions ----")
             for pos in all_positions:
                 pos_symbol_raw = pos.get('symbol', '')
-                pos_symbol = pos_symbol_raw.replace("-", "").lower()
+                pos_symbol = pos_symbol_raw.replace("-", "").replace("/", "").lower()
                 side_open = pos.get('side', '').lower()
                 size = float(pos.get('size', 0))
                 margin_mode = pos.get('marginMode', '')
