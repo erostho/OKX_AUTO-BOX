@@ -155,43 +155,44 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-
-            # 📌 Lọc danh sách symbol hợp lệ ngay sau khi đọc Google Sheet
-            try:
-                df = pd.read_csv(SPREADSHEET_URL)
-                symbols_raw = df['symbol'].dropna().tolist()  # Loại bỏ NaN
-                symbols = [s.strip().upper().replace("/", "-") for s in symbols_raw if s.strip()]
-                logging.info(f"✅ Đọc {len(symbols)} SYMBOL từ Google Sheet thành công")
-            except Exception as e:
-                logging.error(f"❌ Lỗi đọc Google Sheet: {e}")
-                exit()
             
-            # 📌 Load markets từ OKX
+            # ✅ GỌI LOAD MARKETS TRƯỚC
             try:
                 exchange.load_markets()
                 logging.info("✅ Load markets thành công")
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
-                exit()
+                return
             
-            # 📌 Duyệt từng symbol đã lọc (không đụng lại df nữa)
-            for symbol_okx in symbols:
+            # 🔁 Duyệt từng dòng từ orders_data đã có từ Google Sheet
+            for order in orders_data:
                 try:
-                    market = exchange.markets.get(symbol_okx)
-                    if not market:
-                        logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+                    symbol = order[0]  # Ví dụ: 'BTC-USDT' hoặc 'BTC/USDT'
+                    side_input = order[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
+            
+                    # ✅ CHUẨN HÓA SYMBOL và SIDE
+                    symbol_check = symbol.upper().replace("-", "/")  # BTC-USDT -> BTC/USDT
+                    side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else side_input
+            
+                    # ✅ Kiểm tra SYMBOL có tồn tại trong exchange.markets không
+                    market = exchange.markets.get(symbol_check)
+                    if market is None:
+                        logging.error(f"❌ Symbol {symbol_check} không tồn tại trong markets! Bỏ qua...")
                         continue
             
-                    # ✅ Kiểm tra đúng loại futures/swap
+                    # ✅ Kiểm tra phải là USDT-M futures hoặc swap
                     if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
-                        logging.warning(f"⚠️ {symbol_okx} không phải USDT-M futures/swap => Bỏ qua")
+                        logging.warning(f"⚠️ {symbol_check} không phải là USDT-M futures/swap => Bỏ qua")
                         continue
             
-                    # ✅ OK, tiếp tục xử lý lệnh
-                    logging.info(f"✅ {symbol_okx} hợp lệ => Tiếp tục đặt lệnh")
+                    # ✅ Nếu hợp lệ → tiếp tục xử lý lệnh
+                    logging.info(f"✅ Symbol {symbol_check} hợp lệ → Tiếp tục xử lý...")
+            
+                    # (TẠM: Ghi chú chỗ đặt lệnh ở đây nếu cần)
+                    # place_order(symbol_check, side_check, amount, ...)
             
                 except Exception as e:
-                    logging.error(f"❌ Lỗi xử lý SYMBOL {symbol_okx}: {e}")
+                    logging.error(f"❌ Lỗi xử lý dòng order {order}: {e}")
                     continue
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
