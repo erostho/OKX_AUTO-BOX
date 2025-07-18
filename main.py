@@ -125,7 +125,7 @@ def run_bot():
                 }
             )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
-           if (
+            if (
                 not order
                 or 'data' not in order
                 or not isinstance(order['data'], list)
