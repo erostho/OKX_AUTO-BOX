@@ -114,22 +114,22 @@ def run_bot():
                 size = float(pos.get('size', 0))
                 margin_mode = pos.get('marginMode', '')
             
-            logging.debug(
-                f"[DEBUG_POS] raw={pos_symbol_raw} | cleaned={pos_symbol} | "
-                f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
-            )
-            
-            # ✅ So sánh để phát hiện trùng vị thế
-            if (
-                pos_symbol == symbol_check
-                and side_open == side_check
-                and margin_mode == 'isolated'
-                and size > 0
-            ):
-                logging.warning(
-                    f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
+                logging.debug(
+                    f"[DEBUG_POS] raw={pos_symbol_raw} | cleaned={pos_symbol} | "
+                    f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
                 )
-                return
+            
+                # ✅ So sánh để phát hiện trùng vị thế
+                if (
+                    pos_symbol == symbol_check
+                    and side_open == side_check
+                    and margin_mode == 'isolated'
+                    and size > 0
+                ):
+                    logging.warning(
+                        f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
+                    )
+                    return
             
             # ✅ Duyệt từng vị thế và kiểm tra trùng khớp
             for pos in open_positions:
@@ -139,20 +139,20 @@ def run_bot():
                 side_open = pos.get('side', '').lower()
                 size = float(pos.get('size', 0))
             
-            # ✅ Ghi log từng dòng kiểm tra
-            logging.debug(f"[CHECK] ▶ pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
-                            f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
+                # ✅ Ghi log từng dòng kiểm tra
+                logging.debug(f"[CHECK] ▶ pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
+                              f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
                 
-            logging.debug(f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}")
+                logging.debug(f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}")
             
-            if (
-                pos_symbol == symbol_check and
-                margin_mode == 'isolated' and
-                side_open == side_check and
-                size > 0
-            ):
-                logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng, mode={margin_mode}). Bỏ qua lệnh.")
-                return
+                if (
+                    pos_symbol == symbol_check and
+                    margin_mode == 'isolated' and
+                    side_open == side_check and
+                    size > 0
+                ):
+                    logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng, mode={margin_mode}). Bỏ qua lệnh.")
+                    return
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
@@ -172,37 +172,6 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-
-        # 🔍 Kiểm tra xem đã có vị thế đang mở hay chưa
-            try:
-                positions = exchange.fetch_positions()
-                found_position = False
-
-            for pos in positions:
-                pos_symbol = pos.get("symbol", "").replace("-", "").replace("/", "").lower()
-                current_symbol = symbol.replace("-", "").replace("/", "").lower()
-
-                side_open = pos.get("side", "").lower()
-                size = float(pos.get("size", 0))
-                margin_mode = pos.get("marginMode", "")
-
-                logging.debug(f"[Check Position] symbol={pos_symbol} vs {current_symbol} | side={side_open} | size={size} | margin={margin_mode}")
-
-                if (
-                    pos_symbol == current_symbol and
-                    side_open == ("long" if signal == "LONG" else "short") and
-                    size > 0 and
-                    margin_mode == "isolated"
-                ):
-                    logging.warning(f"⚠️ Đã có vị thế đang mở {side_open.upper()} với {symbol}, size={size} → Bỏ qua đặt lệnh.")
-                    found_position = True
-                    break
-
-            if found_position:
-                continue  # bỏ qua dòng hiện tại
-        except Exception as e:
-            logging.error(f"❌ Lỗi khi kiểm tra vị thế: {e}")
-            continue
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
