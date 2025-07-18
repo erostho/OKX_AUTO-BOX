@@ -94,33 +94,34 @@ def run_bot():
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
-            logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}")
-            symbol_check = symbol.replace("/", "").replace("-", "").lower()
+            # ✅ Chuẩn hoá symbol đầu vào và từ API để so sánh
+            def normalize_symbol(sym):
+                return sym.replace("/", "").replace("-", "").upper()
+            
+            symbol_check = normalize_symbol(symbol)
             side_check = side.lower()
             
-            open_positions = []
             try:
-                all_positions = exchange.fetch_positions()
-                for pos in all_positions:
-                    pos_symbol_raw = pos.get('symbol', '')
-                    pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
-                    margin_mode = pos.get('marginMode', '')
-                    side_open = pos.get('side', '').lower()
-                    size = float(pos.get('size', 0))
+                open_positions = exchange.fetch_positions()
+                logging.debug(f"📥 Vị thế từ API: {open_positions}")
             
-                    logging.debug(f"[CHECK] pos_symbol={pos_symbol_raw}, side_open={side_open}, size={size}, margin_mode={margin_mode}")
+                for pos in open_positions:
+                    pos_symbol = normalize_symbol(pos.get('symbol', ''))
+                    pos_side = pos.get('side', '').lower()
+                    pos_mode = pos.get('marginMode', '')
+                    pos_size = float(pos.get('size', 0))
             
                     if (
                         pos_symbol == symbol_check and
-                        margin_mode == 'isolated' and
-                        side_open == side_check and
-                        size > 0
+                        pos_side == side_check and
+                        pos_mode == 'isolated' and
+                        pos_size > 0
                     ):
-                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
+                        logging.warning(f"⚠️ Đã có vị thế {pos_side.upper()} đang mở với {pos_symbol} ({pos_size} hợp đồng). Bỏ qua.")
                         return
             
             except Exception as e:
-                logging.error(f"❌ Không thể fetch vị thế từ API: {e}")
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
 
             # ✅ Duyệt và kiểm tra từng vị thế
