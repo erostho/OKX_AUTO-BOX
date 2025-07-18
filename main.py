@@ -160,11 +160,19 @@ def run_bot():
             symbol = symbol.upper().replace("/", "-")
             
             # 🔍 LẤY MARKET INFO
+            # Tải lại toàn bộ markets nếu chưa có
+            if not exchange.markets:
+                exchange.load_markets()
+            
+            # Ép lấy market đúng từ Futures list
             try:
                 market = exchange.market(symbol)
+                if not market.get('contract') or market.get('settle') != 'usdt':
+                    logging.error(f"❌ Symbol {symbol} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
+                    return
             except Exception as e:
-                logging.error(f"❌ Không thể lấy market cho symbol {symbol}: {e}")
-                continue
+                logging.error(f"❌ Không lấy được market của symbol {symbol}: {e}")
+                return
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
