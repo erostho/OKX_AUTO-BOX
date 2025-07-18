@@ -25,7 +25,7 @@ exchange = ccxt.okx({
     'password': OKX_API_PASSPHRASE,
     'enableRateLimit': True,
     'options': {
-        'defaultType': 'swap'
+        'defaultType': 'future'
     }
 })
 
