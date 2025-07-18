@@ -88,27 +88,27 @@ def fetch_sheet():
                                         amount = round(safe_usdt / mark_price, 6)
                                         estimated_value = amount * mark_price
 
-                                        if estimated_value > max_order_value:
-                                            logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
-                                            return
+                                    if estimated_value > max_order_value:
+                                        logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
+                                        return
 
-                                            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
-                                            order = exchange.create_market_order(
-                                            logging.info(f"✅ Đã gửi lệnh: {order}")
-                                            if not order or 'data' not in order or not order['data']:
-                                                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL: {order}")
-                                                return
-                                                order_id = order['data'][0]['ordId']
-                                                logging.info(f"🔢 Order ID: {order_id}")
-                                                symbol=symbol,
-                                                side=side,
-                                                amount=amount,
-                                                params={
-                                                "sz": str(amount),
-                                                "tdMode": "isolated",
-                                                }
-                                                )
-                                                logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
+                                        logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
+                                        order = exchange.create_market_order(
+                                        logging.info(f"✅ Đã gửi lệnh: {order}")
+                                    if not order or 'data' not in order or not order['data']:
+                                        logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL: {order}")
+                                        return
+                                        order_id = order['data'][0]['ordId']
+                                        logging.info(f"🔢 Order ID: {order_id}")
+                                        symbol=symbol,
+                                        side=side,
+                                        amount=amount,
+                                        params={
+                                        "sz": str(amount),
+                                        "tdMode": "isolated",
+                                        }
+                                        )
+                                        logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
 
                                                 # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
                                                 order_detail = exchange.private_get_trade_order({'ordId': order_id})
