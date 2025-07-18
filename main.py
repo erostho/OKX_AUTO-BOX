@@ -94,12 +94,21 @@ def run_bot():
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             
             # ✅ Kiểm tra vị thế đang mở
+            logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}")
+            logging.debug(f"Chi tiết open_positions: {open_positions}")
             open_positions = exchange.fetch_positions()
+
             for pos in open_positions:
-                if pos['symbol'] == symbol and float(pos['contracts']) > 0:
-                    if pos['side'].lower() == side.lower():
-                        logging.info(f'⚠️ Đã có vị thế {side.upper()} đang mở với {symbol}, không đặt lệnh mới.')
+                if pos.get('symbol') == symbol:
+                    contracts = float(pos.get('contracts', 0))
+                    side_open = pos.get('side', '').lower()
+
+                    if contracts > 0:
+                        if side_open == side.lower():
+                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({contracts} hợp đồng). Bỏ qua.")
                         return
+                    else:
+                        logging.info(f"⚠️ Đã có vị thế ngược chiều ({side.open}) đang mở với {symbol}, cho phép đặt mới")
             # ✅ Gửi lệnh thị trường
             order = exchange.create_market_order(
                 symbol=symbol,
