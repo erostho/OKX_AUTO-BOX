@@ -96,7 +96,8 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
-            symbol_check = symbol.replace("/", "").replace("-", "").lower()
+            # Lấy 3 ký tự đầu tiên của symbol (tên coin)
+            symbol_check = symbol.replace("/", "").replace("-", "").lower()[:3]
             side_check = side.lower()
             if side_check == 'buy':
                 side_check = 'long'
@@ -104,29 +105,28 @@ def run_bot():
                 side_check = 'short'
             
             try:
-                open_positions = exchange.fetch_positions()
-                for pos in open_positions:
-                    pos_symbol_raw = pos.get('symbol', '')
-                    pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
-                    margin_mode = pos.get('marginMode', '').lower()
-                    side_open = pos.get('side', '').lower()
-                    size = float(pos.get('size', 0))
-            
-                    logging.debug(f"[CHECK] pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
-                                  f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
-                    logging.debug(f"[CHECK] So với: symbol_check={symbol_check}, side_check={side_check}")
-            
-                    if (
-                        symbol_check in pos_symbol and         # ← khớp một phần tên symbol
-                        margin_mode == 'isolated' and
-                        side_open == side_check and
-                        size > 0
-                    ):
-                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
-                        return
+                all_positions = exchange.fetch_positions()
             except Exception as e:
-                logging.error(f"❌ Lỗi khi kiểm tra vị thế: {e}")
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
+            
+            for pos in all_positions:
+                pos_symbol_raw = pos.get('symbol', '')
+                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()[:3]
+                margin_mode = pos.get('marginMode', '').lower()
+                side_open = pos.get('side', '').lower()
+                size = float(pos.get('size', 0))
+            
+                logging.debug(f"[CHECK] pos={pos_symbol_raw} → {pos_symbol} vs {symbol_check} | side={side_open} | size={size}")
+            
+                if (
+                    pos_symbol == symbol_check and
+                    margin_mode == 'isolated' and
+                    side_open == side_check and
+                    size > 0
+                ):
+                    logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
+                    return
             
             # ✅ Duyệt từng vị thế và kiểm tra trùng khớp
             for pos in open_positions:
