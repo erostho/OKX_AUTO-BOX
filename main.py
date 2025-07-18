@@ -156,42 +156,42 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # ✅ GỌI LOAD MARKETS TRƯỚC
-            try:
+            # 🔁 Lấy giá thị trường hiện tại
+            ticker = exchange.fetch_ticker(symbol)
+            market_price = ticker['last']
+
+            # ✅ Thiết lập thông số lệnh
+            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
+            leverage = 5
+            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
+            
+            # ✅ Tính số lượng coin cần mua
+            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
+            
+            # ✅ Gửi lệnh thị trường
+            ticker = exchange.fetch_ticker(symbol)
+            price = ticker['ask']
+            usdt_amount = 20
+            size = round(usdt_amount / price, 6)
+            
+            # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
+            symbol_formatted = symbol.upper().replace("/", "-")
+            
+            # ✅ Load market list 1 lần duy nhất
+            if not exchange.markets:
                 exchange.load_markets()
-                logging.info("✅ Load markets thành công")
-            except Exception as e:
-                logging.error(f"❌ Không thể load markets từ OKX: {e}")
-                return
             
-            # 🔁 Duyệt từng dòng từ orders_data đã có từ Google Sheet
-            for row in rows:
-                try:
-                    symbol = row[0]  # Ví dụ: 'BTC-USDT' hoặc 'BTC/USDT'
-                    side_input = row[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
+            # ✅ Lấy market từ danh sách đã load
+            market = exchange.markets.get(symbol_formatted)
             
-            # ✅ CHUẨN HÓA SYMBOL: BTC/USDT → BTC-USDT (dạng OKX)
-            symbol_okx = symbol.upper().replace("/", "-")
-            side_check = 'long' if side_input in ['buy', 'long'] else 'short' if side_input in ['sell', 'short'] else None
-            
-            if side_check is None:
-                logging.error(f"❌ SIDE không hợp lệ: {side_input}")
+            if not market:
+                logging.error(f"❌ Symbol {symbol_formatted} không tồn tại trong markets!")
                 continue
             
-            # ✅ KIỂM TRA SYMBOL CÓ TỒN TẠI TRONG MARKETS KHÔNG
-            market = exchange.markets.get(symbol_okx)
-            if market is None:
-                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+            # ✅ Kiểm tra xem có đúng là hợp đồng USDT-M Futures không
+            if not market.get('contract') or market.get('settle') != 'usdt':
+                logging.error(f"❌ Symbol {symbol_formatted} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
                 continue
-            
-            # ✅ KIỂM TRA CÓ PHẢI FUTURES / SWAP USDT-M KHÔNG
-            if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
-                logging.warning(f"⚠️ {symbol_okx} không phải là USDT-M futures/swap => Bỏ qua")
-                continue
-            
-            # ✅ Nếu hợp lệ → chuyển lại symbol về dạng chuẩn BTC/USDT để dùng tiếp
-            symbol = symbol_okx.replace("-", "/")
-            logging.info(f"✅ Symbol {symbol} hợp lệ ⇒ Tiếp tục xử lý…")
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
