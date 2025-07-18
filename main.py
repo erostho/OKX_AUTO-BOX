@@ -193,7 +193,7 @@ def run_bot():
                 )
                 logging.info(f"✅ Order đã đặt: {order['id']} → {symbol} {side_check} {amount}")
             
-            except Exception as e:
+                except Exception as e:
                 logging.error(f"❗ Lỗi trong quá trình xử lý {symbol}: {e}")
                 # không break, tiếp tục với coin tiếp theo
                 continue
