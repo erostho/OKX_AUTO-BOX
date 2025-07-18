@@ -134,7 +134,7 @@ def run_bot():
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=usdt_amount,
+                amount=20,
                 params={
                     "tdMode": "isolated",         # Giao dịch isolated
                     "ccy": "USDT",                # Dùng USDT làm đơn vị ký quỹ
