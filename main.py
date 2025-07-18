@@ -115,14 +115,28 @@ def run_bot():
                     if size > 0 and side_open == side.lower():
                         logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
                         return
+            
+            # 🔁 Lấy giá thị trường hiện tại
+            ticker = exchange.fetch_ticker(symbol)
+            market_price = ticker['last']
+
+            # ✅ Thiết lập thông số lệnh
+            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
+            leverage = 5
+            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
+            
+            # ✅ Tính số lượng coin cần mua
+            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
+            
             # ✅ Gửi lệnh thị trường
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
                 amount=amount,
                 params={
-                    "sz": str(amount),
-                    "tdMode": "isolated",
+                    "tdMode": "isolated",       # Chế độ ký quỹ cô lập
+                    "lever": str(leverage),     # Thiết lập đòn bẩy
+                    "sz": str(amount)           # Số lượng hợp đồng (bắt buộc cho OKX)
                 }
             )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
