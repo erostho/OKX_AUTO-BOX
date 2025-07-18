@@ -17,7 +17,7 @@ SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
 OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
 OKX_API_PASSPHRASE = os.environ.get("OKX_API_PASSPHRASE")
-df = pd.read_csv(spreadsheet_url)
+
 # Khởi tạo OKX
 exchange = ccxt.okx({
     'apiKey': OKX_API_KEY,
@@ -162,6 +162,13 @@ def run_bot():
                 logging.info("✅ Load markets thành công")
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
+                return
+            # ✅ Đọc danh sách SYMBOL từ Google Sheet           
+            try:
+                df = pd.read_csv(spreadsheet_url)
+                logging.info(f"✅ Đọc Google Sheet thành công từ {spreadsheet_url}")
+            except Exception as e:
+                logging.error(f"❌ Lỗi đọc Google Sheet: {e}")
                 return
 
             # ✅ Lấy danh sách symbol (viết hoa, loại bỏ rỗng và trùng)
