@@ -155,63 +155,48 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-                
-            # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
-            def fetch_okx_usdt_futures_symbols():
-                url = "https://www.okx.com/api/v5/public/instruments?instType=FUTURES"
+            
+            # ✅ xử lý symbol
+            
+            symbols = os.getenv('TARGET_SYMBOLS', 'BTC-USDT,ETH-USDT,PI-USDT').split(',')
+            
+            for symbol in symbols:
                 try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    data = response.json()
-                    instruments = data.get("data", [])
-                    symbols = []
-            
-                    for item in instruments:
-                        if item.get("settleCcy") == "USDT":
-                            inst_id = item["instId"]  # VD: PI-USDT-240726
-                            parts = inst_id.split("-")
-                            if len(parts) >= 2:
-                                clean_symbol = f"{parts[0]}-{parts[1]}"
-                                symbols.append(clean_symbol)
-            
-                    return list(set(symbols))  # Loại bỏ trùng
+                    market = exchange.market(symbol)  # Nếu không tồn tại, ném lỗi
                 except Exception as e:
-                    logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
-                    return []
-            
-            
-            # ✅ Lấy danh sách Futures symbols
-            futures_symbols_okx = fetch_okx_usdt_futures_symbols()
-            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
-            
-            # ✅ Ví dụ: Danh sách coin từ Google Sheet hay nguồn nào đó
-            coin_list = [
-                ["PI/USDT"],
-                ["TURBO/USDT"],
-                ["BTC/USDT"],
-                ["ETH/USDT"],
-                ["NONFUTURE/USDT"],
-            ]
-            
-            # ✅ Lặp qua từng coin để kiểm tra
-            for row in coin_list:
-                symbol_raw = row[0]  # VD: PI/USDT
-                symbol_check = symbol_raw.upper().replace("/", "-")  # PI-USDT
-            
-                if symbol_check not in futures_symbols_okx:
-                    logging.warning(f"⛔ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
+                    logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua... ({e})")
                     continue
             
-                logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
-                
-                # 📌 Chỗ này bạn có thể tiếp tục: check vị thế, đặt lệnh, v.v.
-                # Ví dụ: đặt lệnh market
-                # exchange.create_market_order(
-                #     symbol=symbol_check,
-                #     side='buy',
-                #     amount=0.1,
-                #     params={"tdMode": "isolated", "ccy": "USDT"}
-                # )
+                if market['settle'] != 'USDT':  # chỉ đếm những coin đúng USDT‑margined
+                    logging.warning(f"⚠️ Symbol {symbol} không phải USDT‑M Futures! Bỏ qua...")
+                    continue
+            
+                # Lấy kích thước hợp đồng (lot size)
+                contract_size = market.get('contractSize')
+                logging.info(f"🔸 {symbol} là USDT‑M, contractSize = {contract_size}")
+            
+                # Tiếp tục xử lý đặt lệnh...
+                # VD:
+                side = 'buy'  # hoặc 'sell'
+                side_input = side.lower()
+                side_check = 'long' if side_input == 'buy' else 'short'
+                amount = 1 * contract_size
+            
+                order = exchange.create_order(
+                    symbol=symbol,
+                    type='market',
+                    side=side_input,
+                    amount=amount,
+                    params={
+                        'tgtCcy': 'quote_ccy',  # để dùng USDT làm lượng giao dịch
+                    }
+                )
+                logging.info(f"✅ Order đã đặt: {order['id']} → {symbol} {side_check} {amount}")
+            
+            except Exception as e:
+                logging.error(f"❗ Lỗi trong quá trình xử lý {symbol}: {e}")
+                # không break, tiếp tục với coin tiếp theo
+                continue
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
