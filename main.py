@@ -129,17 +129,20 @@ def run_bot():
             amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
             
             # ✅ Gửi lệnh thị trường
-            usdt_amount = 20  # Số USDT muốn dùng cho mỗi lệnh
-
+            ticker = exchange.fetch_ticker(symbol)
+            price = ticker['ask']
+            usdt_amount = 20
+            size = round(usdt_amount / price, 6)
+            
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=20,
+                amount=size,
                 params={
-                    "tdMode": "isolated",         # Giao dịch isolated
-                    "ccy": "USDT",                # Dùng USDT làm đơn vị ký quỹ
-                    "tgtCcy": "quote_ccy",        # Đặt lệnh theo số tiền USDT, không phải số lượng coin
-                    "lever": "5"                  # Đòn bẩy x5
+                    "tdMode": "isolated",
+                    "ccy": "USDT",
+                    "reduceOnly": False,
+                    "lever": "5"
                 }
             )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
