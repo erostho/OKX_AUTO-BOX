@@ -175,14 +175,14 @@ def run_bot():
             size = round(usdt_amount / price, 6)
             
             # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
-            symbol_formatted = symbol.upper().replace("/", "-")
+            symbol_okx = symbol.upper().replace("-", "/")
             
             # ✅ Load market list 1 lần duy nhất
             if not exchange.markets:
                 exchange.load_markets()
             
             # ✅ Lấy market từ danh sách đã load
-            market = exchange.markets.get(symbol_formatted)
+            market = exchange.markets.get(symbol_okx)
             
             if not market:
                 logging.error(f"❌ Symbol {symbol_formatted} không tồn tại trong markets!")
