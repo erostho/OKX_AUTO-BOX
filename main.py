@@ -108,7 +108,7 @@ def run_bot():
                 return
             
             # Duyệt từng vị thế và kiểm tra trùng khớp
-            for pos in all_positions:
+            for pos in open_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                 margin_mode = pos.get('marginMode', '')
