@@ -9,7 +9,7 @@ import ccxt
 # Logging setup
 
 logging.basicConfig(
-    level=logging.DEBUG,  # thay vì INFO
+    level=logging.INFO,  # thay vì DEBUG
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
