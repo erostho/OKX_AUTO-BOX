@@ -155,11 +155,6 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-
-            # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
-            if market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
-                continue
                 
             order = exchange.create_market_order(
                 symbol=symbol,
