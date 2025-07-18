@@ -110,10 +110,16 @@ def run_bot():
                     "tdMode": "isolated",
                 }
             )
-            # ✅ Kiểm tra phản hồi hợp lệ
-            if not order or 'data' not in order or not order['data']:
-                logging.error(f"❌ lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
+            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
+            if (
+                not order
+                or 'data' not in order
+                or not order['data']
+                or 'code' in order and order['code'] != "0"
+            ):
+                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
                 return
+
             order_id = order['data'][0]['ordId']
             logging.info(f"⚠️ Order ID: {order_id}")
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
