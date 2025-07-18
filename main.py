@@ -13,11 +13,11 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
-
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
 OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
 OKX_API_PASSPHRASE = os.environ.get("OKX_API_PASSPHRASE")
+
 # Khởi tạo OKX
 exchange = ccxt.okx({
     'apiKey': OKX_API_KEY,
@@ -25,7 +25,7 @@ exchange = ccxt.okx({
     'password': OKX_API_PASSPHRASE,
     'enableRateLimit': True,
     'options': {
-        'defaultType': 'future'
+        'defaultType': 'swap'
     }
 })
 
@@ -155,6 +155,32 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
+            
+            # ✅ GỌI LOAD MARKETS TRƯỚC
+            try:
+                exchange.load_markets()
+            except Exception as e:
+                logging.error(f"❌ Không thể load markets từ OKX: {e}")
+                return
+            
+            # ✅ Chuẩn hóa SYMBOL về đúng dạng OKX
+            symbol_okx = symbol.upper().replace("/", "-")  # Ví dụ: BTC/USDT => BTC-USDT
+            
+            # ✅ Kiểm tra symbol có tồn tại trong exchange.markets
+            market = exchange.markets.get(symbol_okx)
+            if not market:
+                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+                continue  # => TIẾP TỤC COIN KHÁC, không return
+            
+            # ✅ Chỉ xử lý nếu là USDT-M Futures
+            if not market.get('future') or market.get('settle') != 'usdt':
+                logging.error(f"❌ Symbol {symbol_okx} KHÔNG phải USDT-M Futures! Loại khỏi danh sách.")
+                continue  # => TIẾP TỤC COIN KHÁC
+            
+            # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
+            if market.get('settle') != 'usdt':
+                logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
+                continue
                 
             order = exchange.create_market_order(
                 symbol=symbol,
