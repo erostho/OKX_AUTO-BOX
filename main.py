@@ -96,8 +96,15 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
+            # Làm sạch symbol để so sánh
             symbol_check = symbol.replace("/", "").replace("-", "").lower()
+            
+            # Chuẩn hóa side
             side_check = side.lower()
+            if side_check in ['s', 'sell']:
+                side_check = 'short'
+            elif side_check in ['b', 'buy']:
+                side_check = 'long'
             
             try:
                 all_positions = exchange.fetch_positions()
@@ -105,8 +112,8 @@ def run_bot():
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
-            # ✅ Ghi log tất cả vị thế OKX trả về
             logging.debug("---- START Vị thế fetch_positions ----")
+            
             for pos in all_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
@@ -119,7 +126,8 @@ def run_bot():
                     f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
                 )
             
-                # ✅ So sánh để phát hiện trùng vị thế
+                logging.debug(f"[DEBUG_CHECK] So với: symbol_check={symbol_check}, side_check={side_check}")
+            
                 if (
                     pos_symbol == symbol_check
                     and side_open == side_check
@@ -127,7 +135,7 @@ def run_bot():
                     and size > 0
                 ):
                     logging.warning(
-                        f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
+                        f"⚠️ Đã có vị thế {side_check.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
                     )
                     return
             
