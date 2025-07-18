@@ -95,9 +95,9 @@ def fetch_sheet():
                                         logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
                                         order = exchange.create_market_order(
                                         logging.info(f"✅ Đã gửi lệnh: {order}")
-                                            if not order or 'data' not in order or not order['data']:
-                                                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL: {order}")
-                                                return
+                                        if not order or 'data' not in order or not order['data']:
+                                            logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL: {order}")
+                                            return
                                                 order_id = order['data'][0]['ordId']
                                                 logging.info(f"🔢 Order ID: {order_id}")
                                                 symbol=symbol,
