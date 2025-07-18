@@ -161,7 +161,7 @@ def run_bot():
             
             # 🔍 LẤY MARKET INFO
             try:
-                market = exchange.fetch_market(symbol)
+                market = exchange.market(symbol)
             except Exception as e:
                 logging.error(f"❌ Không thể lấy market cho symbol {symbol}: {e}")
                 continue
