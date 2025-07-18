@@ -163,7 +163,8 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
                 return
-            # ✅ Đọc danh sách SYMBOL từ Google Sheet           
+            # ✅ Đọc danh sách SYMBOL từ Google Sheet
+            spreadsheet_url = os.environ.get("SPREADSHEET_URL")
             try:
                 df = pd.read_csv(spreadsheet_url)
                 logging.info(f"✅ Đọc Google Sheet thành công từ {spreadsheet_url}")
