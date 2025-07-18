@@ -163,32 +163,39 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
                 return
+
+            # ✅ Lấy danh sách symbol (viết hoa, loại bỏ rỗng và trùng)
+            symbols = list(set(df['symbol'].dropna().astype(str).str.upper()))
             
-            # ✅ Duyệt danh sách SYMBOL lấy từ Google Sheet hoặc biến môi trường
+            if not symbols:
+                logging.error("❌ Không có symbol nào để xử lý!")
+                return
+            
+            # ✅ BẮT ĐẦU DUYỆT DANH SÁCH SYMBOL
             for symbol in symbols:
                 try:
-                    # ✅ Chuẩn hóa SYMBOL
-                    symbol_okx = symbol.upper().replace("/", "-")  # BTC/USDT → BTC-USDT
+                    # ✅ Chuẩn hóa SYMBOL về dạng OKX
+                    symbol_okx = symbol.replace("/", "-").upper()
             
-                    # ✅ Kiểm tra SYMBOL có tồn tại trong thị trường
+                    # ✅ Kiểm tra SYMBOL có trong exchange.markets không
                     market = exchange.markets.get(symbol_okx)
-                    if market is None:
+                    if not market:
                         logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua...")
                         continue
             
-                    # ✅ Kiểm tra đúng loại USDT-M Futures hoặc Swap
-                    if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
+                    # ✅ Chỉ xử lý USDT-M futures hoặc swap
+                    if market.get('settle') != 'usdt' or not (market.get('future') or market.get('swap')):
                         logging.warning(f"⚠️ {symbol} không phải là USDT-M futures/swap => Bỏ qua")
                         continue
             
-                    # ✅ Nếu hợp lệ → xử lý tiếp (ví dụ đặt lệnh...)
-                    logging.info(f"✅ Symbol {symbol} hợp lệ => Tiếp tục xử lý")
-                      
-                except Exception as e:
-                    logging.error(f"❌ Lỗi xử lý symbol {symbol}: {e}")
-                    continue
-
+                    # ✅ Nếu hợp lệ thì xử lý tiếp
+                    logging.info(f"✅ Symbol {symbol} hợp lệ => Tiếp tục xử lý...")
             
+                    # (Tiếp tục phần đặt lệnh hoặc kiểm tra vị thế ở đây)
+            
+                except Exception as e:
+                    logging.error(f"❌ Lỗi xử lý {symbol}: {e}")
+                    continue
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
                 logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
