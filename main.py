@@ -155,43 +155,7 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-            
-            
-            # ✅ Load toàn bộ thị trường
-            try:
-                exchange.load_markets()
-                logging.info("✅ Load markets thành công")
-            except Exception as e:
-                logging.error(f"❌ Lỗi khi load markets: {e}")
-                exit()
-            
-            # ✅ Danh sách coin cần kiểm tra
-            symbols = os.getenv("TARGET_SYMBOLS", "BTC-USDT,PI-USDT,TURBO-USDT").split(",")
-            
-            for symbol in symbols:
-                symbol = symbol.strip().upper()
-                symbol_okx = symbol.replace("/", "-")  # chuẩn hóa symbol
-            
-                try:
-                    market = exchange.markets.get(symbol_okx)
-            
-                    # Nếu market không tồn tại
-                    if not market:
-                        logging.error(f"❌ Symbol {symbol} không tồn tại trong markets! Bỏ qua...")
-                        continue
-            
-                    # Nếu không phải FUTURES USDT-M
-                    if not market.get('future') or market.get('settle') != 'usdt':
-                        logging.error(f"❌ Symbol {symbol} KHÔNG phải USDT-M Futures! Bỏ qua...")
-                        continue
-            
-                    # ✅ Coin hợp lệ → Tiến hành xử lý (in ra log hoặc đặt lệnh...)
-                    logging.info(f"✅ Symbol hợp lệ: {symbol_okx} - USDT-M Futures")
-                                
-                except Exception as e:
-                    logging.error(f"❌ Lỗi xử lý {symbol}: {e}")
-                    continue  # Quan trọng: vẫn chạy tiếp coin khác
-            
+
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
                 logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
