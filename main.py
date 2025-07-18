@@ -112,7 +112,7 @@ def run_bot():
             )
             # ✅ Kiểm tra phản hồi hợp lệ
             if not order or 'data' not in order or not order['data']:
-                logging.error(f"❌ lệnh không hợp lệ, không tạo TP/SL: {order}")
+                logging.error(f"❌ lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
                 return
             order_id = order['data'][0]['ordId']
             logging.info(f"⚠️ Order ID: {order_id}")
