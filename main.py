@@ -176,6 +176,7 @@ def run_bot():
             
             # ✅ Cấu hình load markets future
             exchange.options['defaultType'] = 'future'
+            market = exchange.markets.get(symbol_check)
             
             # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
             def fetch_okx_usdt_futures_symbols():
@@ -207,7 +208,7 @@ def run_bot():
             
             # ✅ Lặp qua từng coin để kiểm tra
             for row in rows:
-                symbol_raw = row[0]  # VD: PI/USDT
+                symbol_raw = row[0]  # VD: PI-USDT
                 symbol_check = symbol_raw.upper().replace("-", "/")  # PI/USDT
             
                 if symbol_check not in futures_symbols_okx:
