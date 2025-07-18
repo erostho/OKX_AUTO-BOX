@@ -69,7 +69,30 @@ def run_bot():
             side = "buy" if signal == "LONG" else "sell"
             pos_side = "long" if signal == "LONG" else "SHORT"
 
-                        
+            # Đặt đòn bẩy 5x
+            exchange.set_leverage(5, symbol)
+            logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
+
+            # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
+            ticker = exchange.fetch_ticker(symbol)
+            mark_price = float(ticker.get('last') or 0)
+
+            if mark_price <= 0:
+                logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
+                return
+
+            base_usdt = 20
+            max_order_value = 1000000  # giới hạn OKX là 1 triệu
+            safe_usdt = min(base_usdt, max_order_value * 0.9)  # chỉ dùng tối đa 90% ngưỡng
+
+            amount = round(safe_usdt / mark_price, 6)
+            estimated_value = amount * mark_price
+
+            if estimated_value > max_order_value:
+                logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
+                return
+            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
+            
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
