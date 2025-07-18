@@ -170,30 +170,29 @@ def run_bot():
                     symbol = row[0]  # Ví dụ: 'BTC-USDT' hoặc 'BTC/USDT'
                     side_input = row[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
             
-                    # ✅ CHUẨN HÓA SYMBOL và SIDE
-                    symbol_okx = symbol.upper().replace("/", "-")  # BTC/USDT -> BTC-USDT
-                    side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else side_input
+            # ✅ CHUẨN HÓA SYMBOL: BTC/USDT → BTC-USDT (dạng OKX)
+            symbol_okx = symbol.upper().replace("/", "-")
+            side_check = 'long' if side_input in ['buy', 'long'] else 'short' if side_input in ['sell', 'short'] else None
             
-                    # ✅ Kiểm tra SYMBOL có tồn tại trong exchange.markets không
-                    market = exchange.markets.get(symbol_okx)
-                    if market is None:
-                        logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
-                        continue
+            if side_check is None:
+                logging.error(f"❌ SIDE không hợp lệ: {side_input}")
+                continue
             
-                    # ✅ Kiểm tra phải là USDT-M futures hoặc swap
-                    if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
-                        logging.warning(f"⚠️ {symbol_check} không phải là USDT-M futures/swap => Bỏ qua")
-                        continue
+            # ✅ KIỂM TRA SYMBOL CÓ TỒN TẠI TRONG MARKETS KHÔNG
+            market = exchange.markets.get(symbol_okx)
+            if market is None:
+                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+                continue
             
-                    # ✅ Nếu hợp lệ → tiếp tục xử lý lệnh
-                    logging.info(f"✅ Symbol {symbol_check} hợp lệ → Tiếp tục xử lý...")
+            # ✅ KIỂM TRA CÓ PHẢI FUTURES / SWAP USDT-M KHÔNG
+            if market.get('settle') != 'usdt' or not (market.get('swap') or market.get('future')):
+                logging.warning(f"⚠️ {symbol_okx} không phải là USDT-M futures/swap => Bỏ qua")
+                continue
             
-                    # (TẠM: Ghi chú chỗ đặt lệnh ở đây nếu cần)
-                    # place_order(symbol_check, side_check, amount, ...)
+            # ✅ Nếu hợp lệ → chuyển lại symbol về dạng chuẩn BTC/USDT để dùng tiếp
+            symbol = symbol_okx.replace("-", "/")
+            logging.info(f"✅ Symbol {symbol} hợp lệ ⇒ Tiếp tục xử lý…")
             
-                except Exception as e:
-                    logging.error(f"❌ Lỗi xử lý dòng order {order}: {e}")
-                    continue
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
                 logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
