@@ -156,23 +156,24 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # 🟢 CHUẨN HÓA SYMBOL về BTC-USDT (đúng định dạng OKX)
-            symbol = symbol.upper().replace("/", "-")
+            # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
+            symbol_formatted = symbol.upper().replace("/", "-")
             
-            # 🔍 LẤY MARKET INFO
-            # Tải lại toàn bộ markets nếu chưa có
+            # ✅ Load market list 1 lần duy nhất
             if not exchange.markets:
                 exchange.load_markets()
             
-            # Ép lấy market đúng từ Futures list
-            try:
-                market = exchange.market(symbol)
-                if not market.get('contract') or market.get('settle') != 'usdt':
-                    logging.error(f"❌ Symbol {symbol} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
-                    return
-            except Exception as e:
-                logging.error(f"❌ Không lấy được market của symbol {symbol}: {e}")
-                return
+            # ✅ Lấy market từ danh sách đã load
+            market = exchange.markets.get(symbol_formatted)
+            
+            if not market:
+                logging.error(f"❌ Symbol {symbol_formatted} không tồn tại trong markets!")
+                continue
+            
+            # ✅ Kiểm tra xem có đúng là hợp đồng USDT-M Futures không
+            if not market.get('contract') or market.get('settle') != 'usdt':
+                logging.error(f"❌ Symbol {symbol_formatted} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
+                continue
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
