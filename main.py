@@ -104,19 +104,20 @@ def run_bot():
                 side_check = 'short'
             
             try:
-                open_positions = exchange.fetch_positions()
-                for pos in open_positions:
+                all_positions = exchange.fetch_positions()
+                for pos in all_positions:
                     pos_symbol_raw = pos.get('symbol', '')
                     pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                     margin_mode = pos.get('marginMode', '').lower()
                     side_open = pos.get('side', '').lower()
                     size = float(pos.get('size', 0))
             
-                    logging.debug(f"[CHECK] pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, side_open={side_open}, margin_mode={margin_mode}, size={size}")
+                    logging.debug(f"[CHECK] pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
+                                  f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
                     logging.debug(f"[CHECK] So với: symbol_check={symbol_check}, side_check={side_check}")
             
                     if (
-                        pos_symbol == symbol_check and
+                        symbol_check in pos_symbol and         # ← khớp một phần tên symbol
                         margin_mode == 'isolated' and
                         side_open == side_check and
                         size > 0
