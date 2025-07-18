@@ -96,15 +96,8 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
-            # Làm sạch symbol để so sánh
             symbol_check = symbol.replace("/", "").replace("-", "").lower()
-            
-            # Chuẩn hóa side
             side_check = side.lower()
-            if side_check in ['s', 'sell']:
-                side_check = 'short'
-            elif side_check in ['b', 'buy']:
-                side_check = 'long'
             
             try:
                 all_positions = exchange.fetch_positions()
@@ -112,8 +105,8 @@ def run_bot():
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
+            # ✅ Ghi log tất cả vị thế OKX trả về
             logging.debug("---- START Vị thế fetch_positions ----")
-            
             for pos in all_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
@@ -126,8 +119,7 @@ def run_bot():
                     f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
                 )
             
-                logging.debug(f"[DEBUG_CHECK] So với: symbol_check={symbol_check}, side_check={side_check}")
-            
+                # ✅ So sánh để phát hiện trùng vị thế
                 if (
                     pos_symbol == symbol_check
                     and side_open == side_check
@@ -135,12 +127,12 @@ def run_bot():
                     and size > 0
                 ):
                     logging.warning(
-                        f"⚠️ Đã có vị thế {side_check.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
+                        f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
                     )
                     return
             
             # ✅ Duyệt từng vị thế và kiểm tra trùng khớp
-            for pos in all_positions:
+            for pos in open_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                 margin_mode = pos.get('marginMode', '')
@@ -180,6 +172,37 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
+
+        # 🔍 Kiểm tra xem đã có vị thế đang mở hay chưa
+        try:
+            positions = exchange.fetch_positions()
+            found_position = False
+
+            for pos in positions:
+                pos_symbol = pos.get("symbol", "").replace("-", "").replace("/", "").lower()
+                current_symbol = symbol.replace("-", "").replace("/", "").lower()
+
+                side_open = pos.get("side", "").lower()
+                size = float(pos.get("size", 0))
+                margin_mode = pos.get("marginMode", "")
+
+                logging.debug(f"[Check Position] symbol={pos_symbol} vs {current_symbol} | side={side_open} | size={size} | margin={margin_mode}")
+
+                if (
+                    pos_symbol == current_symbol and
+                    side_open == ("long" if signal == "LONG" else "short") and
+                    size > 0 and
+                    margin_mode == "isolated"
+                ):
+                    logging.warning(f"⚠️ Đã có vị thế đang mở {side_open.upper()} với {symbol}, size={size} → Bỏ qua đặt lệnh.")
+                    found_position = True
+                    break
+
+            if found_position:
+                continue  # bỏ qua dòng hiện tại
+        except Exception as e:
+            logging.error(f"❌ Lỗi khi kiểm tra vị thế: {e}")
+            continue
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
@@ -191,8 +214,88 @@ def run_bot():
                     "lever": "5"
                 }
             )
+            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
+            if (
+                not order
+                or 'data' not in order
+                or not isinstance(order['data'], list)
+                or len(order['data']) == 0
+                or 'ordId' not in order['data'][0]
+            ):
+                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
+                return
+
+            order_id = order['data'][0]['ordId']
+            logging.info(f"⚠️ Order ID: {order_id}")
+            logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
+            
+            # ✅ Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
+            order_detail = exchange.private_get_trade_order({'ordId': order_id})
+
+            # ✅ Kiểm tra dữ liệu trả về từ API
+            if not order_detail or 'data' not in order_detail or not order_detail['data']:
+                logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
+                return
+
+            # ✅ Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
+            avg_price = float(order_detail['data'][0].get('avgPx', 0))
+
+            # ✅ Nếu avg_price = 0 thì không nên tiếp tục
+            if avg_price == 0:
+                logging.error(f"❌ Giá avgPx = 0 từ order_id = {order_id}, không tạo được TP/SL")
+                return
+                
+            # ✅ Tính TP và SL theo % nhập từ Google Sheet
+            tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
+            sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
+
+            # ✅ Tạo TP (Take Profit)
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
+                "tdMode": "isolated",
+                "side": "sell" if signal == "LONG" else "buy",
+                "ordType": "take_profit",
+                "sz": str(amount),
+                "tpTriggerPx": round(tp_price, 6),
+                "tpOrdPx": "-1"
+            })
+
+            # ✅ Tạo SL (Stop Loss)
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
+                "tdMode": "isolated",
+                "side": "sell" if signal == "LONG" else "buy",
+                "ordType": "stop_loss",
+                "sz": str(amount),
+                "slTriggerPx": round(sl_price, 6),
+                "slOrdPx": "-1"
+            })
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
+                "tdMode": "isolated",
+                "side": "sell" if signal == "LONG" else "buy",
+                "ordType": "take_profit",
+                "sz": str(amount),
+                "tpTriggerPx": round(tp_price, 6),
+                "tpOrdPx": "-1",
+            })
+
+            exchange.private_post_trade_order_algo({
+                "instId": symbol,
+                "tdMode": "isolated",
+                "side": "sell" if signal == "LONG" else "buy",
+                "ordType": "stop",
+                "sz": str(amount),
+                "slTriggerPx": round(sl_price, 6),
+                "slOrdPx": "-1",
+                "posSide": pos_side
+            })
+
+            logging.info(f"🎯 TP/SL đặt xong cho {symbol}: TP={round(tp_price,6)} | SL={round(sl_price,6)}")
+
         except Exception as e:
-            logging.error(f"Lỗi xử lý {s}: {e}")
+            logging.error(f"❌ Lỗi xử lý dòng: {e}")
+
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
