@@ -101,8 +101,8 @@ def run_bot():
             side_check = side.lower()
             
             try:
-                all_positions = exchange.fetch_positions()
-                logging.debug(f"📥 Danh sách vị thế hiện tại: {all_positions}")
+                open_positions = exchange.fetch_positions()
+                logging.debug(f"📥 Danh sách vị thế hiện tại: {open_positions}")
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
@@ -129,25 +129,6 @@ def run_bot():
                 ):
                     logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng, mode={margin_mode}). Bỏ qua lệnh.")
                     return
-
-            # ✅ Duyệt và kiểm tra từng vị thế
-            for pos in open_positions:
-                pos_symbol = pos.get('symbol', '').replace("/", "").replace("-", "").lower()
-                cur_symbol = symbol.replace("/", "").replace("-", "").lower()
-            
-                if cur_symbol == pos_symbol:
-                    size = float(pos.get('size', 0))
-                    side_open = pos.get('side', '').lower()
-                    side_check = side.lower()
-            
-                    if side_check == 'buy':
-                        side_check = 'long'
-                    elif side_check == 'sell':
-                        side_check = 'short'
-            
-                    if size > 0 and side_open == side_check:
-                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
-                        return
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
