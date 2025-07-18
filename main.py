@@ -7,8 +7,11 @@ from datetime import datetime
 import ccxt
 
 # Logging setup
-logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 
+logging.basicConfig(
+    level=logging.DEBUG,  # thay vì INFO
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 # Đọc biến môi trường
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
