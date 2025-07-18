@@ -184,14 +184,17 @@ def run_bot():
             # ✅ Lấy market từ danh sách đã load
             market = exchange.markets.get(symbol_okx)
             
-            if not market:
+            # ✅ Lấy thông tin thị trường
+            if market is None:
                 logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets!")
                 continue
             
-            # ✅ Kiểm tra xem có đúng là hợp đồng USDT-M Futures không
-            if not market.get('contract') or market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol_okx} KHÔNG PHẢI USDT-M Futures! Loại khỏi danh sách.")
+            # Kiểm tra đúng loại USDT-M futures/swap
+            if market.get('settle') != 'usdt' or not (market.get('future') or market.get('swap')):
+                logging.warning(f"⚠️ {symbol_okx} không phải là USDT-M futures/swap => Bỏ qua")
                 continue
+            
+            logging.info(f"✅ {symbol_okx} hợp lệ, tiếp tục xử lý")
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
