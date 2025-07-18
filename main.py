@@ -175,7 +175,7 @@ def run_bot():
             size = round(usdt_amount / price, 6)
             
             # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
-            symbol_okx = symbol.upper().replace("-", "/")
+            symbol_okx = symbol.upper().replace("/", "-")
             
             # ✅ Load market list 1 lần duy nhất
             if not exchange.markets:
