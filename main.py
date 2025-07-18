@@ -167,8 +167,8 @@ def run_bot():
             # 🔁 Duyệt từng dòng từ orders_data đã có từ Google Sheet
             for row in rows:
                 try:
-                    symbol = order[0]  # Ví dụ: 'BTC-USDT' hoặc 'BTC/USDT'
-                    side_input = order[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
+                    symbol = row[0]  # Ví dụ: 'BTC-USDT' hoặc 'BTC/USDT'
+                    side_input = row[1].lower()  # 'buy' hoặc 'sell' hoặc 'long'/'short'
             
                     # ✅ CHUẨN HÓA SYMBOL và SIDE
                     symbol_check = symbol.upper().replace("-", "/")  # BTC-USDT -> BTC/USDT
