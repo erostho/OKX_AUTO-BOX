@@ -129,14 +129,17 @@ def run_bot():
             amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
             
             # ✅ Gửi lệnh thị trường
+            usdt_amount = 20  # Số USDT muốn dùng cho mỗi lệnh
+
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=amount,
+                amount=usdt_amount,
                 params={
-                    "tdMode": "isolated",       # Chế độ ký quỹ cô lập
-                    "lever": str(leverage),     # Thiết lập đòn bẩy
-                    "sz": str(amount)           # Số lượng hợp đồng (bắt buộc cho OKX)
+                    "tdMode": "isolated",         # Giao dịch isolated
+                    "ccy": "USDT",                # Dùng USDT làm đơn vị ký quỹ
+                    "tgtCcy": "quote_ccy",        # Đặt lệnh theo số tiền USDT, không phải số lượng coin
+                    "lever": "5"                  # Đòn bẩy x5
                 }
             )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
