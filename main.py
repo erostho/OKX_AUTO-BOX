@@ -4,6 +4,7 @@ import csv
 import logging
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
 import ccxt
 
 # Logging setup
@@ -13,11 +14,11 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
+load_dotenv()
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
 OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
 OKX_API_PASSPHRASE = os.environ.get("OKX_API_PASSPHRASE")
-
 # Khởi tạo OKX
 exchange = ccxt.okx({
     'apiKey': OKX_API_KEY,
@@ -25,7 +26,7 @@ exchange = ccxt.okx({
     'password': OKX_API_PASSPHRASE,
     'enableRateLimit': True,
     'options': {
-        'defaultType': 'swap'
+        'defaultType': 'future'
     }
 })
 
@@ -155,27 +156,33 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-            
-            # ✅ GỌI LOAD MARKETS TRƯỚC
+                       
+            # ✅ Load đầy đủ thị trường
             try:
                 exchange.load_markets()
+                logging.info("✅ Load markets thành công")
             except Exception as e:
                 logging.error(f"❌ Không thể load markets từ OKX: {e}")
-                return
+                exit()
             
-            # ✅ Chuẩn hóa SYMBOL về đúng dạng OKX
-            symbol_okx = symbol.upper().replace("/", "-")  # Ví dụ: BTC/USDT => BTC-USDT
+            # ✅ Danh sách coin cần kiểm tra
+            symbol_list = ['PI-USDT', 'TURBO-USDT', 'BTC-USDT']  # Có thể lấy từ Google Sheet
             
-            # ✅ Kiểm tra symbol có tồn tại trong exchange.markets
-            market = exchange.markets.get(symbol_okx)
-            if not market:
-                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
-                continue  # => TIẾP TỤC COIN KHÁC, không return
+            for symbol in symbol_list:
+                symbol_okx = symbol.upper().replace("/", "-")  # Đảm bảo định dạng OKX
             
-            # ✅ Chỉ xử lý nếu là USDT-M Futures
-            if not market.get('future') or market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol_okx} KHÔNG phải USDT-M Futures! Loại khỏi danh sách.")
-                continue  # => TIẾP TỤC COIN KHÁC
+                market = exchange.markets.get(symbol_okx)
+                if not market:
+                    logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+                    continue
+            
+                # ✅ Check đúng là USDT-M Futures
+                if not market.get('future') or market.get('settle') != 'usdt':
+                    logging.error(f"❌ Symbol {symbol_okx} KHÔNG phải USDT-M Futures! Bỏ qua...")
+                    continue
+            
+                logging.info(f"✅ {symbol_okx} là USDT-M Futures → Tiếp tục xử lý...")
+                # 👉 Tại đây bạn đặt lệnh futures hoặc xử lý thêm...
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
