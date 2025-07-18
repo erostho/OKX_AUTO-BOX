@@ -100,12 +100,12 @@ def run_bot():
             side_check = side.lower()
             
             try:
-                all_positions = exchange.fetch_positions()
+                open_positions = exchange.fetch_positions()
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
-            for pos in all_positions:
+            for pos in open_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                 margin_mode = pos.get('marginMode', '').lower()
