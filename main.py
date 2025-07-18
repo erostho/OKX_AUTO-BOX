@@ -106,7 +106,8 @@ def run_bot():
 
             # ✅ Duyệt và kiểm tra từng vị thế
             for pos in open_positions:
-                if pos.get('symbol') == symbol:
+                pos_symbol = pos.get('symbol', '')
+                if symbol.replace("/", "").replace("-", "").lower() in pos.get('symbol', '').replace("/", "").replace("-", "").lower():
                     # Với OKX futures, dùng 'size' thay vì 'contracts'
                     size = float(pos.get('size', 0))
                     side_open = pos.get('side', '').lower()
