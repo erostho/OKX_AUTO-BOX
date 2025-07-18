@@ -96,18 +96,41 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
-            # Chuẩn hóa symbol và side để so khớp
             symbol_check = symbol.replace("/", "").replace("-", "").lower()
             side_check = side.lower()
             
             try:
-                open_positions = exchange.fetch_positions()
-                logging.debug(f"📥 Danh sách vị thế hiện tại: {open_positions}")
+                all_positions = exchange.fetch_positions()
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
-            # Duyệt từng vị thế và kiểm tra trùng khớp
+            for pos in all_positions:
+                pos_symbol_raw = pos.get('symbol', '')
+                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
+                margin_mode = pos.get('marginMode', '').lower()
+                side_open = pos.get('side', '').lower()
+                size = float(pos.get('size', 0))
+            
+                # Log từng vị thế để kiểm tra
+                logging.debug(
+                    f"[CHECK] pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
+                    f"margin_mode={margin_mode}, side_open={side_open}, size={size}"
+                )
+            
+                # So sánh với symbol hiện tại
+                if (
+                    pos_symbol == symbol_check and
+                    margin_mode == 'isolated' and
+                    side_open == side_check and
+                    size > 0
+                ):
+                    logging.warning(
+                        f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua."
+                    )
+                    return
+            
+            # ✅ Duyệt từng vị thế và kiểm tra trùng khớp
             for pos in open_positions:
                 pos_symbol_raw = pos.get('symbol', '')
                 pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
@@ -115,7 +138,7 @@ def run_bot():
                 side_open = pos.get('side', '').lower()
                 size = float(pos.get('size', 0))
             
-                # Ghi log từng dòng kiểm tra
+                # ✅ Ghi log từng dòng kiểm tra
                 logging.debug(f"[CHECK] ▶ pos_symbol_raw={pos_symbol_raw}, pos_symbol={pos_symbol}, "
                               f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
                 
