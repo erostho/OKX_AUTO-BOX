@@ -27,6 +27,7 @@ exchange = ccxt.okx({
     'enableRateLimit': True,
     'options': {
         'defaultType': 'future'
+        'adjustForTimeDiference': True,
     }
 })
 
@@ -156,33 +157,63 @@ def run_bot():
             price = ticker['ask']
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
-                       
-            # ✅ Load đầy đủ thị trường
-            try:
-                exchange.load_markets()
-                logging.info("✅ Load markets thành công")
-            except Exception as e:
-                logging.error(f"❌ Không thể load markets từ OKX: {e}")
-                exit()
+                
+            # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
+            def fetch_okx_usdt_futures_symbols():
+                url = "https://www.okx.com/api/v5/public/instruments?instType=FUTURES"
+                try:
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    data = response.json()
+                    instruments = data.get("data", [])
+                    symbols = []
             
-            # ✅ Danh sách coin cần kiểm tra
-            symbol_list = ['PI-USDT', 'TURBO-USDT', 'BTC-USDT']  # Có thể lấy từ Google Sheet
+                    for item in instruments:
+                        if item.get("settleCcy") == "USDT":
+                            inst_id = item["instId"]  # VD: PI-USDT-240726
+                            parts = inst_id.split("-")
+                            if len(parts) >= 2:
+                                clean_symbol = f"{parts[0]}-{parts[1]}"
+                                symbols.append(clean_symbol)
             
-            for symbol in symbol_list:
-                symbol_okx = symbol.upper().replace("/", "-")  # Đảm bảo định dạng OKX
+                    return list(set(symbols))  # Loại bỏ trùng
+                except Exception as e:
+                    logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
+                    return []
             
-                market = exchange.markets.get(symbol_okx)
-                if not market:
-                    logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets! Bỏ qua...")
+            
+            # ✅ Lấy danh sách Futures symbols
+            futures_symbols_okx = fetch_okx_usdt_futures_symbols()
+            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
+            
+            # ✅ Ví dụ: Danh sách coin từ Google Sheet hay nguồn nào đó
+            coin_list = [
+                ["PI/USDT"],
+                ["TURBO/USDT"],
+                ["BTC/USDT"],
+                ["ETH/USDT"],
+                ["NONFUTURE/USDT"],
+            ]
+            
+            # ✅ Lặp qua từng coin để kiểm tra
+            for row in coin_list:
+                symbol_raw = row[0]  # VD: PI/USDT
+                symbol_check = symbol_raw.upper().replace("/", "-")  # PI-USDT
+            
+                if symbol_check not in futures_symbols_okx:
+                    logging.warning(f"⛔ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
                     continue
             
-                # ✅ Check đúng là USDT-M Futures
-                if not market.get('future') or market.get('settle') != 'usdt':
-                    logging.error(f"❌ Symbol {symbol_okx} KHÔNG phải USDT-M Futures! Bỏ qua...")
-                    continue
-            
-                logging.info(f"✅ {symbol_okx} là USDT-M Futures → Tiếp tục xử lý...")
-                # 👉 Tại đây bạn đặt lệnh futures hoặc xử lý thêm...
+                logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
+                
+                # 📌 Chỗ này bạn có thể tiếp tục: check vị thế, đặt lệnh, v.v.
+                # Ví dụ: đặt lệnh market
+                # exchange.create_market_order(
+                #     symbol=symbol_check,
+                #     side='buy',
+                #     amount=0.1,
+                #     params={"tdMode": "isolated", "ccy": "USDT"}
+                # )
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
