@@ -177,27 +177,44 @@ def run_bot():
             # ✅ Cấu hình load markets future
             exchange.options['defaultType'] = 'future'
             
-            # ✅ CHUẨN HÓA SYMBOL về BTC-USDT (OKX dùng định dạng này)
-            symbol_okx = symbol.upper().replace("/", "-")
+            # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
+            def fetch_okx_usdt_futures_symbols():
+                url = "https://www.okx.com/api/v5/public/instruments?instType=FUTURES"
+                try:
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    data = response.json()
+                    instruments = data.get("data", [])
+                    symbols = []
             
-            # ✅ Load market list 1 lần duy nhất
-            if not exchange.markets:
-                exchange.load_markets()
+                    for item in instruments:
+                        if item.get("settleCcy") == "USDT":
+                            inst_id = item["instId"]  # VD: PI-USDT-240726
+                            parts = inst_id.split("-")
+                            if len(parts) >= 2:
+                                clean_symbol = f"{parts[0]}-{parts[1]}"
+                                symbols.append(clean_symbol)
             
-            # ✅ Lấy market từ danh sách đã load
-            market = exchange.markets.get(symbol_okx)
+                    return list(set(symbols))  # Loại bỏ trùng
+                except Exception as e:
+                    logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
+                    return []
             
-            # ✅ Lấy thông tin thị trường
-            if not market:
-                logging.error(f"❌ Symbol {symbol_okx} không tồn tại trong markets!")
-                continue
             
-            # Kiểm tra đúng loại USDT-M futures/swap
-            if market.get('settle') != 'usdt' or not (market.get('future') or market.get('swap')):
-                logging.warning(f"⚠️ {symbol_okx} không phải là USDT-M futures/swap => Bỏ qua")
-                continue
+            # ✅ Lấy danh sách Futures symbols
+            futures_symbols_okx = fetch_okx_usdt_futures_symbols()
+            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
             
-            logging.info(f"✅ {symbol_okx} hợp lệ, tiếp tục xử lý")
+            # ✅ Lặp qua từng coin để kiểm tra
+            for row in rows:
+                symbol_raw = row[0]  # VD: PI/USDT
+                symbol_check = symbol_raw.upper().replace("/", "-")  # PI-USDT
+            
+                if symbol_check not in futures_symbols_okx:
+                    logging.warning(f"⛔ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
+                    continue
+            
+                logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
