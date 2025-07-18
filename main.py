@@ -4,7 +4,6 @@ import csv
 import logging
 import requests
 from datetime import datetime
-from dotenv import load_dotenv
 import ccxt
 
 # Logging setup
@@ -14,7 +13,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
-load_dotenv()
+
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
 OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
@@ -26,8 +25,7 @@ exchange = ccxt.okx({
     'password': OKX_API_PASSPHRASE,
     'enableRateLimit': True,
     'options': {
-        'defaultType': 'future'
-        'adjustForTimeDiference': True,
+        'defaultType': 'swap'
     }
 })
 
