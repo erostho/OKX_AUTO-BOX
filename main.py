@@ -102,6 +102,7 @@ def run_bot():
             
             try:
                 all_positions = exchange.fetch_positions()
+                open_positions = [pos for pos in all_positions if float(pos.get('size', 0)) > 0]
                 logging.debug(f"✅ Lấy danh sách vị thế thành công: Tổng cộng {len(all_positions)} vị thế")
             
                 for pos in all_positions:
