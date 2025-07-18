@@ -110,11 +110,16 @@ def run_bot():
                 cur_symbol = symbol.replace("/", "").replace("-", "").lower()
             
                 if cur_symbol == pos_symbol:
-                    # Với OKX futures, dùng 'size' thay vì 'contracts'
                     size = float(pos.get('size', 0))
                     side_open = pos.get('side', '').lower()
+                    side_check = side.lower()
             
-                    if size > 0 and side_open == side.lower():
+                    if side_check == 'buy':
+                        side_check = 'long'
+                    elif side_check == 'sell':
+                        side_check = 'short'
+            
+                    if size > 0 and side_open == side_check:
                         logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
                         return
             
