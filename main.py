@@ -93,28 +93,27 @@ def run_bot():
                 return
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             
-            # ✅ Kiểm tra vị thế đang mở
+            # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}")
 
             open_positions = []
             try:
                 open_positions = exchange.fetch_positions()
-                logging.debug(f"Chi tiết open_positions: {open_positions}")
+                logging.debug(f"📋 Vị thế từ API: {open_positions}")
             except Exception as e:
-                logging.error(f"❌ Không thể fetch open positions: {e}")
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
 
+            # ✅ Duyệt và kiểm tra từng vị thế
             for pos in open_positions:
                 if pos.get('symbol') == symbol:
-                    contracts = float(pos.get('contracts', 0))
+                    # Với OKX futures, dùng 'size' thay vì 'contracts'
+                    size = float(pos.get('size', 0))
                     side_open = pos.get('side', '').lower()
 
-                    if contracts > 0:
-                        if side_open == side.lower():
-                            logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({contracts} hợp đồng). Bỏ qua.")
-                            return
-                        else:
-                            logging.info(f"⚠️ Đã có vị thế ngược chiều ({side.open}) đang mở với {symbol}, cho phép đặt mới")
+                    if size > 0 and side_open == side.lower():
+                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua.")
+                        return
             # ✅ Gửi lệnh thị trường
             order = exchange.create_market_order(
                 symbol=symbol,
@@ -126,12 +125,12 @@ def run_bot():
                 }
             )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
-            if (
+           if (
                 not order
                 or 'data' not in order
-                or not order['data']
-                or ('code' in order and order['code'] not in [0, "0"])
-                or ('info' in order and 'code' in order['info'] and order['info']['code'] not in [0, "0"])
+                or not isinstance(order['data'], list)
+                or len(order['data']) == 0
+                or 'ordId' not in order['data'][0]
             ):
                 logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
                 return
@@ -140,27 +139,27 @@ def run_bot():
             logging.info(f"⚠️ Order ID: {order_id}")
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
-            # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
+            # ✅ Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
             order_detail = exchange.private_get_trade_order({'ordId': order_id})
 
-            # Kiểm tra dữ liệu trả về từ API
+            # ✅ Kiểm tra dữ liệu trả về từ API
             if not order_detail or 'data' not in order_detail or not order_detail['data']:
                 logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
                 return
 
-            # Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
+            # ✅ Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
             avg_price = float(order_detail['data'][0].get('avgPx', 0))
 
-            # Nếu avg_price = 0 thì không nên tiếp tục
+            # ✅ Nếu avg_price = 0 thì không nên tiếp tục
             if avg_price == 0:
                 logging.error(f"❌ Giá avgPx = 0 từ order_id = {order_id}, không tạo được TP/SL")
                 return
                 
-            # Tính TP và SL theo % nhập từ Google Sheet
+            # ✅ Tính TP và SL theo % nhập từ Google Sheet
             tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
             sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
 
-            # Tạo TP (Take Profit)
+            # ✅ Tạo TP (Take Profit)
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
                 "tdMode": "isolated",
@@ -171,7 +170,7 @@ def run_bot():
                 "tpOrdPx": "-1"
             })
 
-            # Tạo SL (Stop Loss)
+            # ✅ Tạo SL (Stop Loss)
             exchange.private_post_trade_order_algo({
                 "instId": symbol,
                 "tdMode": "isolated",
