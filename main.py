@@ -93,31 +93,31 @@ def run_bot():
                 return
             logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
             
-            # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
-            logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
+            # Kiểm tra vị thế đang mở
+            logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}")
             
-            # Lấy 3 ký tự đầu tiên của symbol (tên coin)
             symbol_check = symbol.replace("/", "").replace("-", "").lower()[:3]
             side_check = side.lower()
             if side_check == 'buy':
                 side_check = 'long'
             elif side_check == 'sell':
                 side_check = 'short'
-            
             try:
                 all_positions = exchange.fetch_positions()
+                open_positions = [pos for pos in all_positions if float(pos.get('size', 0)) > 0]
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
-                return
+                open_positions = []
             
-            for pos in all_positions:
+            for pos in open_positions:
                 pos_symbol_raw = pos.get('symbol', '')
-                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()[:3]
-                margin_mode = pos.get('marginMode', '').lower()
+                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                 side_open = pos.get('side', '').lower()
+                margin_mode = pos.get('marginMode', '')
                 size = float(pos.get('size', 0))
             
-                logging.debug(f"[CHECK] pos={pos_symbol_raw} → {pos_symbol} vs {symbol_check} | side={side_open} | size={size}")
+                logging.debug(f"[CHECK] 🔄 pos_symbol={pos_symbol}, side_open={side_open}, margin_mode={margin_mode}, size={size}")
+                logging.debug(f"[CHECK] ↔ so với: symbol_check={symbol_check}, side_check={side_check}")
             
                 if (
                     pos_symbol == symbol_check and
