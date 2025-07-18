@@ -156,6 +156,21 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
+            # 🟢 CHUẨN HÓA SYMBOL về BTC-USDT (đúng định dạng OKX)
+            symbol = symbol.upper().replace("/", "-")
+            
+            # 🔍 LẤY MARKET INFO
+            try:
+                market = exchange.market(symbol)
+            except Exception as e:
+                logging.error(f"❌ Không thể lấy market cho symbol {symbol}: {e}")
+                return
+            
+            # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
+            if market.get('settle') != 'usdt':
+                logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! STOP.")
+                return
+                
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
