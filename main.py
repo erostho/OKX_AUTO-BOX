@@ -5,7 +5,7 @@ import logging
 import requests
 from datetime import datetime
 import ccxt
-
+import pandas as pd
 # Logging setup
 
 logging.basicConfig(
@@ -17,7 +17,7 @@ SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
 OKX_API_KEY = os.environ.get("OKX_API_KEY")
 OKX_API_SECRET = os.environ.get("OKX_API_SECRET")
 OKX_API_PASSPHRASE = os.environ.get("OKX_API_PASSPHRASE")
-
+df = pd.read_csv(spreadsheet_url)
 # Khởi tạo OKX
 exchange = ccxt.okx({
     'apiKey': OKX_API_KEY,
