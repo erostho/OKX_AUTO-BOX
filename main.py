@@ -96,35 +96,40 @@ def run_bot():
             # ✅ Kiểm tra vị thế đang mở trước khi đặt lệnh
             logging.info(f"🔍 Kiểm tra vị thế đang mở với symbol = {symbol}, side = {side}")
             
-            symbol_prefix = symbol.split('-')[0].lower()  # chỉ lấy phần COIN
+            symbol_check = symbol.replace("/", "").replace("-", "").lower()
             side_check = side.lower()
             
-            # Gọi API fetch_positions lần đầu
             try:
                 all_positions = exchange.fetch_positions()
-                open_positions = [pos for pos in all_positions if float(pos.get('size', 0)) > 0]
             except Exception as e:
-                logging.error(f"❌ Không thể fetch positions: {e}")
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
             
+            # ✅ Ghi log tất cả vị thế OKX trả về
+            logging.debug("---- START Vị thế fetch_positions ----")
             for pos in all_positions:
-                pos_symbol_raw = pos.get('symbol', '')  # ví dụ "BTC-USDT"
-                pos_symbol_prefix = pos_symbol_raw.split('-')[0].lower()
-            
-                margin_mode = pos.get('marginMode', '')
+                pos_symbol_raw = pos.get('symbol', '')
+                pos_symbol = pos_symbol_raw.replace("/", "").replace("-", "").lower()
                 side_open = pos.get('side', '').lower()
                 size = float(pos.get('size', 0))
+                margin_mode = pos.get('marginMode', '')
             
-                logging.debug(f"[CHECK] pos_symbol={pos_symbol_raw}, prefix={pos_symbol_prefix}, "
-                              f"side_open={side_open}, margin_mode={margin_mode}, size={size}")
+                logging.debug(
+                    f"[DEBUG_POS] raw={pos_symbol_raw} | cleaned={pos_symbol} | "
+                    f"side_open={side_open} | size={size} | margin_mode={margin_mode}"
+                )
             
-                if margin_mode == 'isolated' and size > 0 and pos_symbol_prefix == symbol_prefix:
-                    # biến đổi side để khớp API:
-                    expected_side = 'long' if side_check == 'buy' else 'short'
-                    if expected_side == side_open:
-                        logging.warning(f"⚠️ Đã có vị thế {side.upper()} với {symbol} rồi ({size} hợp đồng). Bỏ qua.")
-                        return
-            # nếu duyệt hết mà không return => không có vị thế trùng, đặt lệnh tiếp
+                # ✅ So sánh để phát hiện trùng vị thế
+                if (
+                    pos_symbol == symbol_check
+                    and side_open == side_check
+                    and margin_mode == 'isolated'
+                    and size > 0
+                ):
+                    logging.warning(
+                        f"⚠️ Đã có vị thế {side.upper()} đang mở với {symbol} ({size} hợp đồng). Bỏ qua lệnh."
+                    )
+                    return
             
             # ✅ Duyệt từng vị thế và kiểm tra trùng khớp
             for pos in open_positions:
