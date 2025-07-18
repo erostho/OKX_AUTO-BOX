@@ -135,7 +135,7 @@ def run_bot():
                     side_open == side_check and
                     margin_mode == 'isolated'
                 ):
-                    logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} (size={size}) => BỎ QUA KHÔNG ĐẶT LỆNH")
+                    logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check}) => BỎ QUA KHÔNG ĐẶT LỆNH")
                     return
             
             # 🔁 Lấy giá thị trường hiện tại
