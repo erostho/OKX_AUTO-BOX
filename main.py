@@ -104,13 +104,22 @@ def run_bot():
             )
             logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
             
-            # Lấy order ID sau khi đặt lệnh chính
-            order_id = order['data'][0]['ordId']
-
             # Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
             order_detail = exchange.private_get_trade_order({'ordId': order_id})
-            avg_price = float(order_detail['data'][0]['avgPx'])
 
+            # Kiểm tra dữ liệu trả về từ API
+            if not order_detail or 'data' not in order_detail or not order_detail['data']:
+                logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
+                return
+
+            # Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
+            avg_price = float(order_detail['data'][0].get('avgPx', 0))
+
+            # Nếu avg_price = 0 thì không nên tiếp tục
+            if avg_price == 0:
+                logging.error(f"❌ Giá avgPx = 0 từ order_id = {order_id}, không tạo được TP/SL")
+                return
+                
             # Tính TP và SL theo % nhập từ Google Sheet
             tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
             sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
