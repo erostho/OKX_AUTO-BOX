@@ -190,7 +190,7 @@ def run_bot():
             for row in rows:
                 symbol_raw = row[0]                            # Ví dụ: BTC-USDT
                 symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
-                symbol_ccxt = symbol_raw.upper().replace("-", "/")   # BTC/USDT
+                symbol_ccxt = f"{symbol_raw.replace("-", "/")}:USDT".upper()   # BTC/USDT:USDT
             
                 # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
                 if symbol_check not in futures_symbols_okx:
