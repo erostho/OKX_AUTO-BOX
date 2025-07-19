@@ -84,6 +84,7 @@ def run_bot():
             usdt_limit = 20
             coin_amount = round(usdt_limit /ask_price, 6)
             estimated_value = coin_amount * ask_price
+            size = round(usdt_amount / price, 6)
 
             if estimated_value > usdt_limit:
                 coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
@@ -207,11 +208,12 @@ def run_bot():
             logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
 
             symbol_for_order = market['id']
+            # ✅ Vào lệnh — ưu tiên dùng symbol_for_order
             try:
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
                     side=side,
-                    amount=20,
+                    amount=coin_amount,
                     params={
                         "tdMode": "isolated",
                         "ccy": "USDT",
@@ -219,10 +221,27 @@ def run_bot():
                         "lever": "5"
                     }
                 )
-                logging.info(f"📤 Kết quả tạo lệnh: {order}")
+                logging.info(f"📌 SYMBOL ĐẶT LỆNH (OKX ID): {symbol_for_order}")
+                logging.info(f"📥 Kết quả tạo lệnh: {order}")
             except Exception as e:
-                logging.error(f"❌ Lỗi khi gửi lệnh {symbol} | side={side}: {e}")
-                continue
+                logging.warning(f"⚠️ Lỗi với symbol_for_order. Thử lại với symbol: {e}")
+                try:
+                    order = exchange.create_market_order(
+                        symbol=symbol,
+                        side=side,
+                        amount=size,
+                        params={
+                            "tdMode": "isolated",
+                            "ccy": "USDT",
+                            "reduceOnly": False,
+                            "lever": "5"
+                        }
+                    )
+                    logging.info(f"📌 SYMBOL ĐẶT LỆNH (symbol): {symbol}")
+                    logging.info(f"📥 Kết quả tạo lệnh fallback: {order}")
+                except Exception as e2:
+                    logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
+                    continue
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
             if (
                 not order
