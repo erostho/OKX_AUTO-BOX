@@ -252,13 +252,13 @@ def run_bot():
                     symbol_check = symbol.replace("-", "/").upper()
                     side_check = 'long' if side == 'buy' else 'short'
             
-                    logging.info(f"📌 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}, ENTRY: {entry_price}")
-                    logging.debug(f"➡️ symbol_check={symbol_check}, side_check={side_check}")
+                    logging.info(f"⏳ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}, ENTRY: {entry_price}")
+                    logging.debug(f"🔍 symbol_check={symbol_check}, side_check={side_check}")
             
-                    # ✅ Chờ sàn cập nhật vị thế
+                    # ✅ Delay nhỏ để chắc chắn vị thế đã được ghi nhận
                     time.sleep(1)
             
-                    # ✅ Fetch lại vị thế sau khi vào lệnh
+                    # ✅ Fetch vị thế
                     positions = exchange.fetch_positions([symbol])
                     amount = 0
             
@@ -266,20 +266,14 @@ def run_bot():
                         pos_symbol = pos.get('symbol', '').upper()
                         pos_side = pos.get('side', '').lower()
                         margin_mode = pos.get('marginMode', '')
-                        size_raw = pos.get('size', None)
+                        size_raw = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
             
                         logging.debug(
-                            f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, "
-                            f"margin={margin_mode}, size_raw={size_raw}"
+                            f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, margin={margin_mode}, raw={size_raw}"
                         )
             
-                        # ✅ So khớp vị thế
-                        if (
-                            pos_symbol == symbol_check and
-                            pos_side == side_check and
-                            margin_mode == 'isolated'
-                        ):
-                            amount = float(size_raw) if size_raw not in [None, "None", ""] else 0
+                        if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
+                            amount = float(size_raw) if size_raw not in [None, '', "None"] else 0
                             logging.debug(f"[CHECK SIZE FINAL] symbol={symbol}, amount={amount}")
                             break
             
@@ -295,15 +289,14 @@ def run_bot():
                         amount=amount,
                         price=None,
                         params={
-                            'triggerPrice': round(tp_price, 8),
-                            'orderType': 'market',
-                            'tdMode': 'isolated',
-                            'ccy': 'USDT'
+                            "triggerPrice": round(tp_price, 8),
+                            "orderType": "market",
+                            "tdMode": "isolated",
+                            "ccy": "USDT"
                         }
                     )
-                    logging.info(f"✅ Đã đặt TP cho {symbol}: trigger @ {round(tp_price, 8)}")
             
-                    # ✅ Đặt SL
+                    # ✅ Đặt SL (nếu cần)
                     sl_order = exchange.create_order(
                         symbol=symbol,
                         type='trigger',
@@ -311,16 +304,15 @@ def run_bot():
                         amount=amount,
                         price=None,
                         params={
-                            'triggerPrice': round(sl_price, 8),
-                            'orderType': 'market',
-                            'tdMode': 'isolated',
-                            'ccy': 'USDT'
+                            "triggerPrice": round(sl_price, 8),
+                            "orderType": "market",
+                            "tdMode": "isolated",
+                            "ccy": "USDT"
                         }
                     )
-                    logging.info(f"✅ Đã đặt SL cho {symbol}: trigger @ {round(sl_price, 8)}")
             
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
+                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol} | {e}")
                     
             # 🟦 Tính entry_price và đặt TP/SL
             entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
