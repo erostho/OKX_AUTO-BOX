@@ -189,7 +189,7 @@ def run_bot():
             # ✅ Duyệt từng dòng trong sheet
             for row in rows:
                 symbol_raw = row[0]                            # Ví dụ: BTC-USDT
-                symbol_check = f"{symbol_raw}-SWAP  # BTC-USDT-SWAP
+                symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
                 symbol_ccxt = symbol_raw.upper().replace("-", "/")   # BTC/USDT
             
                 # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
