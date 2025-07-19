@@ -213,12 +213,10 @@ def run_bot():
                 
                 logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
                 
-                if settle_coin == 'usdt' and market_type in ['future', 'swap']:
-                    logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} → Cho phép đặt lệnh")
+                if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
+                    logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
                 else:
-                    logging.error(
-                        f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua..."
-                    )
+                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                     continue
                 
                 logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
