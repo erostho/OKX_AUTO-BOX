@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.INFO,  # thay vì DEBUG/INFO
+    level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
@@ -230,6 +230,7 @@ def run_bot():
                     "lever": "5"
                 }
             )
+            logging.info(f"📤 Kết quả tạo lệnh: {order}")
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
             if (
                 not order
