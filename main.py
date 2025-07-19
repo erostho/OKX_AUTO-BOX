@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.INFO,  # thay vì DEBUG/INFO
+    level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
@@ -205,8 +205,8 @@ def run_bot():
                 logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
        
-            # ✅ vào lệnh 
-            market = exchange.markets.get(symbol_check)
+            # ✅ vào lệnh
+            logging.info(f"📌 SYMBOL ĐẶT LỆNH (OKX ID): {symbol_for_order}")
             try:
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
