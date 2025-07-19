@@ -242,86 +242,59 @@ def run_bot():
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
-            if (
-                not order
-                or 'data' not in order
-                or not isinstance(order['data'], list)
-                or len(order['data']) == 0
-                or 'ordId' not in order['data'][0]
-            ):
-                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
-                continue
-    
-                order_id = order['data'][0]['ordId']
-                logging.info(f"⚠️ Order ID: {order_id}")
-                logging.info(f"✅ Mở lệnh {signal} {symbol} với 20 USDT đòn bẩy 5x thành công")
-                
-                # ✅ Gọi API để lấy thông tin order đã khớp, bao gồm giá khớp (avgPx)
-                order_detail = exchange.private_get_trade_order({'ordId': order_id})
-    
-                # ✅ Kiểm tra dữ liệu trả về từ API
-                if not order_detail or 'data' not in order_detail or not order_detail['data']:
-                    logging.error(f"❌ Không thể lấy thông tin khớp lệnh từ order_id = {order_id}")
-                    continue
-    
-                # ✅ Nếu dữ liệu hợp lệ, lấy giá trung bình khớp lệnh
-                avg_price = float(order_detail['data'][0].get('avgPx', 0))
-    
-                # ✅ Nếu avg_price = 0 thì không nên tiếp tục
-                if avg_price == 0:
-                    logging.error(f"❌ Giá avgPx = 0 từ order_id = {order_id}, không tạo được TP/SL")
-                    continue
-                    
-                # ✅ Tính TP và SL theo % nhập từ Google Sheet
-                tp_price = avg_price * (1 + tp) if signal == "LONG" else avg_price * (1 - tp)
-                sl_price = avg_price * (1 - sl) if signal == "LONG" else avg_price * (1 + sl)
-    
-                # ✅ Tạo TP (Take Profit)
-                exchange.private_post_trade_order_algo({
-                    "instId": symbol,
-                    "tdMode": "isolated",
-                    "side": "sell" if signal == "LONG" else "buy",
-                    "ordType": "take_profit",
-                    "sz": str(amount),
-                    "tpTriggerPx": round(tp_price, 6),
-                    "tpOrdPx": "-1"
-                })
-    
-                # ✅ Tạo SL (Stop Loss)
-                exchange.private_post_trade_order_algo({
-                    "instId": symbol,
-                    "tdMode": "isolated",
-                    "side": "sell" if signal == "LONG" else "buy",
-                    "ordType": "stop_loss",
-                    "sz": str(amount),
-                    "slTriggerPx": round(sl_price, 6),
-                    "slOrdPx": "-1"
-                })
-                exchange.private_post_trade_order_algo({
-                    "instId": symbol,
-                    "tdMode": "isolated",
-                    "side": "sell" if signal == "LONG" else "buy",
-                    "ordType": "take_profit",
-                    "sz": str(amount),
-                    "tpTriggerPx": round(tp_price, 6),
-                    "tpOrdPx": "-1",
-                })
-    
-                exchange.private_post_trade_order_algo({
-                    "instId": symbol,
-                    "tdMode": "isolated",
-                    "side": "sell" if signal == "LONG" else "buy",
-                    "ordType": "stop",
-                    "sz": str(amount),
-                    "slTriggerPx": round(sl_price, 6),
-                    "slOrdPx": "-1",
-                    "posSide": pos_side
-                })
-    
-                logging.info(f"🎯 TP/SL đặt xong cho {symbol}: TP={round(tp_price,6)} | SL={round(sl_price,6)}")
-    
-        except Exception as e:
-            logging.error(f"❌ Lỗi xử lý dòng: {e}")
+            def place_tp_sl_order(exchange, symbol, side, entry_price):
+                """
+                Đặt TP/SL cho lệnh futures trên OKX.
+                SL: -5%, TP: +10%
+                """
+                try:
+                    # ✅ Tính giá TP & SL
+                    if side.lower() == 'buy':  # tức là LONG
+                        tp_price = round(entry_price * 1.10, 6)  # +10%
+                        sl_price = round(entry_price * 0.95, 6)  # -5%
+                        opposite_side = 'sell'
+                    elif side.lower() == 'sell':  # SHORT
+                        tp_price = round(entry_price * 0.90, 6)
+                        sl_price = round(entry_price * 1.05, 6)
+                        opposite_side = 'buy'
+                    else:
+                        logging.error(f"❌ Side không hợp lệ: {side}")
+                        return
+            
+                    logging.info(f"🎯 TP: {tp_price}, SL: {sl_price}")
+            
+                    # ✅ Đặt lệnh TP
+                    tp_order = exchange.create_order(
+                        symbol=symbol,
+                        type="trigger",
+                        side=opposite_side,
+                        amount=None,  # OKX sẽ lấy toàn bộ khối lượng đang mở
+                        params={
+                            "triggerPrice": tp_price,
+                            "triggerType": "mark",  # hoặc 'last'
+                            "orderType": "market",
+                            "reduceOnly": True,
+                        }
+                    )
+                    logging.info(f"✅ Đã đặt TP: {tp_order}")
+            
+                    # ✅ Đặt lệnh SL
+                    sl_order = exchange.create_order(
+                        symbol=symbol,
+                        type="trigger",
+                        side=opposite_side,
+                        amount=None,
+                        params={
+                            "triggerPrice": sl_price,
+                            "triggerType": "mark",
+                            "orderType": "market",
+                            "reduceOnly": True,
+                        }
+                    )
+                    logging.info(f"✅ Đã đặt SL: {sl_order}")
+            
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
 
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
