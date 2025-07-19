@@ -159,6 +159,7 @@ def run_bot():
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
             exchange.load_markets()
+            market = exchange.markets.get(symbol_check)
 
             # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
             def fetch_okx_usdt_futures_symbols():
