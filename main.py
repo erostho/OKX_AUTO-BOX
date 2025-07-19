@@ -134,7 +134,7 @@ def run_bot():
                     margin_mode == 'isolated'
                 ):
                     logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh")
-                    has_position_open = true
+                    has_position_open = True
                     break # không cần kiểm tra thêm
             # ✅ Đã có vị thế bỏ qua coin này
             if has_position_open:
