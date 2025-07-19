@@ -253,27 +253,43 @@ def run_bot():
                     logging.error(f"❌ Không thể fetch vị thế để lấy entry_price: {ex}")
                     return
             
+                # ✅ Lấy entry_price từ vị thế hiện tại (kèm retry)
                 entry_price = 0
-                size = 0
                 symbol_check = symbol.replace("-", "/").upper()
                 side_check = side.lower()
-            
-                for pos in positions:
-                    pos_symbol = pos.get('symbol', '').upper()
-                    pos_side = pos.get('side', '').lower()
-                    if (
-                        pos_symbol == symbol_check and
-                        pos_side == side_check and
-                        pos.get('marginMode') == 'isolated' and
-                        float(pos.get('size', 0)) > 0
-                    ):
-                        entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
-                        size = float(pos.get('size'))
-                        logging.info(f"✅ Tìm thấy entry_price = {entry_price} từ vị thế hiện tại")
+                max_retries = 5
+                
+                for i in range(max_retries):
+                    try:
+                        positions = exchange.fetch_positions([symbol])
+                    except Exception as e:
+                        logging.error(f"❌ Lỗi khi fetch vị thế để lấy entry_price: {e}")
+                        return
+                
+                    for pos in positions:
+                        pos_symbol = pos.get('symbol', '').upper()
+                        pos_side = pos.get('side', '').lower()
+                        margin_mode = pos.get('marginMode', '')
+                        size = float(pos.get('size', 0))
+                
+                        if (
+                            pos_symbol == symbol_check and
+                            pos_side == side_check and
+                            margin_mode == 'isolated' and
+                            size > 0
+                        ):
+                            entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+                            logging.info(f"✅ Tìm thấy entry_price = {entry_price} từ vị thế hiện tại")
+                            break
+                
+                    if entry_price > 0:
                         break
-            
-                if not entry_price or entry_price == 0:
-                    logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                    else:
+                        logging.warning(f"⚠️ Lần {i+1}: entry_price vẫn = 0, chờ thêm 1s...")
+                        time.sleep(1)
+                
+                if entry_price == 0:
+                    logging.error(f"❌ Không thể lấy được entry_price hợp lệ sau {max_retries} lần")
                     return
 
                 # ✅ Đặt Take Profit (TP)
