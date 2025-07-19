@@ -229,7 +229,6 @@ def run_bot():
                     amount=size,
                     params={
                         "tdMode": "isolated",
-                        "ccy": "USDT",
                         "reduceOnly": False,
                         "lever": "5"
                     }
