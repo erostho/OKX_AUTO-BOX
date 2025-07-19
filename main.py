@@ -176,29 +176,30 @@ def run_bot():
                     continue
                 logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
-            logging.debug("--- START kiểm tra vị thế từ OKX ---")
-            for pos in all_positions:
-                pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
-                side_open = pos.get('side', '').lower()                         # long / short
-                margin_mode = pos.get('marginMode', '')                         # isolated / cross
-            
-                logging.debug(
-                    f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
-                    f"margin_mode={margin_mode}"
-                )
-                logging.debug(
-                    f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
-                )
-            
-                if (
-                    pos_symbol == symbol_check and
-                    side_open == side_check and
-                    margin_mode == 'isolated'
-                ):
-                    logging.warning(
-                        f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
+                
+                logging.debug("--- START kiểm tra vị thế từ OKX ---")
+                for pos in all_positions:
+                    pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
+                    side_open = pos.get('side', '').lower()                         # long / short
+                    margin_mode = pos.get('marginMode', '')                         # isolated / cross
+                
+                    logging.debug(
+                        f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
+                        f"margin_mode={margin_mode}"
                     )
-                    continue 
+                    logging.debug(
+                        f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
+                    )
+                
+                    if (
+                        pos_symbol == symbol_check and
+                        side_open == side_check and
+                        margin_mode == 'isolated'
+                    ):
+                        logging.warning(
+                            f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
+                        )
+                        continue
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
