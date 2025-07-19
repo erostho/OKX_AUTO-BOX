@@ -213,7 +213,7 @@ def run_bot():
                         "tdMode": "isolated",
                         "ccy": "USDT",
                         "reduceOnly": False,
-                        "lever": str(leverage)
+                        "lever": "5"
                     }
                 )
                 logging.info(f"📤 Kết quả tạo lệnh: {order}")
