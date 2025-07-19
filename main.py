@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.DEBUG,  # thay vì DEBUG/INFO
+    level=logging.INFO,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
