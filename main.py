@@ -89,7 +89,7 @@ def run_bot():
             estimated_value = coin_amount * ask_price
 
             if estimated_value > usdt_limit:
-                coin_amount = round(usdt_limit * 0.999) /ask_price, 6)
+                coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
                 estimated_value  = coin_amount * ask_price
             logging.info(
                 f"✅ Đặt lệnh {side.upper()} {symbol} với {coin_amount} coin (~{estimated_value:.2f} USDT), "
