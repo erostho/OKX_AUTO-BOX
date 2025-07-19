@@ -280,13 +280,12 @@ def run_bot():
                     return
             
                 # ✅ Tính giá TP/SL
+                # Tính TP/SL
                 sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
                 tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
                 side_tp_sl = 'sell' if side == 'buy' else 'buy'
-            
-                logging.debug(f"📌 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
-            
-                # ✅ Đặt lệnh TP (take profit)
+                
+                # Đặt lệnh Take Profit
                 try:
                     tp_order = exchange.create_order(
                         symbol=symbol,
@@ -294,18 +293,13 @@ def run_bot():
                         side=side_tp_sl,
                         amount=size,
                         params={
-                            'takeProfitPrice': round(tp_price, 6),                            
-                            'stopLossPrice': None,
                             'triggerPrice': round(tp_price, 6),
-                            'triggerType': 'last',
-                            'tpTriggerBy': 'last',
-                            'tdMode': 'isolated',
-                            'reduceOnly': True
+                            'triggerType': 'last'
                         }
                     )
-                    logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
-                except Exception as ex:
-                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {ex}")
+                    logging.info(f"✅ Đã đặt TP với triggerPrice={tp_price}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt TP: {e}")
             
                 # ✅ Đặt lệnh SL (stop loss)
                 try:
@@ -315,18 +309,13 @@ def run_bot():
                         side=side_tp_sl,
                         amount=size,
                         params={
-                            'stopLossPrice': round(sl_price, 6),
-                            'takeProfitPrice': None,
                             'triggerPrice': round(sl_price, 6),
-                            'triggerType': 'last',
-                            'slTriggerBy': 'last',
-                            'tdMode': 'isolated',
-                            'reduceOnly': True
+                            'triggerType': 'last'
                         }
                     )
-                    logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
-                except Exception as ex:
-                    logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {ex}")
+                    logging.info(f"✅ Đã đặt SL với triggerPrice={sl_price}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt SL: {e}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
