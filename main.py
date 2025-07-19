@@ -219,12 +219,6 @@ def run_bot():
                 logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
                 
-            
-            # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
-            if market.get('settle') != 'usdt':
-                logging.error(f"❌ Symbol {symbol} không phải USDT-M Futures! bỏ qua...")
-                continue
-                
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
