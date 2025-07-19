@@ -242,10 +242,10 @@ def run_bot():
            
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
             def place_tp_sl_order(exchange, symbol, side):
-                logging.info(f"🚀 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
-                time.sleep(1.5)  # chờ vị thế ổn định sau khi mở lệnh
+                logging.info(f"📌 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
+                time.sleep(1.5)  # Đợi vị thế vừa mở ổn định
             
-                # ✅ Fetch vị thế để lấy entry_price và size
+                # ✅ Fetch vị thế hiện tại để lấy entry_price và size
                 try:
                     positions = exchange.fetch_positions([symbol])
                 except Exception as ex:
@@ -262,17 +262,12 @@ def run_bot():
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
                     pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
-                    pos_size = float(pos_size)
-            
-                    logging.debug(
-                        f"[CHECK POS] symbol={pos_symbol}, side={pos_side}, mode={margin_mode}, size={pos_size}"
-                    )
             
                     if (
                         pos_symbol == symbol_check and
                         pos_side == side_check and
                         margin_mode == 'isolated' and
-                        pos_size > 0
+                        float(pos_size) > 0
                     ):
                         entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
                         size = pos_size
@@ -288,41 +283,43 @@ def run_bot():
                 tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
                 side_tp_sl = 'sell' if side == 'buy' else 'buy'
             
-                logging.debug(f"📌 TP/SL info → TP: {tp_price}, SL: {sl_price}, side_tp_sl={side_tp_sl}")
+                logging.debug(f"📊 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
             
-                # ✅ Đặt TP
+                # ✅ Gửi lệnh TP (take profit)
                 try:
-                    logging.info(f"🟩 Gửi lệnh TP cho {symbol} - Giá: {tp_price}")
+                    logging.debug(f"📤 Gửi lệnh TP: {symbol}, triggerPx={round(tp_price,6)}, size={size}")
                     tp_order = exchange.private_post_trade_order_algo({
                         'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': side_tp_sl,
-                        'ordType': 'conditional',
+                        'ordType': 'trigger',
                         'sz': str(size),
+                        'ccy': 'USDT',
                         'triggerPx': str(round(tp_price, 6)),
                         'triggerPxType': 'last',
-                        'ordPx': '',  # market
+                        'reduceOnly': True
                     })
-                    logging.info(f"✅ TP order response: {tp_order}")
+                    logging.info(f"✅ Đặt TP thành công: {tp_order}")
                 except Exception as ex:
-                    logging.error(f"❌ Đặt TP lỗi: {ex}")
+                    logging.error(f"❌ Lỗi đặt lệnh TP: {ex}")
             
-                # ✅ Đặt SL
+                # ✅ Gửi lệnh SL (stop loss)
                 try:
-                    logging.info(f"🟥 Gửi lệnh SL cho {symbol} - Giá: {sl_price}")
+                    logging.debug(f"📤 Gửi lệnh SL: {symbol}, triggerPx={round(sl_price,6)}, size={size}")
                     sl_order = exchange.private_post_trade_order_algo({
                         'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': side_tp_sl,
-                        'ordType': 'conditional',
+                        'ordType': 'trigger',
                         'sz': str(size),
+                        'ccy': 'USDT',
                         'triggerPx': str(round(sl_price, 6)),
                         'triggerPxType': 'last',
-                        'ordPx': '',  # market
+                        'reduceOnly': True
                     })
-                    logging.info(f"✅ SL order response: {sl_order}")
+                    logging.info(f"✅ Đặt SL thành công: {sl_order}")
                 except Exception as ex:
-                    logging.error(f"❌ Đặt SL lỗi: {ex}")
+                    logging.error(f"❌ Lỗi đặt lệnh SL: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
