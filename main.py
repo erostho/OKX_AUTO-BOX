@@ -279,43 +279,41 @@ def run_bot():
                     logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
                     return
             
-                # ✅ Tính giá TP/SL
-                # Tính TP/SL
-                sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
-                tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
-                side_tp_sl = 'sell' if side == 'buy' else 'buy'
-                
-                # Đặt lệnh Take Profit
+                # ✅ Đặt Take Profit (TP)
                 try:
                     tp_order = exchange.create_order(
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=size,
+                        amount=size_raw,
                         params={
-                            'triggerPrice': round(tp_price, 6),
-                            'triggerType': 'last'
+                            "takeProfitPrice": round(tp_price, 4),
+                            "stopLossPrice": None,
+                            "triggerType": "mark",
+                            "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅ Đã đặt TP với triggerPrice={tp_price}")
+                    logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP: {e}")
-            
-                # ✅ Đặt lệnh SL (stop loss)
+                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
+                
+                # ✅ Đặt Stop Loss (SL)
                 try:
                     sl_order = exchange.create_order(
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=size,
+                        amount=size_raw,
                         params={
-                            'triggerPrice': round(sl_price, 6),
-                            'triggerType': 'last'
+                            "stopLossPrice": round(sl_price, 4),
+                            "takeProfitPrice": None,
+                            "triggerType": "mark",
+                            "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅ Đã đặt SL với triggerPrice={sl_price}")
+                    logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt SL: {e}")
+                    logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {e}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
