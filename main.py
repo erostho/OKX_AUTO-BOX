@@ -78,17 +78,19 @@ def run_bot():
 
             # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
             ticker = exchange.fetch_ticker(symbol)
-            mark_price = float(ticker.get('last') or 0)
-
+            mark_price = float(ticker.get('ask') or 0)          
+            
             if mark_price <= 0:
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
             base_usdt = 20
+            usdt_amount = 20
             max_order_value = 1000000  # giới hạn OKX là 1 triệu
             safe_usdt = min(base_usdt, max_order_value * 0.9)  # chỉ dùng tối đa 90% ngưỡng
 
             amount = round(safe_usdt / mark_price, 6)
+            size = round(usdt_amount / market_price, 6)
             estimated_value = amount * mark_price
 
             if estimated_value > max_order_value:
@@ -140,24 +142,6 @@ def run_bot():
             # ✅ Đã có vị thế bỏ qua coin này
             if has_position_open:
                 continue
-            
-            # 🔁 Lấy giá thị trường hiện tại
-            ticker = exchange.fetch_ticker(symbol)
-            market_price = ticker['last']
-
-            # ✅ Thiết lập thông số lệnh
-            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
-            leverage = 5
-            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
-            
-            # ✅ Tính số lượng coin cần mua
-            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
-            
-            # ✅ Gửi lệnh thị trường
-            ticker = exchange.fetch_ticker(symbol)
-            price = ticker['ask']
-            usdt_amount = 20
-            size = round(usdt_amount / market_price, 6)
             
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
