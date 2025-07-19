@@ -270,7 +270,7 @@ def run_bot():
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
-                    size_raw = pos.get('pos', None)
+                    size_raw = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
             
                     logging.debug(f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, margin={margin_mode}, size_raw={size_raw}")
             
