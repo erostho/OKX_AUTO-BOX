@@ -315,8 +315,8 @@ def run_bot():
     
                 logging.info(f"🎯 TP/SL đặt xong cho {symbol}: TP={round(tp_price,6)} | SL={round(sl_price,6)}")
     
-            except Exception as e:
-                logging.error(f"❌ Lỗi xử lý dòng: {e}")
+        except Exception as e:
+            logging.error(f"❌ Lỗi xử lý dòng: {e}")
 
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
