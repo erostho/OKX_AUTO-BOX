@@ -262,7 +262,7 @@ def run_bot():
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
-                    pos_size = float(pos.get('size', 0))
+                    pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
             
                     if (
                         pos_symbol == symbol_check and
@@ -292,7 +292,7 @@ def run_bot():
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=coin_amount,
+                        amount=size
                         params={
                             'takeProfitPrice': round(tp_price, 6),                            
                             'stopLossPrice': None,
@@ -313,7 +313,7 @@ def run_bot():
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=coin_amount,
+                        amount=size
                         params={
                             'stopLossPrice': round(sl_price, 6),
                             'takeProfitPrice': None,
