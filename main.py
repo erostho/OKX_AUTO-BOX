@@ -282,41 +282,40 @@ def run_bot():
                 if amount == 0:
                     logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
                     return
-            
-                # ✅ Đặt Take Profit
+
+                # ✅ Đặt Take Profit (TP)
                 try:
                     tp_order = exchange.create_order(
                         symbol=symbol,
-                        type='stop_market',
+                        type='stop-market',
                         side=side_tp_sl,
                         amount=amount,
                         params={
-                            "triggerPrice": round(tp_price, 4),
-                            "orderType": "market",         # ✅ đặt luôn là market khi trigger
-                            "triggerType": "mark",         # ✅ hoặc "last" nếu muốn
-                            "marginMode": "isolated"
-                        }
-                    )
-                    logging.info(f"✅✅ Đã đặt TP cho {symbol}: {tp_order}")
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
-                
-                # ✅ Đặt Stop Loss
-                # ✅ Đặt Stop Loss
-                try:
-                    sl_order = exchange.create_order(
-                        symbol=symbol,
-                        type='stop_market',
-                        side=side_tp_sl,
-                        amount=amount,
-                        params={
-                            "triggerPrice": round(sl_price, 4),
-                            "orderType": "market",
+                            "stopLossPrice": None,
+                            "takeProfitPrice": round(tp_price, 4),
                             "triggerType": "mark",
                             "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅✅ Đã đặt SL cho {symbol}: {sl_order}")
+                    logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
+                
+                # ✅ Đặt Stop Loss (SL)
+                try:
+                    sl_order = exchange.create_order(
+                        symbol=symbol,
+                        type='stop-market',
+                        side=side_tp_sl,
+                        amount=amount,
+                        params={
+                            "stopLossPrice": round(sl_price, 4),
+                            "takeProfitPrice": None,
+                            "triggerType": "mark",
+                            "marginMode": "isolated"
+                        }
+                    )
+                    logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {e}")
                     
