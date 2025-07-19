@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.INFO,  # thay vì DEBUG
+    level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
@@ -207,12 +207,17 @@ def run_bot():
                     logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
                     continue
             
-                # ✅ Bước 3: Check đúng loại USDT-M (Linear Futures/Swap)
-                if not market.get('linear') or market.get('settle') != 'usdt':
-                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (linear & usdt)! Bỏ qua...")
+                # ✅ Bước 3: Check đúng loại USDT-M Futures/Swap (Linear)
+                market_type = market.get('type')
+                settle_coin = market.get('settle')
+                
+                logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
+                
+                if settle_coin != 'usdt' or market_type not in ['future', 'swap']:
+                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                     continue
-            
-                logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market.get('type').upper()} → Cho phép đặt lệnh")
+                
+                logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
