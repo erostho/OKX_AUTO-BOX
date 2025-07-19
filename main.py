@@ -78,25 +78,23 @@ def run_bot():
 
             # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
             ticker = exchange.fetch_ticker(symbol)
-            mark_price = float(ticker.get('ask') or 0)          
+            ask_price = float(ticker.get('ask') or 0)          
             
-            if mark_price <= 0:
+            if ask_price <= 0:
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
-            base_usdt = 20
-            usdt_amount = 20
-            max_order_value = 1000000  # giới hạn OKX là 1 triệu
-            safe_usdt = min(base_usdt, max_order_value * 0.9)  # chỉ dùng tối đa 90% ngưỡng
+            usdt_limit = 20
+            coin_amount = round(usdt_limit /ask_price, 6)
+            estimated_value = coin_amount * ask_price
 
-            amount = round(safe_usdt / mark_price, 6)
-            size = round(usdt_amount / mark_price, 6)
-            estimated_value = amount * mark_price
-
-            if estimated_value > max_order_value:
-                logging.warning(f"⚠️ Giá trị lệnh ~{estimated_value} USDT vượt giới hạn OKX. Hủy lệnh.")
-                return
-            logging.info(f"✅ Đặt lệnh {side} {symbol} với amount = {amount}, giá hiện tại = {mark_price}")
+            if estimated_value > usdt_limit:
+                coin_amount = round(usdt_limit * 0.999) /ask_price, 6)
+                estimated_value  = coin_amount * ask_price
+            logging.info(
+                f"✅ Đặt lệnh {side.upper()} {symbol} với {coin_amount} coin (~{estimated_value:.2f} USDT), "
+                f"giá ask = {ask_price}"
+            )
             
             # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
             symbol_check = symbol.replace("-", "/").upper()
