@@ -238,7 +238,8 @@ def run_bot():
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
-            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
+           
+            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP
             def place_tp_sl_order(exchange, symbol, side, entry_price):
                 try:
                     # Tính TP/SL
@@ -251,7 +252,7 @@ def run_bot():
                         symbol=symbol,
                         type='trigger',
                         side=side_tp_sl,
-                        amount=None,  # OKX tự dùng vị thế hiện có
+                        amount= float(pos.get('size', 0))  # OKX tự dùng vị thế hiện có (sai)
                         price=None,
                         params={
                             "triggerPrice": round(tp_price, 8),
@@ -268,7 +269,7 @@ def run_bot():
                         symbol=symbol,
                         type='trigger',
                         side=side_tp_sl,
-                        amount=None,
+                        amount= float(pos.get('size', 0))
                         price=None,
                         params={
                             "triggerPrice": round(sl_price, 8),
