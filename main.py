@@ -241,60 +241,58 @@ def run_bot():
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
+            
+            # ▶️ Tính entry_price và đặt TP/SL
+            entry_price = float(order['info'].get('avgPx') or order['info'].get('fillPx') or 0)
+            if entry_price > 0:
+                place_tp_sl_order(exchange, symbol, side, entry_price)
+            else:
+                logging.warning(f"⚠️ Không xác định được entry_price để đặt TP/SL cho {symbol}")
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
+        
             def place_tp_sl_order(exchange, symbol, side, entry_price):
-                """
-                Đặt TP/SL cho lệnh futures trên OKX.
-                SL: -5%, TP: +10%
-                """
                 try:
-                    # ✅ Tính giá TP & SL
-                    if side.lower() == 'buy':  # tức là LONG
-                        tp_price = round(entry_price * 1.10, 6)  # +10%
-                        sl_price = round(entry_price * 0.95, 6)  # -5%
-                        opposite_side = 'sell'
-                    elif side.lower() == 'sell':  # SHORT
-                        tp_price = round(entry_price * 0.90, 6)
-                        sl_price = round(entry_price * 1.05, 6)
-                        opposite_side = 'buy'
-                    else:
-                        logging.error(f"❌ Side không hợp lệ: {side}")
-                        return
+                    # Tính TP/SL
+                    sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
+                    tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
+                    side_tp_sl = 'sell' if side == 'buy' else 'buy'
             
-                    logging.info(f"🎯 TP: {tp_price}, SL: {sl_price}")
-            
-                    # ✅ Đặt lệnh TP
+                    # TP
                     tp_order = exchange.create_order(
                         symbol=symbol,
-                        type="trigger",
-                        side=opposite_side,
-                        amount=None,  # OKX sẽ lấy toàn bộ khối lượng đang mở
+                        type='trigger',
+                        side=side_tp_sl,
+                        amount=None,  # OKX tự dùng vị thế hiện có
+                        price=None,
                         params={
-                            "triggerPrice": tp_price,
-                            "triggerType": "mark",  # hoặc 'last'
+                            "triggerPrice": round(tp_price, 8),
                             "orderType": "market",
+                            "tdMode": "isolated",
+                            "ccy": "USDT",
                             "reduceOnly": True,
                         }
                     )
-                    logging.info(f"✅ Đã đặt TP: {tp_order}")
+                    logging.info(f"✅ Đã tạo lệnh TP tại {tp_price} cho {symbol} ({side_tp_sl})")
             
-                    # ✅ Đặt lệnh SL
+                    # SL
                     sl_order = exchange.create_order(
                         symbol=symbol,
-                        type="trigger",
-                        side=opposite_side,
+                        type='trigger',
+                        side=side_tp_sl,
                         amount=None,
+                        price=None,
                         params={
-                            "triggerPrice": sl_price,
-                            "triggerType": "mark",
+                            "triggerPrice": round(sl_price, 8),
                             "orderType": "market",
+                            "tdMode": "isolated",
+                            "ccy": "USDT",
                             "reduceOnly": True,
                         }
                     )
-                    logging.info(f"✅ Đã đặt SL: {sl_order}")
+                    logging.info(f"✅ Đã tạo lệnh SL tại {sl_price} cho {symbol} ({side_tp_sl})")
             
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
+                    logging.error(f"❌ Lỗi khi tạo TP/SL cho {symbol}: {e}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
