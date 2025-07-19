@@ -174,46 +174,40 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # ✅ Cấu hình load markets future
+            # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
-            market = exchange.markets.get(symbol_check)
+            exchange.load_markets()
             
-            # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
-            def fetch_okx_usdt_futures_symbols():
-                url = "https://www.okx.com/api/v5/public/instruments?instType=SWAP"  # hoặc FUTURES nếu bạn muốn FUTURES thay vì perpetual
-                try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    data = response.json()
-                    instruments = data.get("data", [])
-                    symbols = []
-            
-                    for item in instruments:
-                        # Chỉ chọn USDT-M (linear), bỏ qua COIN-M
-                        if item.get("settleCcy") == "USDT" and item.get("ctType") in ["linear", None]:
-                            inst_id = item["instId"]  # VD: BTC-USDT-SWAP
-                            symbols.append(inst_id)
-            
-                    return list(set(symbols))  # Loại trùng
-                except Exception as e:
-                    logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
-                    return []
-            
-            
-            # ✅ Lấy danh sách Futures symbols
+            # ✅ Lấy danh sách symbols từ API OKX (Futures)
             futures_symbols_okx = fetch_okx_usdt_futures_symbols()
             logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
             
-            # ✅ Lặp qua từng coin để kiểm tra
+            # ✅ Duyệt từng dòng trong sheet
             for row in rows:
-                symbol_raw = row[0]  # VD: PI-USDT
-                symbol_check = symbol_raw.upper().replace("/", "-") + "-SWAP"  # PI-USDT-SWAP
+                symbol_raw = row[0]                            # Ví dụ: BTC-USDT
+                symbol_check = symbol_raw.upper().replace("/", "-")  # BTC-USDT
+                symbol_ccxt = symbol_raw.upper().replace("-", "/")   # BTC/USDT
             
+                # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
                 if symbol_check not in futures_symbols_okx:
-                    logging.warning(f"⛔ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
+                    logging.warning(f"⚠️ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
                     continue
             
                 logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
+            
+                # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
+                market = exchange.markets.get(symbol_ccxt)
+            
+                if not market:
+                    logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
+                    continue
+            
+                # ✅ Bước 3: Check đúng loại USDT-M (Linear Futures/Swap)
+                if market.get('settle') != 'usdt' or market.get('type') not in ['future', 'swap']:
+                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures! Bỏ qua...")
+                    continue
+            
+                logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market.get('type').upper()} → Cho phép đặt lệnh")
             
             # 🔒 CHỈ CHO PHÉP ĐẶT LỆNH CHO USDT-M (Linear Futures)
             if market.get('settle') != 'usdt':
