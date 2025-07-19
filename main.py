@@ -140,7 +140,8 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
-                            logging.debug("--- START kiểm tra vị thế từ OKX ---")
+                
+                logging.debug("--- START kiểm tra vị thế từ OKX ---")
                 for pos in all_positions:
                     pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
                     side_open = pos.get('side', '').lower()                         # long / short
