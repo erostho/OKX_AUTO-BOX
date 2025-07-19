@@ -201,14 +201,15 @@ def run_bot():
             
                 # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
                 market = exchange.markets.get(symbol_ccxt)
+                logging.debug(f"↪ Thông tin thị trường: {market}")
             
                 if not market:
                     logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
                     continue
             
                 # ✅ Bước 3: Check đúng loại USDT-M (Linear Futures/Swap)
-                if market.get('settle') != 'usdt' or market.get('type') not in ['future', 'swap']:
-                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures! Bỏ qua...")
+                if not market.get('linear') or market.get('settle') != 'usdt':
+                    logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (linear & usdt)! Bỏ qua...")
                     continue
             
                 logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market.get('type').upper()} → Cho phép đặt lệnh")
