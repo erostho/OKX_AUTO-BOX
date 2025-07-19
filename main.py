@@ -243,17 +243,28 @@ def run_bot():
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
            
             def place_tp_sl_order(exchange, symbol, side, entry_price):
-                logging.info(f"🟡 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}, ENTRY: {entry_price}")
+                logging.info(f"🟡 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
             
-                # ✅ Tính giá TP/SL
-                sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
-                tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
-                side_tp_sl = 'sell' if side == 'buy' else 'buy'
+                # ✅ Tính TP/SL đúng logic futures
+                sl_percent = 5   # 5% cắt lỗ
+                tp_percent = 10  # 10% chốt lời
             
-                logging.debug(f"✅ TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
+                if side == 'buy':
+                    sl_price = entry_price * (1 - sl_percent / 100)
+                    tp_price = entry_price * (1 + tp_percent / 100)
+                    side_tp_sl = 'sell'
+                elif side == 'sell':
+                    sl_price = entry_price * (1 + sl_percent / 100)
+                    tp_price = entry_price * (1 - tp_percent / 100)
+                    side_tp_sl = 'buy'
+                else:
+                    logging.error(f"❌ SIDE không hợp lệ: {side}")
+                    return
             
-                # ✅ Chờ 1 giây để dữ liệu vị thế ổn định
-                time.sleep(1)
+                logging.debug(f"✅ TP/SL: TP={tp_price:.4f}, SL={sl_price:.4f}, side_tp_sl={side_tp_sl}")
+            
+                # ✅ Chờ 1s để vị thế ổn định
+                time.sleep(2)
             
                 try:
                     positions = exchange.fetch_positions([symbol])
@@ -291,8 +302,8 @@ def run_bot():
                         side=side_tp_sl,
                         amount=size_raw,
                         params={
-                            "stopLossPrice": None,
                             "takeProfitPrice": round(tp_price, 4),
+                            "stopLossPrice": None,
                             "triggerType": "mark",
                             "marginMode": "isolated"
                         }
