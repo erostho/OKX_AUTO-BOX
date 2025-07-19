@@ -292,7 +292,7 @@ def run_bot():
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=size
+                        amount=size,
                         params={
                             'takeProfitPrice': round(tp_price, 6),                            
                             'stopLossPrice': None,
@@ -313,7 +313,7 @@ def run_bot():
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=size
+                        amount=size,
                         params={
                             'stopLossPrice': round(sl_price, 6),
                             'takeProfitPrice': None,
