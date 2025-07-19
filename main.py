@@ -113,49 +113,7 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
-            
-            logging.debug("--- START kiểm tra vị thế từ OKX ---")
-            for pos in all_positions:
-                pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
-                side_open = pos.get('side', '').lower()                         # long / short
-                margin_mode = pos.get('marginMode', '')                         # isolated / cross
-            
-                logging.debug(
-                    f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
-                    f"margin_mode={margin_mode}"
-                )
-                logging.debug(
-                    f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
-                )
-            
-                if (
-                    pos_symbol == symbol_check and
-                    side_open == side_check and
-                    margin_mode == 'isolated'
-                ):
-                    logging.warning(
-                        f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
-                    )
-                    break 
-            
-            # 🔁 Lấy giá thị trường hiện tại
-            ticker = exchange.fetch_ticker(symbol)
-            market_price = ticker['last']
-
-            # ✅ Thiết lập thông số lệnh
-            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
-            leverage = 5
-            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
-            
-            # ✅ Tính số lượng coin cần mua
-            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
-            
-            # ✅ Gửi lệnh thị trường
-            ticker = exchange.fetch_ticker(symbol)
-            price = ticker['ask']
-            usdt_amount = 20
-            size = round(usdt_amount / price, 6)
-            
+                    
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
             exchange.load_markets()
@@ -218,7 +176,48 @@ def run_bot():
                     continue
                 logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
-           
+            logging.debug("--- START kiểm tra vị thế từ OKX ---")
+            for pos in all_positions:
+                pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
+                side_open = pos.get('side', '').lower()                         # long / short
+                margin_mode = pos.get('marginMode', '')                         # isolated / cross
+            
+                logging.debug(
+                    f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
+                    f"margin_mode={margin_mode}"
+                )
+                logging.debug(
+                    f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
+                )
+            
+                if (
+                    pos_symbol == symbol_check and
+                    side_open == side_check and
+                    margin_mode == 'isolated'
+                ):
+                    logging.warning(
+                        f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
+                    )
+                    continue 
+            
+            # 🔁 Lấy giá thị trường hiện tại
+            ticker = exchange.fetch_ticker(symbol)
+            market_price = ticker['last']
+
+            # ✅ Thiết lập thông số lệnh
+            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
+            leverage = 5
+            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
+            
+            # ✅ Tính số lượng coin cần mua
+            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
+            
+            # ✅ Gửi lệnh thị trường
+            ticker = exchange.fetch_ticker(symbol)
+            price = ticker['ask']
+            usdt_amount = 20
+            size = round(usdt_amount / price, 6)        
+            
             # ✅ vào lệnh 
             params={
                     "tdMode": "isolated",
