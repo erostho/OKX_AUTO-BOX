@@ -71,7 +71,29 @@ def run_bot():
 
             side = "buy" if signal == "LONG" else "sell"
             pos_side = "long" if signal == "LONG" else "SHORT"
+            # Đặt đòn bẩy 5x
+            exchange.set_leverage(5, symbol)
+            logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
+
+            # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
+            ticker = exchange.fetch_ticker(symbol)
+            ask_price = float(ticker.get('ask') or 0)          
             
+            if ask_price <= 0:
+                logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
+                return
+
+            usdt_limit = 20
+            coin_amount = round(usdt_limit /ask_price, 6)
+            estimated_value = coin_amount * ask_price
+
+            if estimated_value > usdt_limit:
+                coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
+                estimated_value  = coin_amount * ask_price
+            logging.info(
+                f"✅ Đặt lệnh {side.upper()} {symbol} với {coin_amount} coin (~{estimated_value:.2f} USDT), "
+                f"giá ask = {ask_price}"
+            ) 
             # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
             symbol_check = symbol.replace("-", "/").upper()
             market = exchange.markets.get(symbol_check)
@@ -183,29 +205,7 @@ def run_bot():
        
             # ✅ vào lệnh
             logging.info(f"📌 SYMBOL ĐẶT LỆNH (OKX ID): {symbol_for_order}")
-            # Đặt đòn bẩy 5x
-            exchange.set_leverage(5, symbol)
-            logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
 
-            # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
-            ticker = exchange.fetch_ticker(symbol)
-            ask_price = float(ticker.get('ask') or 0)          
-            
-            if ask_price <= 0:
-                logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
-                return
-
-            usdt_limit = 20
-            coin_amount = round(usdt_limit /ask_price, 6)
-            estimated_value = coin_amount * ask_price
-
-            if estimated_value > usdt_limit:
-                coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
-                estimated_value  = coin_amount * ask_price
-            logging.info(
-                f"✅ Đặt lệnh {side.upper()} {symbol} với {coin_amount} coin (~{estimated_value:.2f} USDT), "
-                f"giá ask = {ask_price}"
-            )
             symbol_for_order = market['id']
             try:
                 order = exchange.create_market_order(
