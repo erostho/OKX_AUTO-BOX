@@ -81,7 +81,7 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
-            usdt_limit = 30
+            usdt_limit = 50
             coin_amount = round(usdt_limit /ask_price, 6)
             estimated_value = coin_amount * ask_price
 
@@ -191,9 +191,7 @@ def run_bot():
             # ✅ Bước 3: Check đúng loại USDT-M Futures/Swap (Linear)
             market_type = market.get('type')
             settle_coin = market.get('settle')
-            
-            logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
-            
+                        
             if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
                 logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
             else:
@@ -242,7 +240,7 @@ def run_bot():
                     continue
 
             # 🟦 Tính entry_price và đặt TP/SL
-            entry_price = float(order['info'].get('avgPx') or order['info'].get('fillPx') or 0)
+            entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
             logging.info(f"📌 Entry từ order['info']: {entry_price}")
             
             # ⛳ Nếu vẫn không có entry_price thì check lại từ vị thế
@@ -256,7 +254,7 @@ def run_bot():
                     for pos in positions:
                         logging.info(f"↪️ pos_symbol={pos['symbol']} | pos_side={pos['side']} | entryPrice={pos.get('entryPrice')}")
                         if pos['symbol'].upper() == symbol_check and pos['side'].lower() == side_check:
-                            entry_price = float(pos.get('entryPrice') or 0)
+                            entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
                             logging.info(f"✅ Tìm thấy entry_price từ vị thế: {entry_price}")
                             break
                 except Exception as ex:
