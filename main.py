@@ -157,7 +157,7 @@ def run_bot():
             ticker = exchange.fetch_ticker(symbol)
             price = ticker['ask']
             usdt_amount = 20
-            size = round(usdt_amount / price, 6)
+            size = round(usdt_amount / market_price, 6)
             
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
