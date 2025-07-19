@@ -242,47 +242,57 @@ def run_bot():
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP
             def place_tp_sl_order(exchange, symbol, side, entry_price):
                 try:
-                    # Tính TP/SL
+                    # ✅ Tính TP/SL
                     sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
                     tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
                     side_tp_sl = 'sell' if side == 'buy' else 'buy'
             
-                    # TP
+                    # ✅ Tìm lại số lượng từ vị thế
+                    positions = exchange.fetch_positions([symbol])
+                    amount = 0
+                    for pos in positions:
+                        if pos['symbol'].upper() == symbol.upper() and pos['side'].lower() == side.lower():
+                            amount = float(pos.get('size', 0))
+                            break
+            
+                    if amount == 0:
+                        logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
+                        return
+            
+                    # ✅ Đặt TP
                     tp_order = exchange.create_order(
                         symbol=symbol,
                         type='trigger',
                         side=side_tp_sl,
-                        amount= float(pos.get('size', 0))  # OKX tự dùng vị thế hiện có (sai)
+                        amount=amount,
                         price=None,
                         params={
                             "triggerPrice": round(tp_price, 8),
                             "orderType": "market",
                             "tdMode": "isolated",
-                            "ccy": "USDT",
-                            "reduceOnly": True,
+                            "ccy": "USDT"
                         }
                     )
-                    logging.info(f"✅ Đã tạo lệnh TP tại {tp_price} cho {symbol} ({side_tp_sl})")
             
-                    # SL
+                    # ✅ Đặt SL
                     sl_order = exchange.create_order(
                         symbol=symbol,
                         type='trigger',
                         side=side_tp_sl,
-                        amount= float(pos.get('size', 0))
+                        amount=amount,
                         price=None,
                         params={
                             "triggerPrice": round(sl_price, 8),
                             "orderType": "market",
                             "tdMode": "isolated",
-                            "ccy": "USDT",
-                            "reduceOnly": True,
+                            "ccy": "USDT"
                         }
                     )
-                    logging.info(f"✅ Đã tạo lệnh SL tại {sl_price} cho {symbol} ({side_tp_sl})")
+            
+                    logging.info(f"✅ Đã đặt TP/SL cho {symbol} | TP={tp_price:.4f} | SL={sl_price:.4f} | amount={amount}")
             
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi tạo TP/SL cho {symbol}: {e}")
+                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
                     
             # 🟦 Tính entry_price và đặt TP/SL
             entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
