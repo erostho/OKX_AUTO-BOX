@@ -5,6 +5,7 @@ import logging
 import requests
 from datetime import datetime
 import ccxt
+import time
 import pandas as pd
 # Logging setup
 
@@ -239,34 +240,49 @@ def run_bot():
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
            
-            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP
+            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
             def place_tp_sl_order(exchange, symbol, side, entry_price):
                 try:
                     # ✅ Tính TP/SL
                     sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
                     tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
                     side_tp_sl = 'sell' if side == 'buy' else 'buy'
-
-                    # ✅ Tìm lại số lượng từ vị thế
-                    positions = exchange.fetch_positions([symbol])
-                    amount = 0
+            
+                    # ✅ Chuẩn hóa SYMBOL và SIDE
                     symbol_check = symbol.replace("-", "/").upper()
                     side_check = 'long' if side == 'buy' else 'short'
-                    
+            
+                    logging.info(f"📌 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}, ENTRY: {entry_price}")
+                    logging.debug(f"➡️ symbol_check={symbol_check}, side_check={side_check}")
+            
+                    # ✅ Chờ sàn cập nhật vị thế
+                    time.sleep(1)
+            
+                    # ✅ Fetch lại vị thế sau khi vào lệnh
+                    positions = exchange.fetch_positions([symbol])
+                    amount = 0
+            
                     for pos in positions:
                         pos_symbol = pos.get('symbol', '').upper()
                         pos_side = pos.get('side', '').lower()
                         margin_mode = pos.get('marginMode', '')
-                    
+                        size_raw = pos.get('size', None)
+            
                         logging.debug(
-                            f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, margin={margin_mode}, size={pos.get('size')}"
+                            f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                            f"margin={margin_mode}, size_raw={size_raw}"
                         )
-                    
-                        if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
-                            size_raw = pos.get("size") or pos.get("pos") or pos.get("posAmt") or 0
-                            amount = float(size_raw) if str(size_raw) not in ["None", "", "0", "0.0"] else 0
-                            logging.debug(f"[CHECK SIZE FINAL] symbol={symbol}, pos_symbol={pos_symbol}, size_raw={size_raw}, amount={amount}")
+            
+                        # ✅ So khớp vị thế
+                        if (
+                            pos_symbol == symbol_check and
+                            pos_side == side_check and
+                            margin_mode == 'isolated'
+                        ):
+                            amount = float(size_raw) if size_raw not in [None, "None", ""] else 0
+                            logging.debug(f"[CHECK SIZE FINAL] symbol={symbol}, amount={amount}")
                             break
+            
                     if amount == 0:
                         logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
                         return
@@ -279,12 +295,13 @@ def run_bot():
                         amount=amount,
                         price=None,
                         params={
-                            "triggerPrice": round(tp_price, 8),
-                            "orderType": "market",
-                            "tdMode": "isolated",
-                            "ccy": "USDT"
+                            'triggerPrice': round(tp_price, 8),
+                            'orderType': 'market',
+                            'tdMode': 'isolated',
+                            'ccy': 'USDT'
                         }
                     )
+                    logging.info(f"✅ Đã đặt TP cho {symbol}: trigger @ {round(tp_price, 8)}")
             
                     # ✅ Đặt SL
                     sl_order = exchange.create_order(
@@ -294,14 +311,13 @@ def run_bot():
                         amount=amount,
                         price=None,
                         params={
-                            "triggerPrice": round(sl_price, 8),
-                            "orderType": "market",
-                            "tdMode": "isolated",
-                            "ccy": "USDT"
+                            'triggerPrice': round(sl_price, 8),
+                            'orderType': 'market',
+                            'tdMode': 'isolated',
+                            'ccy': 'USDT'
                         }
                     )
-            
-                    logging.info(f"✅ Đã đặt TP/SL cho {symbol} | TP={tp_price:.4f} | SL={sl_price:.4f} | amount={amount}")
+                    logging.info(f"✅ Đã đặt SL cho {symbol}: trigger @ {round(sl_price, 8)}")
             
                 except Exception as e:
                     logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
