@@ -218,11 +218,13 @@ def run_bot():
                     continue
                 logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
-                
+           
+            # ✅ vào lệnh 
+            logging.info(f"🔄 Gửi lệnh market: symbol={symbol}, side={side}, size={size}, params={params}")
             order = exchange.create_market_order(
                 symbol=symbol,
                 side=side,
-                amount=size,
+                amount=20,
                 params={
                     "tdMode": "isolated",
                     "ccy": "USDT",
