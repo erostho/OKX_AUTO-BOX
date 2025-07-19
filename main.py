@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.DEBUG,  # thay vì DEBUG/INFO
+    level=logging.INFO,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
@@ -136,7 +136,7 @@ def run_bot():
                     logging.warning(
                         f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
                     )
-                    continue
+                    return
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
