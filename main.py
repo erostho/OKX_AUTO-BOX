@@ -71,16 +71,7 @@ def run_bot():
 
             side = "buy" if signal == "LONG" else "sell"
             pos_side = "long" if signal == "LONG" else "SHORT"
-            
-            # ✅ Lấy danh sách symbols từ API OKX (Futures)
-            futures_symbols_okx = fetch_okx_usdt_futures_symbols()
-            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
-            
-            # ✅ Duyệt từng dòng trong sheet
-            symbol_raw = row[0]                            # Ví dụ: BTC-USDT
-            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
-            symbol_ccxt = f"{symbol_raw.replace("-", "/")}:USDT".upper()   # BTC/USDT:USDT
-            
+
             # Đặt đòn bẩy 5x
             exchange.set_leverage(5, symbol)
             logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
@@ -114,6 +105,39 @@ def run_bot():
                 logging.error(f"❌ SIDE không hợp lệ: {side}")
                 return
             
+            logging.info(f"🔍 Kiểm tra vị thế đã mở với SYMBOL = {symbol_check}, SIDE = {side_check}")
+            
+            # ✅ Fetch tất cả vị thế hiện tại
+            try:
+                all_positions = exchange.fetch_positions()
+            except Exception as e:
+                logging.error(f"❌ Không thể fetch vị thế: {e}")
+                return
+            
+            logging.debug("--- START kiểm tra vị thế từ OKX ---")
+            for pos in all_positions:
+                pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
+                side_open = pos.get('side', '').lower()                         # long / short
+                margin_mode = pos.get('marginMode', '')                         # isolated / cross
+            
+                logging.debug(
+                    f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
+                    f"margin_mode={margin_mode}"
+                )
+                logging.debug(
+                    f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
+                )
+            
+                if (
+                    pos_symbol == symbol_check and
+                    side_open == side_check and
+                    margin_mode == 'isolated'
+                ):
+                    logging.warning(
+                        f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
+                    )
+                    break 
+            
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
             market_price = ticker['last']
@@ -130,40 +154,8 @@ def run_bot():
             ticker = exchange.fetch_ticker(symbol)
             price = ticker['ask']
             usdt_amount = 20
-            size = round(usdt_amount / price, 6)        
+            size = round(usdt_amount / price, 6)
             
-            logging.info(f"🔍 Kiểm tra vị thế đã mở với SYMBOL = {symbol_check}, SIDE = {side_check}")
-            
-            # ✅ Fetch tất cả vị thế hiện tại
-            try:
-                all_positions = exchange.fetch_positions()
-            except Exception as e:
-                logging.error(f"❌ Không thể fetch vị thế: {e}")
-                return
-                
-                logging.debug("--- START kiểm tra vị thế từ OKX ---")
-                for pos in all_positions:
-                    pos_symbol = pos.get('symbol', '').upper()                      # Ví dụ BTC/USDT
-                    side_open = pos.get('side', '').lower()                         # long / short
-                    margin_mode = pos.get('marginMode', '')                         # isolated / cross
-                
-                    logging.debug(
-                        f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
-                        f"margin_mode={margin_mode}"
-                    )
-                    logging.debug(
-                        f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
-                    )
-                
-                    if (
-                        pos_symbol == symbol_check and
-                        side_open == side_check and
-                        margin_mode == 'isolated'
-                    ):
-                        logging.warning(
-                            f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
-                        )
-                        continue        
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
             exchange.load_markets()
@@ -189,58 +181,67 @@ def run_bot():
                 except Exception as e:
                     logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
                     return []
-                    
+            
+            # ✅ Lấy danh sách symbols từ API OKX (Futures)
+            futures_symbols_okx = fetch_okx_usdt_futures_symbols()
+            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
+            
+            # ✅ Duyệt từng dòng trong sheet
+            symbol_raw = row[0]                            # Ví dụ: BTC-USDT
+            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
+            symbol_ccxt = f"{symbol_raw.replace("-", "/")}:USDT".upper()   # BTC/USDT:USDT
+        
             # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
             if symbol_check not in futures_symbols_okx:
                 logging.warning(f"⚠️ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
                 continue
-            
+        
             logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
-            
+        
             # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
             market = exchange.markets.get(symbol_ccxt)
             logging.debug(f"↪ Thông tin thị trường: {market}")
-            
+        
             if not market:
                 logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
                 continue
-            
+        
             # ✅ Bước 3: Check đúng loại USDT-M Futures/Swap (Linear)
             market_type = market.get('type')
             settle_coin = market.get('settle')
-                
+            
             logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
-                
+            
             if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
                 logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
                 continue
             logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
             continue
-            
-            
-            # ✅ vào lệnh 
-            logging.info(f"🔄 Gửi lệnh market: symbol={symbol}, side={side}, size={size}, params={params}")
-            order = exchange.create_market_order(
-                symbol=symbol,
-                side=side,
-                amount=size,
-                params={
-                    "tdMode": "isolated",
-                    "ccy": "USDT",
-                    "reduceOnly": False,
-                    "lever": "5"
-                }
-            )
-            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
-            if (
-                not order
-                or 'data' not in order
-                or not isinstance(order['data'], list)
-                or len(order['data']) == 0
-                or 'ordId' not in order['data'][0]
-            ):
-                logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
-                continue
+       
+        # ✅ vào lệnh 
+        params={
+                "tdMode": "isolated",
+                "ccy": "USDT",
+                "reduceOnly": False,
+                "lever": "5"
+        }
+        logging.info(f"🔄 Gửi lệnh market: symbol={symbol}, side={side}, size={size}, params={params}")
+        order = exchange.create_market_order(
+            symbol=symbol,
+            side=side,
+            amount=size,
+            params=params
+        )
+        # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
+        if (
+            not order
+            or 'data' not in order
+            or not isinstance(order['data'], list)
+            or len(order['data']) == 0
+            or 'ordId' not in order['data'][0]
+        ):
+            logging.error(f"❌ Lệnh không hợp lệ, không tạo TP/SL. Phản hồi: {order}")
+            continue
 
             order_id = order['data'][0]['ordId']
             logging.info(f"⚠️ Order ID: {order_id}")
