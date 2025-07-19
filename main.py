@@ -180,7 +180,7 @@ def run_bot():
             
             # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
             def fetch_okx_usdt_futures_symbols():
-                url = "https://www.okx.com/api/v5/public/instruments?instType=FUTURES"
+                url = "https://www.okx.com/api/v5/public/instruments?instType=SWAP"  # hoặc FUTURES nếu bạn muốn FUTURES thay vì perpetual
                 try:
                     response = requests.get(url)
                     response.raise_for_status()
@@ -189,14 +189,12 @@ def run_bot():
                     symbols = []
             
                     for item in instruments:
-                        if item.get("settleCcy") == "USDT":
-                            inst_id = item["instId"]  # VD: PI-USDT-240726
-                            parts = inst_id.split("-")
-                            if len(parts) >= 2:
-                                clean_symbol = f"{parts[0]}-{parts[1]}"
-                                symbols.append(clean_symbol)
+                        # Chỉ chọn USDT-M (linear), bỏ qua COIN-M
+                        if item.get("settleCcy") == "USDT" and item.get("ctType") in ["linear", None]:
+                            inst_id = item["instId"]  # VD: BTC-USDT-SWAP
+                            symbols.append(inst_id)
             
-                    return list(set(symbols))  # Loại bỏ trùng
+                    return list(set(symbols))  # Loại trùng
                 except Exception as e:
                     logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
                     return []
