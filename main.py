@@ -263,8 +263,9 @@ def run_bot():
                         )
                     
                         if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
-                            size_raw = pos.get("size") or pos.get("pos") or pos.get("posAmt")
-                            amount = float(size_raw) if size_raw not in [None, "None", ""] else 0
+                            size_raw = pos.get("size") or pos.get("pos") or pos.get("posAmt") or 0
+                            amount = float(size_raw) if str(size_raw) not in ["None", "", "0", "0.0"] else 0
+                            logging.debug(f"[CHECK SIZE FINAL] symbol={symbol}, pos_symbol={pos_symbol}, size_raw={size_raw}, amount={amount}")
                             break
                     if amount == 0:
                         logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
