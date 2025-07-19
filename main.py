@@ -81,7 +81,7 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 return
 
-            usdt_limit = 30
+            usdt_limit = 20
             coin_amount = round(usdt_limit /ask_price, 6)
             estimated_value = coin_amount * ask_price
 
@@ -211,7 +211,7 @@ def run_bot():
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
                     side=side,
-                    amount=coin_amount,
+                    amount=20,
                     params={
                         "tdMode": "isolated",
                         "ccy": "USDT",
