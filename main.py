@@ -285,6 +285,7 @@ def run_bot():
             
                 # ✅ Đặt Take Profit
                 try:
+                    logging.debug(f"[TP ORDER] symbol={symbol}, side={side_tp_sl}, amount={amount}, TP={tp_price}")
                     tp_order = exchange.create_order(
                         symbol=symbol,
                         type='trigger',
@@ -293,16 +294,17 @@ def run_bot():
                         params={
                             "triggerPrice": round(tp_price, 4),
                             "orderPx": round(tp_price, 4),
-                            "triggerType": "mark",
+                            "triggerType": "last",  # ✅ sửa tại đây
                             "marginMode": "isolated"
                         }
                     )
                     logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
-            
+                
                 # ✅ Đặt Stop Loss
                 try:
+                    logging.debug(f"[SL ORDER] symbol={symbol}, side={side_tp_sl}, amount={amount}, SL={sl_price}")
                     sl_order = exchange.create_order(
                         symbol=symbol,
                         type='trigger',
@@ -311,7 +313,7 @@ def run_bot():
                         params={
                             "triggerPrice": round(sl_price, 4),
                             "orderPx": round(sl_price, 4),
-                            "triggerType": "mark",
+                            "triggerType": "last",  # ✅ sửa tại đây
                             "marginMode": "isolated"
                         }
                     )
