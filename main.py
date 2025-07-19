@@ -98,6 +98,7 @@ def run_bot():
             
             # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
             symbol_check = symbol.replace("-", "/").upper()
+            market = exchange.markets.get(symbol_check)
             symbol_for_order = market['id']
             side_input = side.lower()
             side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else None
