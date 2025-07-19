@@ -133,10 +133,12 @@ def run_bot():
                     side_open == side_check and
                     margin_mode == 'isolated'
                 ):
-                    logging.warning(
-                        f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
-                    )
-                    continue 
+                    logging.warning(f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh")
+                    has_position_open = true
+                    break # không cần kiểm tra thêm
+            # ✅ Đã có vị thế bỏ qua coin này
+            if has_position_open:
+                continue
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
