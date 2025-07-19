@@ -218,7 +218,7 @@ def run_bot():
                 )
                 logging.info(f"📤 Kết quả tạo lệnh: {order}")
             except Exception as e:
-                logging.error(f"❌ Lỗi khi gửi lệnh {symbol} | side={side} | size={size}: {e}")
+                logging.error(f"❌ Lỗi khi gửi lệnh {symbol} | side={side}: {e}")
                 continue
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
             if (
