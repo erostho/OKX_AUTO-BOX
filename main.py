@@ -263,7 +263,7 @@ def run_bot():
                         )
                     
                         if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
-                            size_raw = pos.get("size")
+                            size_raw = pos.get("size") or pos.get("pos") or pos.get("posAmt")
                             amount = float(size_raw) if size_raw not in [None, "None", ""] else 0
                             break
                     if amount == 0:
