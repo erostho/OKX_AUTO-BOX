@@ -293,8 +293,8 @@ def run_bot():
                     )
                     logging.info(f"✅ Đã đặt SL: {sl_order}")
             
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi đặt TP/SL cho {symbol}: {e}")
 
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
