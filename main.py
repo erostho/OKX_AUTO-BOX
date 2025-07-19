@@ -207,6 +207,7 @@ def run_bot():
        
             # ✅ vào lệnh
             logging.info(f"📌 SYMBOL ĐẶT LỆNH (OKX ID): {symbol_for_order}")
+            symbol_for_order = market['id']
             try:
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
