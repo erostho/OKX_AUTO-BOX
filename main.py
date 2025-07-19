@@ -96,7 +96,6 @@ def run_bot():
             symbol_check = symbol.replace("-", "/").upper()
             market = exchange.markets.get(symbol_check)
             symbol_for_order = market['id']
-            symbol_std = symbol.replace("-", "/")
             side_input = side.lower()
             side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else None
             
@@ -204,7 +203,7 @@ def run_bot():
        
             # ✅ vào lệnh
             # Đặt đòn bẩy 5x
-            exchange.set_leverage(5, symbol=symbol_std)
+            exchange.set_leverage(5, symbol=symbol_check)
             logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
 
             symbol_for_order = market['id']
