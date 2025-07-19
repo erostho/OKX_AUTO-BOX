@@ -84,7 +84,6 @@ def run_bot():
             usdt_limit = 20
             coin_amount = round(usdt_limit /ask_price, 6)
             estimated_value = coin_amount * ask_price
-            size = round(usdt_amount / price, 6)
 
             if estimated_value > usdt_limit:
                 coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
@@ -229,7 +228,7 @@ def run_bot():
                     order = exchange.create_market_order(
                         symbol=symbol,
                         side=side,
-                        amount=size,
+                        amount=coin_amount,
                         params={
                             "tdMode": "isolated",
                             "ccy": "USDT",
