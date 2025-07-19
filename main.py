@@ -219,23 +219,17 @@ def run_bot():
             continue
        
             # ✅ vào lệnh 
-            try:
+            order = exchange.create_market_order(
+                symbol=symbol,
+                side=side,
+                amount=size,
                 params={
-                        "tdMode": "isolated",
-                        "ccy": "USDT",
-                        "reduceOnly": False,
-                        "lever": "5"
+                    "tdMode": "isolated",
+                    "ccy": "USDT",
+                    "reduceOnly": False,
+                    "lever": "5"
                 }
-                logging.info(f"🔄 Gửi lệnh market: symbol={symbol}, side={side}, size={size}, params={params}")
-                order = exchange.create_market_order(
-                    symbol=symbol,
-                    side=side,
-                    amount=size,
-                    params=params
-                )
-            except Exception as e:
-                logging.error(f"❌ Lỗi khi đặt lệnh market: {e}")
-                continue
+            )
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
             if (
                 not order
