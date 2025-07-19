@@ -136,7 +136,7 @@ def run_bot():
                     logging.warning(
                         f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
                     )
-                    break 
+                    continue 
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
