@@ -205,6 +205,7 @@ def run_bot():
                 continue
        
             # ✅ vào lệnh 
+            market = exchange.markets.get(symbol_check)
             try:
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
