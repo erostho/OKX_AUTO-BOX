@@ -215,22 +215,26 @@ def run_bot():
             if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
                 logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
                 continue
-            logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
-            continue
+                logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
+                continue
        
             # ✅ vào lệnh 
-            order = exchange.create_market_order(
-                symbol=symbol,
-                side=side,
-                amount=size,
-                params={
-                    "tdMode": "isolated",
-                    "ccy": "USDT",
-                    "reduceOnly": False,
-                    "lever": "5"
-                }
-            )
-            logging.info(f"📤 Kết quả tạo lệnh: {order}")
+            try:
+                order = exchange.create_market_order(
+                    symbol=symbol,
+                    side=side,
+                    amount=size,
+                    params={
+                        "tdMode": "isolated",
+                        "ccy": "USDT",
+                        "reduceOnly": False,
+                        "lever": "5"
+                    }
+                )
+                logging.info(f"📤 Kết quả tạo lệnh: {order}")
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi gửi lệnh {symbol} | side={side} | size={size}: {e}")
+                continue
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
             if (
                 not order
