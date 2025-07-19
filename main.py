@@ -156,27 +156,30 @@ def run_bot():
             usdt_amount = 20
             size = round(usdt_amount / price, 6)
             
-            # 🔁 Lấy giá thị trường hiện tại
-            ticker = exchange.fetch_ticker(symbol)
-            market_price = ticker['last']
-
-            # ✅ Thiết lập thông số lệnh
-            usdt_before_leverage = 20  # mỗi lệnh dùng 20 USDT (trước đòn bẩy)
-            leverage = 5
-            usdt_total = usdt_before_leverage * leverage  # Tổng giá trị lệnh
-            
-            # ✅ Tính số lượng coin cần mua
-            amount = round(usdt_total / market_price, 6)  # Làm tròn 6 chữ số thập phân
-            
-            # ✅ Gửi lệnh thị trường
-            ticker = exchange.fetch_ticker(symbol)
-            price = ticker['ask']
-            usdt_amount = 20
-            size = round(usdt_amount / price, 6)
-            
             # ⚙️ Cấu hình load markets cho futures
             exchange.options['defaultType'] = 'future'
             exchange.load_markets()
+
+            # ✅ Hàm lấy danh sách symbol USDT-M Futures trực tiếp từ OKX
+            def fetch_okx_usdt_futures_symbols():
+                url = "https://www.okx.com/api/v5/public/instruments?instType=SWAP"  # hoặc FUTURES nếu bạn muốn FUTURES thay vì perpetual
+                try:
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    data = response.json()
+                    instruments = data.get("data", [])
+                    symbols = []
+            
+                    for item in instruments:
+                        # Chỉ chọn USDT-M (linear), bỏ qua COIN-M
+                        if item.get("settleCcy") == "USDT" and item.get("ctType") in ["linear", None]:
+                            inst_id = item["instId"]  # VD: BTC-USDT-SWAP
+                            symbols.append(inst_id)
+            
+                    return list(set(symbols))  # Loại trùng
+                except Exception as e:
+                    logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
+                    return []
             
             # ✅ Lấy danh sách symbols từ API OKX (Futures)
             futures_symbols_okx = fetch_okx_usdt_futures_symbols()
