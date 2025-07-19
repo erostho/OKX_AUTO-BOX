@@ -249,7 +249,8 @@ def run_bot():
                 try:
                     positions = exchange.fetch_positions([symbol])
                     for pos in positions:
-                        if pos['symbol'].upper() == symbol.upper() and pos['side'].lower() == side.lower():
+                        symbol_check = symbol.replace("-", "/").upper()
+                        if pos['symbol'].upper() == symbol_check and pos['side'].lower() == side.lower():
                             entry_price = float(pos.get('entryPrice') or 0)
                             break
                 except Exception as ex:
