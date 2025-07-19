@@ -244,6 +244,16 @@ def run_bot():
             
             # ▶️ Tính entry_price và đặt TP/SL
             entry_price = float(order['info'].get('avgPx') or order['info'].get('fillPx') or 0)
+            # ⛑ Nếu vẫn không có entry_price thì fetch lại từ vị thế
+            if entry_price == 0:
+                try:
+                    positions = exchange.fetch_positions([symbol])
+                    for pos in positions:
+                        if pos['symbol'].upper() == symbol.upper() and pos['side'].lower() == side.lower():
+                            entry_price = float(pos.get('entryPrice') or 0)
+                            break
+                except Exception as ex:
+                    logging.error(f"❌ Không thể fetch vị thế để lấy entry_price: {ex}")
             if entry_price > 0:
                 place_tp_sl_order(exchange, symbol, side, entry_price)
             else:
