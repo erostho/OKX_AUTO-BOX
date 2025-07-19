@@ -9,7 +9,7 @@ import pandas as pd
 # Logging setup
 
 logging.basicConfig(
-    level=logging.INFO,  # thay vì DEBUG/INFO
+    level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # Đọc biến môi trường
@@ -183,7 +183,6 @@ def run_bot():
         
             # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
             market = exchange.markets.get(symbol_ccxt)
-            logging.debug(f"↪ Thông tin thị trường: {market}")
         
             if not market:
                 logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
@@ -241,24 +240,33 @@ def run_bot():
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
-            
-            # ▶️ Tính entry_price và đặt TP/SL
+
+            # 🟦 Tính entry_price và đặt TP/SL
             entry_price = float(order['info'].get('avgPx') or order['info'].get('fillPx') or 0)
-            # ⛑ Nếu vẫn không có entry_price thì fetch lại từ vị thế
+            logging.info(f"📌 Entry từ order['info']: {entry_price}")
+            
+            # ⛳ Nếu vẫn không có entry_price thì check lại từ vị thế
             if entry_price == 0:
                 try:
+                    symbol_check = symbol.replace("-", "/").upper()
+                    side_check = side.lower()
+                    logging.info(f"🔍 Đang kiểm tra lại entry_price từ vị thế: symbol_check={symbol_check}, side_check={side_check}")
+            
                     positions = exchange.fetch_positions([symbol])
                     for pos in positions:
-                        symbol_check = symbol.replace("-", "/").upper()
-                        if pos['symbol'].upper() == symbol_check and pos['side'].lower() == side.lower():
+                        logging.info(f"↪️ pos_symbol={pos['symbol']} | pos_side={pos['side']} | entryPrice={pos.get('entryPrice')}")
+                        if pos['symbol'].upper() == symbol_check and pos['side'].lower() == side_check:
                             entry_price = float(pos.get('entryPrice') or 0)
+                            logging.info(f"✅ Tìm thấy entry_price từ vị thế: {entry_price}")
                             break
                 except Exception as ex:
                     logging.error(f"❌ Không thể fetch vị thế để lấy entry_price: {ex}")
+            
+            # ⛳ Nếu có entry_price thì đặt TP/SL
             if entry_price > 0:
                 place_tp_sl_order(exchange, symbol, side, entry_price)
             else:
-                logging.warning(f"⚠️ Không xác định được entry_price để đặt TP/SL cho {symbol}")
+                logging.warning(f"⚠️ Không xác định được entry_price để đặt TP/SL cho {symbol} | side={side} | symbol_check={symbol_check}")
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh
         
             def place_tp_sl_order(exchange, symbol, side, entry_price):
