@@ -246,15 +246,25 @@ def run_bot():
                     sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
                     tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
                     side_tp_sl = 'sell' if side == 'buy' else 'buy'
-            
+
                     # ✅ Tìm lại số lượng từ vị thế
                     positions = exchange.fetch_positions([symbol])
                     amount = 0
+                    symbol_check = symbol.replace("-", "/").upper()
+                    side_check = 'long' if side == 'buy' else 'short'
+                    
                     for pos in positions:
-                        if pos['symbol'].upper() == symbol.upper() and pos['side'].lower() == side.lower():
+                        pos_symbol = pos.get('symbol', '').upper()
+                        pos_side = pos.get('side', '').lower()
+                        margin_mode = pos.get('marginMode', '')
+                    
+                        logging.debug(
+                            f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, margin={margin_mode}, size={pos.get('size')}"
+                        )
+                    
+                        if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
                             amount = float(pos.get('size', 0))
                             break
-            
                     if amount == 0:
                         logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
                         return
