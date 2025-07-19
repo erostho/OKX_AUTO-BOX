@@ -209,7 +209,7 @@ def run_bot():
             # ✅ Lặp qua từng coin để kiểm tra
             for row in rows:
                 symbol_raw = row[0]  # VD: PI-USDT
-                symbol_check = symbol_raw.upper().replace("-", "/")  # PI/USDT
+                symbol_check = symbol_raw.replace("-", "/").upper() + ":USDT"  # PI/USDT:USDT
             
                 if symbol_check not in futures_symbols_okx:
                     logging.warning(f"⛔ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
