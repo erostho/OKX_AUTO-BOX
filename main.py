@@ -244,10 +244,9 @@ def run_bot():
            
             def place_tp_sl_order(exchange, symbol, side):
                 logging.info(f"🔁 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
-                
-                time.sleep(1.5)  # ⏱ Chờ vị thế khớp xong
+                time.sleep(1.5)  # Chờ vị thế vừa mở ổn định
             
-                # ✅ Fetch vị thế để lấy entry_price và size
+                # ✅ Fetch vị thế hiện tại để lấy entry_price và size
                 try:
                     positions = exchange.fetch_positions([symbol])
                 except Exception as ex:
@@ -287,40 +286,47 @@ def run_bot():
             
                 logging.debug(f"📌 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
             
-                # ✅ Đặt Take Profit (TP)
+                # ✅ Đặt lệnh TP (take profit)
                 try:
-                    tp_order = exchange.private_post_trade_order_algo({
-                        "instId": symbol.replace("/", "-"),
-                        "tdMode": "isolated",
-                        "side": side_tp_sl,
-                        "ordType": "conditional",
-                        "sz": str(size),
-                        "ccy": "USDT",
-                        "triggerPx": str(round(tp_price, 6)),
-                        "triggerPxType": "last",
-                        "ordPx": "",  # Market
-                    })
+                    tp_order = exchange.create_order(
+                        symbol=symbol,
+                        type='stop-market',
+                        side=side_tp_sl,
+                        amount=coin_amount,
+                        params={
+                            'takeProfitPrice': round(tp_price, 6),                            
+                            'stopLossPrice': None,
+                            'triggerPrice': round(tp_price, 6),
+                            'triggerType': 'last',
+                            'tpTriggerBy': 'last',
+                            'tdMode': 'isolated',
+                            'reduceOnly': True
+                        }
+                    )
                     logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
+                except Exception as ex:
+                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {ex}")
             
-                # ✅ Đặt Stop Loss (SL)
+                # ✅ Đặt lệnh SL (stop loss)
                 try:
-                    sl_order = exchange.private_post_trade_order_algo({
-                        "instId": symbol.replace("/", "-"),
-                        "tdMode": "isolated",
-                        "side": side_tp_sl,
-                        "ordType": "conditional",
-                        "sz": str(size),
-                        "ccy": "USDT",
-                        "triggerPx": str(round(sl_price, 6)),
-                        "triggerPxType": "last",
-                        "ordPx": "",
-                    })
+                    sl_order = exchange.create_order(
+                        symbol=symbol,
+                        type='stop-market',
+                        side=side_tp_sl,
+                        amount=coin_amount,
+                        params={
+                            'stopLossPrice': round(sl_price, 6),
+                            'takeProfitPrice': None,
+                            'triggerPrice': round(sl_price, 6),
+                            'triggerType': 'last',
+                            'slTriggerBy': 'last',
+                            'tdMode': 'isolated',
+                            'reduceOnly': True
+                        }
+                    )
                     logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {e}")
-        
+                except Exception as ex:
+                    logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
