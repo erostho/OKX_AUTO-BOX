@@ -136,7 +136,7 @@ def run_bot():
                     logging.warning(
                         f"⚠️ ĐÃ CÓ VỊ THẾ {side_check.upper()} mở với {symbol_check} => KHÔNG đặt thêm lệnh"
                     )
-                    continue 
+                    break 
             
             # 🔁 Lấy giá thị trường hiện tại
             ticker = exchange.fetch_ticker(symbol)
@@ -187,37 +187,37 @@ def run_bot():
             logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
             
             # ✅ Duyệt từng dòng trong sheet
-
-            symbol_raw = row[0]                            # Ví dụ: BTC-USDT
-            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
-            symbol_ccxt = f"{symbol_raw.replace("-", "/")}:USDT".upper()   # BTC/USDT:USDT
+            for row in rows:
+                symbol_raw = row[0]                            # Ví dụ: BTC-USDT
+                symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
+                symbol_ccxt = f"{symbol_raw.replace("-", "/")}:USDT".upper()   # BTC/USDT:USDT
             
-            # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
-            if symbol_check not in futures_symbols_okx:
-                logging.warning(f"⚠️ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
-                continue
+                # ✅ Bước 1: check nếu symbol không nằm trong danh sách fetch từ API OKX
+                if symbol_check not in futures_symbols_okx:
+                    logging.warning(f"⚠️ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
+                    continue
             
-            logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
+                logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
             
-            # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
-            market = exchange.markets.get(symbol_ccxt)
-            logging.debug(f"↪ Thông tin thị trường: {market}")
+                # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
+                market = exchange.markets.get(symbol_ccxt)
+                logging.debug(f"↪ Thông tin thị trường: {market}")
             
-            if not market:
-                logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
-                continue
+                if not market:
+                    logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
+                    continue
             
-            # ✅ Bước 3: Check đúng loại USDT-M Futures/Swap (Linear)
-            market_type = market.get('type')
-            settle_coin = market.get('settle')
+                # ✅ Bước 3: Check đúng loại USDT-M Futures/Swap (Linear)
+                market_type = market.get('type')
+                settle_coin = market.get('settle')
                 
-            logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
+                logging.debug(f"↪ Kiểm tra type={market_type}, settle={settle_coin}")
                 
-            if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
-                logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
+                if settle_coin and settle_coin.lower() == 'usdt' and market_type in ['future', 'swap']:
+                    logging.info(f"✅ Symbol {symbol_ccxt} là USDT-M {market_type.upper()} ➜ Cho phép đặt lệnh")
+                    continue
+                logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
                 continue
-            logging.error(f"❌ Symbol {symbol_ccxt} không phải USDT-M Futures (type={market_type}, settle={settle_coin})! Bỏ qua...")
-            continue
            
             # ✅ vào lệnh 
             params={
