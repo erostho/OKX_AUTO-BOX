@@ -208,11 +208,12 @@ def run_bot():
                 order = exchange.create_market_order(
                     symbol=symbol,
                     side=side,
-                    amount=size,
+                    amount=coin_amount,
                     params={
                         "tdMode": "isolated",
+                        "ccy": "USDT",
                         "reduceOnly": False,
-                        "lever": "5"
+                        "lever": str(leverage)
                     }
                 )
                 logging.info(f"📤 Kết quả tạo lệnh: {order}")
