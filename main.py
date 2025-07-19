@@ -225,7 +225,7 @@ def run_bot():
                     "ccy": "USDT",
                     "reduceOnly": False,
                     "lever": "5"
-                }
+            }
             logging.info(f"🔄 Gửi lệnh market: symbol={symbol}, side={side}, size={size}, params={params}")
             order = exchange.create_market_order(
                 symbol=symbol,
