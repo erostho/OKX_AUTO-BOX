@@ -285,39 +285,38 @@ def run_bot():
             
                 # ✅ Đặt Take Profit
                 try:
-                    logging.debug(f"[TP ORDER] symbol={symbol}, side={side_tp_sl}, amount={amount}, TP={tp_price}")
                     tp_order = exchange.create_order(
                         symbol=symbol,
-                        type='trigger',
+                        type='stop_market',
                         side=side_tp_sl,
                         amount=amount,
                         params={
                             "triggerPrice": round(tp_price, 4),
-                            "orderPx": round(tp_price, 4),
-                            "triggerType": "last",  # ✅ sửa tại đây
+                            "orderType": "market",         # ✅ đặt luôn là market khi trigger
+                            "triggerType": "mark",         # ✅ hoặc "last" nếu muốn
                             "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
+                    logging.info(f"✅✅ Đã đặt TP cho {symbol}: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
                 
                 # ✅ Đặt Stop Loss
+                # ✅ Đặt Stop Loss
                 try:
-                    logging.debug(f"[SL ORDER] symbol={symbol}, side={side_tp_sl}, amount={amount}, SL={sl_price}")
                     sl_order = exchange.create_order(
                         symbol=symbol,
-                        type='trigger',
+                        type='stop_market',
                         side=side_tp_sl,
                         amount=amount,
                         params={
                             "triggerPrice": round(sl_price, 4),
-                            "orderPx": round(sl_price, 4),
-                            "triggerType": "last",  # ✅ sửa tại đây
+                            "orderType": "market",
+                            "triggerType": "mark",
                             "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
+                    logging.info(f"✅✅ Đã đặt SL cho {symbol}: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {e}")
                     
