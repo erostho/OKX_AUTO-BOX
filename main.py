@@ -90,7 +90,7 @@ def run_bot():
             safe_usdt = min(base_usdt, max_order_value * 0.9)  # chỉ dùng tối đa 90% ngưỡng
 
             amount = round(safe_usdt / mark_price, 6)
-            size = round(usdt_amount / market_price, 6)
+            size = round(usdt_amount / mark_price, 6)
             estimated_value = amount * mark_price
 
             if estimated_value > max_order_value:
