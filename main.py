@@ -242,7 +242,7 @@ def run_bot():
                 
             # --- Fetch vị thế để lấy size ---
             try:
-                positions = exchange.fetch_positions([symbol])
+                positions = exchange.fetch_positions(params={"type": "swap"})
                 logging.debug(f"✅ [Positions] Đã fetch vị thế: {positions}")
             except Exception as e:
                 logging.error(f"❌ [Positions] Không thể fetch vị thế: {e}")
