@@ -214,8 +214,19 @@ def run_bot():
                             "lever": "4"
                         }
                     )
-                    logging.info(f"🟡 [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                    time.sleep(3)  # Đợi ổn định sau khi vào lệnh
+                    logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
+                    # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
+                    max_retries = 5
+                    positions = []
+                    for i in range(max_retries):
+                        try:
+                            positions = exchange.fetch_positions()
+                            logging.debug(f"[Retry {i+1}] ✅ Fetch được {len(positions)} vị thế")
+                            if positions:
+                                break
+                        except Exception as e:
+                            logging.warning(f"[Retry {i+1}] ❌ Lỗi fetch vị thế: {e}")
+                        time.sleep(3)  # chờ rồi thử lại
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue    
