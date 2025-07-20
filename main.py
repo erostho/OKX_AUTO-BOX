@@ -270,7 +270,6 @@ def run_bot():
             
                 if (
                     pos_symbol == symbol_check and
-                    pos_side == side_check and
                     margin_mode == 'isolated' and
                     float(pos_size) > 0
                 ):
