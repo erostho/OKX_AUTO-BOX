@@ -220,7 +220,7 @@ def run_bot():
 
             # ✅ Bắt đầu đặt SL/TP 
                 logging.info(f"🟡 [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                time.sleep(1.5)  # Đợi ổn định sau khi vào lệnh
+                time.sleep(2)  # Đợi ổn định sau khi vào lệnh
                 
             # --- Lấy market price ---
             try:
@@ -249,12 +249,13 @@ def run_bot():
                 pos_symbol = pos.get('symbol', '').upper()
                 pos_side = pos.get('posSide', '').lower()  # ✅ Dùng 'posSide' thay vì 'side'
                 margin_mode = pos.get('marginMode', '')
-                pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
+                pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos') or pos.get('notionalUsd') or 0
             
                 logging.debug(
                     f"🔁 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
                     f"mode={margin_mode}, size={pos_size} "
                     f"với symbol_check={symbol_check}, side_check={side_check}"
+                    f"[DEBUG] size kiểm tra từ pos = {pos_size}"
                 )
             
                 if (
