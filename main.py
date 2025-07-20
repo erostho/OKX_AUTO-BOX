@@ -12,6 +12,7 @@ import pandas as pd
 logging.basicConfig(
     level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
+    datefmt="%H:%M:%S"
 )
 # Đọc biến môi trường
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
@@ -296,7 +297,8 @@ def run_bot():
                 try:
                     logging.debug(f"📤 Gửi lệnh TP: {symbol}, triggerPx={round(tp_price, 6)}")
                     tp_order = exchange.create_order(
-
+                    time.sleep(1.5)
+                    place_tp_sl_order(exchange, symbol, side)
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
@@ -307,8 +309,6 @@ def run_bot():
                             'reduceOnly': True
                         }
                     )
-                    time.sleep(1.5)
-                    place_tp_sl_order(exchange, symbol, side)
                     logging.info(f"✅ Đặt TP thành công: {tp_order}")
                 except Exception as ex:
                     logging.error(f"❌ Lỗi đặt TP: {ex}")
@@ -334,4 +334,3 @@ def run_bot():
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
-
