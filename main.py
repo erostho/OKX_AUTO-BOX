@@ -236,10 +236,10 @@ def run_bot():
                 logging.info(f"✅ GỌI ĐẶT TP/SL CHO: {symbol} - SIDE: {side}")               
                 try:
                     positions = exchange.fetch_positions([symbol])
-                    logging.debug(f"✅ DANH SÁCH VỊ THẾ: {positions}")
+                    logging.debug(f"✅ Tổng số vị thế đã fetch được: {len(positions)}")
                 except Exception as ex:
                     logging.error(f"❌ Không thể fetch vị thế: {ex}")
-                    return           
+                    continue           
                 entry_price, size = 0, 0
                 symbol_check = symbol.replace("-", "/").upper()
                 side_check = side.lower()
@@ -272,7 +272,7 @@ def run_bot():
             
                 if not entry_price or entry_price == 0:
                     logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
-                    return
+                    continue
             
                 # ✅ Tính TP/SL
                 sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
