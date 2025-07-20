@@ -333,7 +333,7 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'slTtriggerPx': str(round(tp_price, 6)),
+                    'slTtriggerPx': str(round(sl_price, 6)),
                     'slOrderPx': '-1',
                     'triggerPxType': 'last',
                     'reduceOnly': True
