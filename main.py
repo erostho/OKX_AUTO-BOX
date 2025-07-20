@@ -233,71 +233,81 @@ def run_bot():
             # Sau khi đặt lệnh thành công 
             # ✅ Bắt đầu đặt SL/TP 
             def place_tp_sl_order(exchange, symbol, side):
-                import logging, time
-                logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
-                time.sleep(1.5)
-                logging.debug(f"🌀 [{i+1}/{max_retry}] Đang kiểm tra lại vị thế {symbol_check} - {side_check}")           
+                logging.info(f"🟡 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
+                time.sleep(1.5)  # Đợi vị thế vừa mở ổn định (nếu cần)
+            
+                # ✅ Lấy thông tin ticker để lấy giá thị trường hiện tại
                 try:
-                    positions = exchange.fetch_positions([symbol])
-                except Exception as ex:
-                    logging.error(f"❌ Không thể fetch vị thế: {ex}")
+                    ticker = exchange.fetch_ticker(symbol)
+                    market_price = float(ticker['last'])
+                    logging.info(f"🟢 Giá thị trường hiện tại: {market_price}")
+                except Exception as e:
+                    logging.error(f"❌ Không lấy được market price cho {symbol}: {e}")
                     return
             
-                entry_price, size = 0, 0
+                # ✅ Lấy kích thước vị thế (size) từ fetch_positions
+                try:
+                    positions = exchange.fetch_positions([symbol])
+                except Exception as e:
+                    logging.error(f"❌ Không thể fetch vị thế: {e}")
+                    return
+            
                 symbol_check = symbol.replace("-", "/").upper()
                 side_check = side.lower()
+                size = 0
             
                 for pos in positions:
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
                     pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
-                    logging.debug(
-                        f"[CHECK] pos_symbol={pos_symbol}, pos_side={pos_side}, "
-                        f"margin_mode={margin_mode}, size={size}, entry={entry}"
-                    )
+            
                     if (
                         pos_symbol == symbol_check and
                         pos_side == side_check and
                         margin_mode == 'isolated' and
                         float(pos_size) > 0
                     ):
-                        entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
-                        size = pos_size
-                        logging.info(f"✅ Tìm thấy entry_price = {entry_price}, size = {size}")
+                        size = float(pos_size)
                         break
             
-                if not entry_price or entry_price == 0:
-                    logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                if size == 0:
+                    logging.warning(f"⚠️ Không tìm được vị thế hợp lệ để đặt TP/SL cho {symbol}")
                     return
             
-                # ✅ Tính TP/SL
-                sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
-                tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
-                side_tp_sl = 'sell' if side == 'buy' else 'buy'
+                # ✅ Tính giá TP/SL dựa trên giá thị trường hiện tại
+                if side.lower() == 'buy':
+                    tp_price = market_price * 1.10
+                    sl_price = market_price * 0.95
+                    side_tp_sl = 'sell'
+                else:
+                    tp_price = market_price * 0.90
+                    sl_price = market_price * 1.05
+                    side_tp_sl = 'buy'
             
-                logging.debug(f"📐 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
+                logging.debug(f"📊 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
             
-                # ✅ Gửi lệnh TP
+                # ✅ Gửi lệnh TP (take profit)
                 try:
-                    logging.debug(f"📤 Gửi lệnh TP: {symbol}, triggerPx={round(tp_price, 6)}")
-                    tp_order = exchange.create_order(
-                        symbol=symbol,
-                        type='stop-market',
-                        side=side_tp_sl,
-                        amount=size,
-                        params={
-                            'triggerPrice': round(tp_price, 6),
-                            'triggerType': 'last',
-                            'reduceOnly': True
-                        }
-                    )
+                    logging.debug(f"📤 Gửi lệnh TP: {symbol}, triggerPx={round(tp_price,6)}")
+                    tp_order = exchange.private_post_trade_order_algo({
+                        'instId': symbol.replace("/", "-"),
+                        'tdMode': 'isolated',
+                        'side': side_tp_sl,
+                        'ordType': 'trigger',
+                        'sz': str(size),
+                        'ccy': 'USDT',
+                        'triggerPx': str(round(tp_price, 6)),
+                        'triggerPxType': 'last',
+                        'reduceOnly': True
+                    })
                     logging.info(f"✅ Đặt TP thành công: {tp_order}")
                 except Exception as ex:
-                    logging.error(f"❌ Lỗi đặt TP: {ex}")
+                    logging.error(f"❌ Đặt TP thất bại: {ex}")
+            
                 # ✅ Gửi lệnh SL (stop loss)
                 try:
-                    logging.debug(f"📤 Gửi lệnh SL: {symbol}, triggerPx={round(sl_price,6)}, size={size}")
+                    logging.debug(f"📤 Gửi lệnh SL: {symbol}, triggerPx={round(sl_price,6)}")
                     sl_order = exchange.private_post_trade_order_algo({
                         'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
@@ -311,7 +321,7 @@ def run_bot():
                     })
                     logging.info(f"✅ Đặt SL thành công: {sl_order}")
                 except Exception as ex:
-                    logging.error(f"❌ Lỗi đặt lệnh SL: {ex}")
+                    logging.error(f"❌ Đặt SL thất bại: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
