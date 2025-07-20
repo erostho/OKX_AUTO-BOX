@@ -230,11 +230,10 @@ def run_bot():
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
 
-            # Sau khi đặt lệnh thành công
+            # Sau khi đặt lệnh thành công 
+            # ✅ Bắt đầu đặt SL/TP 
             if order:
-                logging.info(f"✅ GỌI ĐẶT TP/SL CHO: {symbol} - SIDE: {side}")
-                place_tp_sl_order(exchange, symbol, side)
-            # ✅ Bắt đầu đặt SL/TP                 
+                logging.info(f"✅ GỌI ĐẶT TP/SL CHO: {symbol} - SIDE: {side}")               
                 try:
                     positions = exchange.fetch_positions([symbol])
                     logging.debug(f"✅ DANH SÁCH VỊ THẾ: {positions}")
