@@ -245,34 +245,29 @@ def run_bot():
                 side_check = side.lower()
            
                 for pos in positions:
-                    logging.warning(f"🧐 Chi tiết vị thế: {pos}")
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
                     pos_size = pos.get('size') or pos.get('contracts') or pos.get('positionAmt') or 0
-                    # ✅ Ưu tiên lấy size đúng format
-                    pos_size = float(pos.get('size') or pos.get('positionAmt') or 0)
+                
+                    if pos_side not in ['long', 'short']:
+                        logging.warning(f"⚠️ Bỏ qua side={pos_side} vì không phải long/short")
+                        continue
+                
+                    pos_size = float(pos_size)
                     entry_price = pos.get('entryPrice') or pos.get('avgPx') or 0
                 
-                    # ✅ Log debug tại đây
                     logging.debug(
-                        f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, margin_mode={margin_mode}, "
-                        f"entry={entry_price}, size={pos_size}"
+                        f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, "
+                        f"margin_mode={margin_mode}, entry={entry_price}, size={pos_size}"
                     )
+                
                     if (
                         pos_symbol == symbol_check and
                         pos_side == side_check and
                         margin_mode == 'isolated' and
-                        float(pos_size) > 0
+                        pos_size > 0
                     ):
-                        entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
-                        size = pos_size
-                        logging.info(f"✅ Tìm thấy entry_price = {entry_price}, size = {size}")
-                        break
-            
-                if not entry_price or entry_price == 0:
-                    logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
-                    continue
             
                 # ✅ Tính TP/SL
                 sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
