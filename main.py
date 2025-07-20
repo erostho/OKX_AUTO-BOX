@@ -7,6 +7,7 @@ from datetime import datetime
 import ccxt
 import time
 import sys
+import math
 import pandas as pd
 # Logging setup
 
@@ -294,7 +295,13 @@ def run_bot():
                 tp_price = market_price * 0.90
                 sl_price = market_price * 1.05
                 side_tp_sl = 'buy'
-                
+            # ✅ Kiểm tra TP/SL có hợp lệ không
+            if (
+                tp_price is None or sl_price is None or
+                math.isnan(tp_price) or math.isnan(sl_price)
+            ):
+                logging.error(f"❌ TP hoặc SL bị lỗi (NaN/None): TP={tp_price}, SL={sl_price} => Không đặt lệnh TP/SL")
+                return    
             logging.debug(f"📊 [TP/SL Calc] TP = {tp_price}, SL = {sl_price}, Opposite Side = {side_tp_sl}")
                 
             # --- Đặt TP ---
