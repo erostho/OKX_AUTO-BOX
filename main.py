@@ -255,7 +255,23 @@ def run_bot():
                         continue
                 
                     pos_size = float(pos_size)
-                    entry_price = pos.get('entryPrice') or pos.get('avgPx') or 0
+                    # Ưu tiên các trường trong vị thế
+                    entry_price = (
+                        pos.get('entryPrice')
+                        or pos.get('avgPx')
+                        or pos.get('markPx')
+                        or pos.get('last')
+                    )
+                    
+                    # Nếu vẫn None => fallback từ fetch_ticker
+                    if not entry_price or entry_price == 0:
+                        try:
+                            ticker = exchange.fetch_ticker(symbol)
+                            entry_price = ticker['last'] or ticker['mark']
+                            logging.warning(f"⚠️ entry_price fallback từ ticker: {entry_price}")
+                        except Exception as ex:
+                            logging.error(f"❌ Không lấy được entry_price fallback từ ticker: {ex}")
+                            continue
                 
                     logging.debug(
                         f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, "
