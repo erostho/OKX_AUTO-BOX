@@ -281,6 +281,11 @@ def run_bot():
                 return
                 
             # --- Tính toán giá TP / SL ---
+            # ✅ Kiểm tra market_price hợp lệ
+            if market_price is None or market_price <= 0:
+                logging.error(f"❌ Lỗi: market_price không hợp lệ ({market_price}) => Không đặt TP/SL")
+                return
+            
             if side.lower() == 'buy':
                 tp_price = market_price * 1.10
                 sl_price = market_price * 0.95
