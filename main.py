@@ -255,7 +255,7 @@ def run_bot():
             for pos in positions:
                 logging.debug(f"🔍 [Position] Kiểm tra từng vị thế: {pos}")
             
-                pos_symbol = pos_get('symbol'), '').upper().replace(':USDT', '')
+                pos_symbol = pos.get('symbol'), '').upper().replace(':USDT', '')
                 pos_side = pos.get('posSide', '').lower()  # ✅ Dùng 'posSide' thay vì 'side'
                 margin_mode = pos.get('marginMode', '')
                 pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos') or pos.get('notionalUsd') or 0
