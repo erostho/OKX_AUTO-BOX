@@ -243,15 +243,16 @@ def run_bot():
                 entry_price, size = 0, 0
                 symbol_check = symbol.replace("-", "/").upper()
                 side_check = side.lower()
-            
+           
                 for pos in positions:
+                    logging.warning(f"🧐 Chi tiết vị thế: {pos}")
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
                     pos_size = pos.get('size') or pos.get('contracts') or pos.get('positionAmt') or 0
                     # ✅ Ưu tiên lấy size đúng format
                     pos_size = float(pos.get('size') or pos.get('positionAmt') or 0)
-                    entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+                    entry_price = pos.get('entryPrice') or pos.get('avgPx') or 0)
                 
                     # ✅ Log debug tại đây
                     logging.debug(
