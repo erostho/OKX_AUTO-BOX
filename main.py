@@ -245,26 +245,27 @@ def run_bot():
                 
             for pos in positions:
                 logging.debug(f"🔍 [Position] Kiểm tra từng vị thế: {pos}")
+            
                 pos_symbol = pos.get('symbol', '').upper()
-                pos_side = pos.get('side', '').lower()
+                pos_side = pos.get('posSide', '').lower()  # ✅ Dùng 'posSide' thay vì 'side'
                 margin_mode = pos.get('marginMode', '')
                 pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
-                
+            
                 logging.debug(
-                    f"👉 So sánh: pos_symbol={pos_symbol}, side={pos_side}, mode={margin_mode}, size={pos_size} "
+                    f"🔁 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                    f"mode={margin_mode}, size={pos_size} "
                     f"với symbol_check={symbol_check}, side_check={side_check}"
                 )
-                
+            
                 if (
                     pos_symbol == symbol_check and
                     pos_side == side_check and
                     margin_mode == 'isolated' and
                     float(pos_size) > 0
                 ):
+                    logging.info(f"✅ [Position] Tìm thấy vị thế hợp lệ để đặt TP/SL cho {symbol_check}")
                     size = float(pos_size)
-                    logging.debug(f"✅ [Match] Vị thế hợp lệ được chọn với size={size}")
                     break
-                
             if size == 0:
                 logging.warning(f"⚠️ [Position] Không tìm được vị thế phù hợp để đặt TP/SL cho {symbol}")
                 return
