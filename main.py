@@ -230,8 +230,7 @@ def run_bot():
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
                     
-            # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
-            def place_tp_sl_order(exchange, symbol, side):
+            # ✅ Bắt đầu đặt SL/TP            
                 logging.info(f"🔧 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
                 time.sleep(1.5)
             
