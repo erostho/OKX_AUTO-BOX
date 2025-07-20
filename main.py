@@ -114,21 +114,12 @@ def run_bot():
             except Exception as e:
                 logging.error(f"❌ Không thể fetch vị thế: {e}")
                 return
-            
-            logging.debug("--- START kiểm tra vị thế từ OKX ---")
+
             has_position_open = False
             for pos in all_positions:
                 pos_symbol = pos.get('symbol', '').split(":")[0].upper()        # Ví dụ BTC/USDT:USDT => BTC/USDT
                 side_open = pos.get('side', '').lower()                         # long / short
                 margin_mode = pos.get('marginMode', '')                         # isolated / cross
-            
-                logging.debug(
-                    f"[CHECK] ↪ pos_symbol={pos_symbol}, side_open={side_open}, "
-                    f"margin_mode={margin_mode}"
-                )
-                logging.debug(
-                    f"[CHECK] ↪ So với: symbol_check={symbol_check}, side_check={side_check}"
-                )
             
                 if (
                     pos_symbol == symbol_check and
@@ -180,8 +171,6 @@ def run_bot():
             if symbol_check not in futures_symbols_okx:
                 logging.warning(f"⚠️ Symbol {symbol_check} KHÔNG nằm trong danh sách USDT-M Futures. Bỏ qua.")
                 continue
-        
-            logging.info(f"✅ Symbol {symbol_check} HỢP LỆ. Tiếp tục xử lý...")
         
             # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
             market = exchange.markets.get(symbol_ccxt)
