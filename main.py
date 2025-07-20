@@ -241,85 +241,124 @@ def run_bot():
                     continue
            
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
-            def place_tp_sl_order(exchange, symbol, side):
-                import logging, time
-                logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
-                time.sleep(1.5)
+            def place_tp_sl_order(exchange, symbol, side, entry_price):
+                logging.info(f"🟡 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
+            
+                # ✅ Tính TP/SL đúng logic futures
+                sl_percent = 5   # 5% cắt lỗ
+                tp_percent = 10  # 10% chốt lời
+            
+                if side == 'buy':
+                    sl_price = entry_price * (1 - sl_percent / 100)
+                    tp_price = entry_price * (1 + tp_percent / 100)
+                    side_tp_sl = 'sell'
+                elif side == 'sell':
+                    sl_price = entry_price * (1 + sl_percent / 100)
+                    tp_price = entry_price * (1 - tp_percent / 100)
+                    side_tp_sl = 'buy'
+                else:
+                    logging.error(f"❌ SIDE không hợp lệ: {side}")
+                    return
+            
+                logging.debug(f"✅ TP/SL: TP={tp_price:.4f}, SL={sl_price:.4f}, side_tp_sl={side_tp_sl}")
+            
+                # ✅ Chờ 1s để vị thế ổn định
+                time.sleep(1)
             
                 try:
                     positions = exchange.fetch_positions([symbol])
-                except Exception as ex:
-                    logging.error(f"❌ Không thể fetch vị thế: {ex}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi fetch vị thế: {e}")
                     return
             
-                entry_price, size = 0, 0
+                # ✅ Chuẩn hóa symbol và side
                 symbol_check = symbol.replace("-", "/").upper()
-                side_check = side.lower()
+                side_check = 'long' if side == 'buy' else 'short'
+                amount = 0
             
                 for pos in positions:
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
-                    pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
+                    size_raw = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
             
-                    if (
-                        pos_symbol == symbol_check and
-                        pos_side == side_check and
-                        margin_mode == 'isolated' and
-                        float(pos_size) > 0
-                    ):
-                        entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
-                        size = pos_size
-                        logging.info(f"✅ Tìm thấy entry_price = {entry_price}, size = {size}")
+                    logging.debug(f"[CHECK SIZE] pos_symbol={pos_symbol}, pos_side={pos_side}, margin={margin_mode}, size_raw={size_raw}")
+            
+                    if pos_symbol == symbol_check and pos_side == side_check and margin_mode == 'isolated':
+                        amount = float(size_raw) if size_raw not in [None, "None", ""] else 0
                         break
             
-                if not entry_price or entry_price == 0:
-                    logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                logging.debug(f"[CHECK SIZE FINAL] symbol={symbol}, amount={amount}")
+                if amount == 0:
+                    logging.warning(f"⚠️ Không tìm thấy size phù hợp để đặt TP/SL cho {symbol}")
                     return
-            
-                # ✅ Tính TP/SL
-                sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
-                tp_price = entry_price * (1.10 if side == 'buy' else 0.90)
-                side_tp_sl = 'sell' if side == 'buy' else 'buy'
-            
-                logging.debug(f"📐 TP/SL: TP={tp_price}, SL={sl_price}, side_tp_sl={side_tp_sl}")
-            
-                # ✅ Gửi lệnh TP
+
+                # ✅ Đặt Take Profit (TP)
                 try:
-                    logging.debug(f"📤 Gửi lệnh TP: {symbol}, triggerPx={round(tp_price, 6)}")
                     tp_order = exchange.create_order(
                         symbol=symbol,
                         type='stop-market',
                         side=side_tp_sl,
-                        amount=size,
+                        amount=size_raw,
                         params={
-                            'triggerPrice': round(tp_price, 6),
-                            'triggerType': 'last',
-                            'reduceOnly': True
+                            "takeProfitPrice": round(tp_price, 4),
+                            "stopLossPrice": None,
+                            "triggerType": "mark",
+                            "marginMode": "isolated"
                         }
                     )
-                    logging.info(f"✅ Đặt TP thành công: {tp_order}")
-                except Exception as ex:
-                    logging.error(f"❌ Lỗi đặt TP: {ex}")
-                # ✅ Gửi lệnh SL (stop loss)
+                    logging.info(f"✅ Đã đặt TP cho {symbol}: {tp_order}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt TP cho {symbol}: {e}")
+                
+                # ✅ Đặt Stop Loss (SL)
                 try:
-                    logging.debug(f"📤 Gửi lệnh SL: {symbol}, triggerPx={round(sl_price,6)}, size={size}")
-                    sl_order = exchange.private_post_trade_order_algo({
-                        'instId': symbol.replace("/", "-"),
-                        'tdMode': 'isolated',
-                        'side': side_tp_sl,
-                        'ordType': 'trigger',
-                        'sz': str(size),
-                        'ccy': 'USDT',
-                        'triggerPx': str(round(sl_price, 6)),
-                        'triggerPxType': 'last',
-                        'reduceOnly': True
-                    })
-                    logging.info(f"✅ Đặt SL thành công: {sl_order}")
+                    sl_order = exchange.create_order(
+                        symbol=symbol,
+                        type='stop-market',
+                        side=side_tp_sl,
+                        amount=size_raw,
+                        params={
+                            "stopLossPrice": round(sl_price, 4),
+                            "takeProfitPrice": None,
+                            "triggerType": "mark",
+                            "marginMode": "isolated"
+                        }
+                    )
+                    logging.info(f"✅ Đã đặt SL cho {symbol}: {sl_order}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi đặt SL cho {symbol}: {e}")
+                    
+            # 🟦 Tính entry_price và đặt TP/SL
+            entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+            logging.info(f"📌 Entry từ order['info']: {entry_price}")
+            
+            # ⛳ Nếu vẫn không có entry_price thì check lại từ vị thế
+            if entry_price == 0:
+                try:
+                    symbol_check = symbol.replace("-", "/").upper()
+                    side_check = side.lower()
+                    logging.info(f"🔍 Đang kiểm tra lại entry_price từ vị thế: symbol_check={symbol_check}, side_check={side_check}")
+            
+                    positions = exchange.fetch_positions([symbol])
+                    for pos in positions:
+                        logging.info(f"↪️ pos_symbol={pos['symbol']} | pos_side={pos['side']} | entryPrice={pos.get('entryPrice')}")
+                        if pos['symbol'].upper() == symbol_check and pos['side'].lower() == side_check:
+                            entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+                            logging.info(f"✅ Tìm thấy entry_price từ vị thế: {entry_price}")
+                            break
                 except Exception as ex:
-                    logging.error(f"❌ Lỗi đặt lệnh SL: {ex}")
+                    logging.error(f"❌ Không thể fetch vị thế để lấy entry_price: {ex}")
+            
+            # ⛳ Nếu có entry_price thì đặt TP/SL
+            if entry_price > 0:
+                place_tp_sl_order(exchange, symbol, side, entry_price)
+            else:
+                logging.warning(f"⚠️ Không xác định được entry_price để đặt TP/SL cho {symbol} | side={side} | symbol_check={symbol_check}")
+
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
+
