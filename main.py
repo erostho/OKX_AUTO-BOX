@@ -266,8 +266,14 @@ def run_bot():
                         pos_symbol == symbol_check and
                         pos_side == side_check and
                         margin_mode == 'isolated' and
-                        pos_size > 0
+                        pos_size > 0 and
+                        entry_price
                     ):
+                        logging.info(f"✅ Đặt TP/SL với entry={entry_price}, size={pos_size}")
+                        break
+                else:
+                logging.error(f"⚠️ không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                
             
                 # ✅ Tính TP/SL
                 sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
