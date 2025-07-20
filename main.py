@@ -170,7 +170,6 @@ def run_bot():
             
             # ✅ Lấy danh sách symbols từ API OKX (Futures)
             futures_symbols_okx = fetch_okx_usdt_futures_symbols()
-            logging.info(f"✅ Đã load {len(futures_symbols_okx)} USDT-M Futures symbols từ OKX")
             
             # ✅ Duyệt từng dòng trong sheet
             symbol_raw = row[0]                            # Ví dụ: BTC-USDT
@@ -240,7 +239,8 @@ def run_bot():
                     logging.info(f"📥 Kết quả tạo lệnh fallback: {order}")
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
-                    return
+                    continue
+                    
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
             def place_tp_sl_order(exchange, symbol, side):
                 logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")         
