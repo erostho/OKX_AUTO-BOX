@@ -232,14 +232,15 @@ def run_bot():
                     
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
             def place_tp_sl_order(exchange, symbol, side):
-                logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")         
+                logging.info(f"🔧 Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
+                time.sleep(1.5)
+            
                 try:
-                    positions = exchange.fetch_positions()
-                    logging.debug(f"❌ danh sách vị thế trả về: {positions}")
+                    positions = exchange.fetch_positions([symbol])
+                    logging.debug(f"✅ DANH SÁCH VỊ THẾ: {positions}")
                 except Exception as ex:
                     logging.error(f"❌ Không thể fetch vị thế: {ex}")
-                    return
-            
+                    return           
                 entry_price, size = 0, 0
                 symbol_check = symbol.replace("-", "/").upper()
                 side_check = side.lower()
