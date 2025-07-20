@@ -271,39 +271,39 @@ def run_bot():
                 logging.error(f"❌ Sau {max_retry} lần vẫn không lấy được entry_price hợp lệ cho {symbol_check} - {side_check}")
                 return None
                     # Ưu tiên các trường trong vị thế
-                    entry_price = (
-                        pos.get('entryPrice')
-                        or pos.get('avgPx')
-                        or pos.get('markPx')
-                        or pos.get('last')
-                    )
+                entry_price = (
+                    pos.get('entryPrice')
+                    or pos.get('avgPx')
+                    or pos.get('markPx')
+                    or pos.get('last')
+                )
                     
-                    # Nếu vẫn None => fallback từ fetch_ticker
-                    if not entry_price or entry_price == 0:
-                        try:
-                            ticker = exchange.fetch_ticker(symbol)
-                            entry_price = ticker['last'] or ticker['mark']
-                            logging.warning(f"⚠️ entry_price fallback từ ticker: {entry_price}")
-                        except Exception as ex:
-                            logging.error(f"❌ Không lấy được entry_price fallback từ ticker: {ex}")
-                            continue
+                # Nếu vẫn None => fallback từ fetch_ticker
+                if not entry_price or entry_price == 0:
+                    try:
+                        ticker = exchange.fetch_ticker(symbol)
+                        entry_price = ticker['last'] or ticker['mark']
+                        logging.warning(f"⚠️ entry_price fallback từ ticker: {entry_price}")
+                    except Exception as ex:
+                        logging.error(f"❌ Không lấy được entry_price fallback từ ticker: {ex}")
+                        continue
                 
-                    logging.debug(
-                        f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, "
-                        f"margin_mode={margin_mode}, entry={entry_price}, size={pos_size}"
-                    )
+                logging.debug(
+                    f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, "
+                    f"margin_mode={margin_mode}, entry={entry_price}, size={pos_size}"
+                )
                 
-                    if (
-                        pos_symbol == symbol_check and
-                        pos_side == side_check and
-                        margin_mode == 'isolated' and
-                        pos_size > 0 and
-                        entry_price
-                    ):
-                        logging.info(f"✅ Đặt TP/SL với entry={entry_price}, size={pos_size}")
-                        break
-                else:
-                    logging.error(f"⚠️ không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                if (
+                    pos_symbol == symbol_check and
+                    pos_side == side_check and
+                    margin_mode == 'isolated' and
+                    pos_size > 0 and
+                    entry_price
+                ):
+                    logging.info(f"✅ Đặt TP/SL với entry={entry_price}, size={pos_size}")
+                    break
+            else:
+                logging.error(f"⚠️ không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
                 
             
                 # ✅ Tính TP/SL
