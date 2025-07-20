@@ -314,9 +314,9 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'triggerPx': str(round(tp_price, 6)),
+                    'tpTtriggerPx': str(round(tp_price, 6)),
+                    'tpOrderPx: '-1' 
                     'triggerPxType': 'last',
-                    'orderPx': '',              # Market price khi chạm trigger
                     'reduceOnly': True
                 })
                 logging.info(f"✅ [TP Created] SL đã được đặt: {TP_order}")
@@ -333,9 +333,9 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'triggerPx': str(round(sl_price, 6)),
+                    'slTtriggerPx': str(round(tp_price, 6)),
+                    'slOrderPx: '-1' 
                     'triggerPxType': 'last',
-                    'orderPx': '',
                     'reduceOnly': True
                 })
                 logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
