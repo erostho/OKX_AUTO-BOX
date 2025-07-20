@@ -243,7 +243,7 @@ def run_bot():
                     return
             # ✅ Kiểm tra phản hồi hợp lệ từ lệnh để SL/TP            
             def place_tp_sl_order(exchange, symbol, side):
-            logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")         
+                logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")         
                 try:
                     positions = exchange.fetch_positions()
                     logging.debug(f"❌ danh sách vị thế trả về: {positions}")
