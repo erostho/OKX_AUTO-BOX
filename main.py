@@ -252,7 +252,7 @@ def run_bot():
                     pos_size = pos.get('size') or pos.get('contracts') or pos.get('positionAmt') or 0
                     # ✅ Ưu tiên lấy size đúng format
                     pos_size = float(pos.get('size') or pos.get('positionAmt') or 0)
-                    entry_price = pos.get('entryPrice') or pos.get('avgPx') or 0)
+                    entry_price = pos.get('entryPrice') or pos.get('avgPx') or 0
                 
                     # ✅ Log debug tại đây
                     logging.debug(
