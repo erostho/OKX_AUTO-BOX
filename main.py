@@ -224,9 +224,9 @@ def run_bot():
                             "lever": "5"
                         }
                     )
-                    logging.info(f"📌 SYMBOL ĐẶT LỆNH (symbol): {symbol}")
-                    logging.info(f"📥 Kết quả tạo lệnh fallback: {order}")
+                    logging.info("Before call")
                     place_tp_sl_order(exchange, symbol, side)
+                    logging.info("After call")
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
                     continue
