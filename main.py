@@ -182,9 +182,9 @@ def run_bot():
                 continue
        
             # ✅ vào lệnh
-            # Đặt đòn bẩy 5x
-            exchange.set_leverage(5, symbol=symbol_check)
-            logging.info(f"⚙️ Đã đặt đòn bẩy 5x cho {symbol}")
+            # Đặt đòn bẩy 4x
+            exchange.set_leverage(4, symbol=symbol_check)
+            logging.info(f"⚙️ Đã đặt đòn bẩy 4x cho {symbol}")
 
             symbol_for_order = market['id']
             # ✅ Vào lệnh — ưu tiên dùng symbol_for_order
@@ -197,7 +197,7 @@ def run_bot():
                         "tdMode": "isolated",
                         "ccy": "USDT",
                         "reduceOnly": False,
-                        "lever": "5"
+                        "lever": "4"
                     }
                 )
             except Exception as e:
@@ -211,17 +211,15 @@ def run_bot():
                             "tdMode": "isolated",
                             "ccy": "USDT",
                             "reduceOnly": False,
-                            "lever": "5"
+                            "lever": "4"
                         }
                     )
+                    logging.info(f"🟡 [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
+                    time.sleep(3)  # Đợi ổn định sau khi vào lệnh
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
-                    continue
-
+                    continue    
             # ✅ Bắt đầu đặt SL/TP 
-                logging.info(f"🟡 [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                time.sleep(2)  # Đợi ổn định sau khi vào lệnh
-                
             # --- Lấy market price ---
             try:
                 ticker = exchange.fetch_ticker(symbol)
