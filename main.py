@@ -311,14 +311,15 @@ def run_bot():
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
                     'side': side_tp_sl,
-                    'ordType': 'trigger',
+                    'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
                     'triggerPx': str(round(tp_price, 6)),
                     'triggerPxType': 'last',
+                    'orderPx': '',              # Market price khi chạm trigger
                     'reduceOnly': True
                 })
-                logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
+                logging.info(f"✅ [TP Created] SL đã được đặt: {TP_order}")
             except Exception as ex:
                 logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
                 
@@ -329,11 +330,12 @@ def run_bot():
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
                     'side': side_tp_sl,
-                    'ordType': 'trigger',
+                    'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
                     'triggerPx': str(round(sl_price, 6)),
                     'triggerPxType': 'last',
+                    'orderPx': '',
                     'reduceOnly': True
                 })
                 logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
