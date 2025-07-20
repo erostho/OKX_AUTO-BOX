@@ -232,51 +232,41 @@ def run_bot():
 
             # Sau khi đặt lệnh thành công 
             # ✅ Bắt đầu đặt SL/TP 
-            def get_valid_position(exchange, symbol_check, side_check, max_retry=5, wait_sec=1):
-                """
-                Lặp lại tối đa max_retry lần để tìm vị thế có entry_price hợp lệ.
-                """
-                for i in range(max_retry):
-                    logging.debug(f"🌀 [{i+1}/{max_retry}] Đang kiểm tra lại vị thế {symbol_check} - {side_check}")
-                    try:
-                        all_positions = exchange.fetch_positions()
-                    except Exception as e:
-                        logging.error(f"❌ Lỗi fetch positions: {e}")
-                        return None
+            def place_tp_sl_order(exchange, symbol, side):
+                import logging, time
+                logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
+                time.sleep(1.5)
             
-                    for pos in all_positions:
-                        pos_symbol = pos.get('symbol', '').upper()
-                        pos_side = pos.get('side', '').lower()
-                        margin_mode = pos.get('marginMode', '')
-                        size = float(pos.get('size') or 0)
-                        entry = pos.get('entryPrice') or 0
+                try:
+                    positions = exchange.fetch_positions([symbol])
+                except Exception as ex:
+                    logging.error(f"❌ Không thể fetch vị thế: {ex}")
+                    return
             
-                        logging.debug(
-                            f"[CHECK] pos_symbol={pos_symbol}, pos_side={pos_side}, "
-                            f"margin_mode={margin_mode}, size={size}, entry={entry}"
-                        )
+                entry_price, size = 0, 0
+                symbol_check = symbol.replace("-", "/").upper()
+                side_check = side.lower()
             
-                        if (
-                            pos_symbol == symbol_check and
-                            pos_side == side_check and
-                            margin_mode == 'isolated' and
-                            size > 0 and
-                            entry > 0
-                        ):
-                            logging.info(f"✅ Vị thế đã cập nhật: size={size}, entry_price={entry}")
-                            return pos
+                for pos in positions:
+                    pos_symbol = pos.get('symbol', '').upper()
+                    pos_side = pos.get('side', '').lower()
+                    margin_mode = pos.get('marginMode', '')
+                    pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
             
-                    time.sleep(2)
+                    if (
+                        pos_symbol == symbol_check and
+                        pos_side == side_check and
+                        margin_mode == 'isolated' and
+                        float(pos_size) > 0
+                    ):
+                        entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+                        size = pos_size
+                        logging.info(f"✅ Tìm thấy entry_price = {entry_price}, size = {size}")
+                        break
             
-                logging.error(f"❌ Sau {max_retry} lần vẫn không lấy được entry_price hợp lệ cho {symbol_check} - {side_check}")
-                return None
-                    # Ưu tiên các trường trong vị thế
-                entry_price = (
-                    pos.get('entryPrice')
-                    or pos.get('avgPx')
-                    or pos.get('markPx')
-                    or pos.get('last')
-                )
+                if not entry_price or entry_price == 0:
+                    logging.error(f"❌ Không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                    return
             
                 # ✅ Tính TP/SL
                 sl_price = entry_price * (0.95 if side == 'buy' else 1.05)
@@ -299,8 +289,6 @@ def run_bot():
                             'reduceOnly': True
                         }
                     )
-                    time.sleep(1.5)
-                    place_tp_sl_order(exchange, symbol, side)
                     logging.info(f"✅ Đặt TP thành công: {tp_order}")
                 except Exception as ex:
                     logging.error(f"❌ Lỗi đặt TP: {ex}")
