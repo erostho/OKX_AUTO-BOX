@@ -247,7 +247,7 @@ def run_bot():
                 time.sleep(1.5)
             
                 try:
-                    positions = exchange.fetch_positions([symbol])
+                    positions = exchange.fetch_positions()
                     logging.debug(f"❌ danh sách vị thế trả về: {positions}")
                 except Exception as ex:
                     logging.error(f"❌ Không thể fetch vị thế: {ex}")
