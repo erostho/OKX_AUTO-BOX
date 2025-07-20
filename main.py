@@ -12,6 +12,7 @@ import pandas as pd
 logging.basicConfig(
     level=logging.DEBUG,  # thay vì DEBUG/INFO
     format="%(asctime)s - %(levelname)s - %(message)s"
+    stream=sys.stdout
 )
 # Đọc biến môi trường
 SPREADSHEET_URL = os.environ.get("SPREADSHEET_URL")
