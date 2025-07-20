@@ -111,7 +111,8 @@ def run_bot():
             has_position_open = False
             for pos in all_positions:
                 pos_symbol = pos.get('symbol', '').split(":")[0].upper()        # Ví dụ BTC/USDT:USDT => BTC/USDT
-                side_open = pos.get('posSide', '').lower()                         # long / short
+                side_open = pos.get('side') or pos.get('posSide', '')
+                side_open = side_open.lower()                         # long / short
                 margin_mode = pos.get('marginMode', '')                         # isolated / cross
             
                 if (
