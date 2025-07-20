@@ -260,8 +260,16 @@ def run_bot():
                     pos_symbol = pos.get('symbol', '').upper()
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
-                    pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
-            
+                    pos_size = pos.get('size') or pos.get('contracts') or pos.get('positionAmt') or 0
+                    # ✅ Ưu tiên lấy size đúng format
+                    pos_size = float(pos.get('size') or pos.get('positionAmt') or 0)
+                    entry_price = float(pos.get('entryPrice') or pos.get('avgPx') or 0)
+                
+                    # ✅ Log debug tại đây
+                    logging.debug(
+                        f"[CHECK ENTRY] symbol={pos_symbol}, side={pos_side}, margin_mode={margin_mode}, "
+                        f"entry={entry_price}, size={pos_size}"
+                    )
                     if (
                         pos_symbol == symbol_check and
                         pos_side == side_check and
