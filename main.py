@@ -232,29 +232,44 @@ def run_bot():
 
             # Sau khi đặt lệnh thành công 
             # ✅ Bắt đầu đặt SL/TP 
-            if order:
-                logging.info(f"✅ GỌI ĐẶT TP/SL CHO: {symbol} - SIDE: {side}")               
-                try:
-                    positions = exchange.fetch_positions([symbol])
-                    logging.debug(f"✅ Tổng số vị thế đã fetch được: {len(positions)}")
-                except Exception as ex:
-                    logging.error(f"❌ Không thể fetch vị thế: {ex}")
-                    continue           
-                entry_price, size = 0, 0
-                symbol_check = symbol.replace("-", "/").upper()
-                side_check = side.lower()
-           
-                for pos in positions:
-                    pos_symbol = pos.get('symbol', '').upper()
-                    pos_side = pos.get('side', '').lower()
-                    margin_mode = pos.get('marginMode', '')
-                    pos_size = pos.get('size') or pos.get('contracts') or pos.get('positionAmt') or 0
-                
-                    if pos_side not in ['long', 'short']:
-                        logging.warning(f"⚠️ Bỏ qua side={pos_side} vì không phải long/short")
-                        continue
-                
-                    pos_size = float(pos_size)
+            def get_valid_position(exchange, symbol_check, side_check, max_retry=5, wait_sec=1):
+                """
+                Lặp lại tối đa max_retry lần để tìm vị thế có entry_price hợp lệ.
+                """
+                for i in range(max_retry):
+                    logging.debug(f"🌀 [{i+1}/{max_retry}] Đang kiểm tra lại vị thế {symbol_check} - {side_check}")
+                    try:
+                        all_positions = exchange.fetch_positions()
+                    except Exception as e:
+                        logging.error(f"❌ Lỗi fetch positions: {e}")
+                        return None
+            
+                    for pos in all_positions:
+                        pos_symbol = pos.get('symbol', '').upper()
+                        pos_side = pos.get('side', '').lower()
+                        margin_mode = pos.get('marginMode', '')
+                        size = float(pos.get('size') or 0)
+                        entry = pos.get('entryPrice') or 0
+            
+                        logging.debug(
+                            f"[CHECK] pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                            f"margin_mode={margin_mode}, size={size}, entry={entry}"
+                        )
+            
+                        if (
+                            pos_symbol == symbol_check and
+                            pos_side == side_check and
+                            margin_mode == 'isolated' and
+                            size > 0 and
+                            entry > 0
+                        ):
+                            logging.info(f"✅ Vị thế đã cập nhật: size={size}, entry_price={entry}")
+                            return pos
+            
+                    time.sleep(wait_sec)
+            
+                logging.error(f"❌ Sau {max_retry} lần vẫn không lấy được entry_price hợp lệ cho {symbol_check} - {side_check}")
+                return None
                     # Ưu tiên các trường trong vị thế
                     entry_price = (
                         pos.get('entryPrice')
