@@ -266,7 +266,7 @@ def run_bot():
                             logging.info(f"✅ Vị thế đã cập nhật: size={size}, entry_price={entry}")
                             return pos
             
-                    time.sleep(wait_sec)
+                    time.sleep(2)
             
                 logging.error(f"❌ Sau {max_retry} lần vẫn không lấy được entry_price hợp lệ cho {symbol_check} - {side_check}")
                 return None
