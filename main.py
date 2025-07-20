@@ -6,12 +6,13 @@ import requests
 from datetime import datetime
 import ccxt
 import time
+import sys
 import pandas as pd
 # Logging setup
 
 logging.basicConfig(
     level=logging.DEBUG,  # thay vì DEBUG/INFO
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(message)s",
     stream=sys.stdout
 )
 # Đọc biến môi trường
