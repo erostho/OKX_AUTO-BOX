@@ -236,7 +236,7 @@ def run_bot():
                 import logging, time
                 logging.info(f"🛠️ Bắt đầu đặt TP/SL cho {symbol} - SIDE: {side}")
                 time.sleep(1.5)
-            
+                logging.debug(f"🌀 [{i+1}/{max_retry}] Đang kiểm tra lại vị thế {symbol_check} - {side_check}")           
                 try:
                     positions = exchange.fetch_positions([symbol])
                 except Exception as ex:
@@ -252,7 +252,10 @@ def run_bot():
                     pos_side = pos.get('side', '').lower()
                     margin_mode = pos.get('marginMode', '')
                     pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or 0
-            
+                    logging.debug(
+                        f"[CHECK] pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                        f"margin_mode={margin_mode}, size={size}, entry={entry}"
+                    )
                     if (
                         pos_symbol == symbol_check and
                         pos_side == side_check and
