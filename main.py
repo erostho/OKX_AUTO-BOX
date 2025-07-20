@@ -302,8 +302,8 @@ def run_bot():
                 ):
                     logging.info(f"✅ Đặt TP/SL với entry={entry_price}, size={pos_size}")
                     break
-            else:
-                logging.error(f"⚠️ không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
+                else:
+                    logging.error(f"⚠️ không tìm được entry_price hợp lệ để đặt TP/SL cho {symbol}")
                 
             
                 # ✅ Tính TP/SL
