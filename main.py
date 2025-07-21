@@ -341,6 +341,7 @@ def run_bot():
                             'stopLossTriggerPrice': None,
                             'takeProfitTriggerPrice': tp_price,
                             'reduceOnly': True,
+                            'posSide': 'short' if position_side == 'short' else 'long',
                             'triggerPxType': 'last',  # hoặc 'mark' tuỳ bạn chọn
                             'tpTriggerPx': str(round(tp_price, 6)),
                         }
@@ -360,6 +361,7 @@ def run_bot():
                         params={
                             'stopLossTriggerPrice': sl_price,
                             'reduceOnly': True,
+                            'posSide': 'short' if position_side == 'short' else 'long',
                             'triggerPxType': 'last',
                             'slTriggerPx': str(round(sl_price, 6)),
                         }
