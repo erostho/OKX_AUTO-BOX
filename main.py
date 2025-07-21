@@ -312,7 +312,15 @@ def run_bot():
             
             # 🧨 Lấy opposite side để đặt TP/SL
             side_tp_sl = 'buy' if side.lower() == 'sell' else 'sell'
+            # ✅ Lấy dòng từ Google Sheet
+            symbol_raw = row[0].strip().upper()  # BTC-USDT (in hoa)
             
+            # ✅ instId chuẩn hóa đúng format của OKX
+            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
+            
+            # ✅ Dành cho CCXT (dùng ở fetch_positions)
+            symbol_ccxt = f"{symbol_raw.replace('-', '/')}/USDT"  # BTC/USDT:USDT
+
             # Xác định lệnh ngược lại
             position_side = pos.get("side")
             opposite_side = "sell" if position_side == "long" else "buy"
@@ -324,7 +332,7 @@ def run_bot():
             if tp_price:
                 try:
                     tp_payload = {
-                        "instId": f"{symbol_raw}-SWAP",
+                        "instId": symbol_check,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
@@ -345,7 +353,7 @@ def run_bot():
             if sl_price:
                 try:
                     sl_payload = {
-                        "instId": f"{symbol_raw}-SWAP",
+                        "instId": symbol_check,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
