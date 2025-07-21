@@ -324,7 +324,7 @@ def run_bot():
             if tp_price:
                 try:
                     tp_payload = {
-                        "instId": inst_id,
+                        "instId": f"{symbol_raw}-SWAP",
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
@@ -345,7 +345,7 @@ def run_bot():
             if sl_price:
                 try:
                     sl_payload = {
-                        "instId": inst_id,
+                        "instId": f"{symbol_raw}-SWAP",
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
