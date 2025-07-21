@@ -377,8 +377,9 @@ def run_bot():
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
-                    pos_qty = float(pos.get("size",0))
+                    pos_qty = float(pos.get("contracts",0))
                     margin_mode = pos.get('marginMode', '').lower()
+                    logging.debug(f"[DEBUG] ↪ pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos = {pos}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
