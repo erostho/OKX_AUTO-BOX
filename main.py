@@ -332,6 +332,7 @@ def run_bot():
                         'ccy': 'USDT',
                         "triggerPx": str(round(tp_price, 6)),
                         "triggerPxType": "last",
+                        "orderPx": str(round(tp_price, 6)),
                         "reduceOnly": True
                     }
                     logging.debug(f"📦 TP payload: {tp_payload}")
@@ -352,6 +353,7 @@ def run_bot():
                         'ccy': 'USDT',
                         "triggerPx": str(round(sl_price, 6)),
                         "triggerPxType": "last",
+                        "orderPx": str(round(sl_price, 6)),
                         "reduceOnly": True
                     }
                     logging.debug(f"📦 SL payload: {sl_payload}")
