@@ -361,7 +361,7 @@ def run_bot():
                             'stopLossTriggerPrice': sl_price,
                             'reduceOnly': True,
                             'triggerPxType': 'last',
-                            'slTriggerPx': str(round(tp_price, 6)),
+                            'slTriggerPx': str(round(sl_price, 6)),
                         }
                     )
                     logging.info(f"✅ Đặt SL thành công: {sl_order}")
