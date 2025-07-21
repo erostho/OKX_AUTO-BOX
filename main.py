@@ -396,23 +396,20 @@ def run_bot():
                                 "instId": symbol_check,
                                 "algoType": "conditional"
                             })
-            
-                            for order in open_algo_orders:
-                                if order.get('type') == 'stop_market':
-                                    algo_id = order.get('id')
+                        
+                            for order in open_algo_orders.get("data", []):
+                                if order.get("type") == "stop-market":
+                                    algo_id = order.get("algoId")
                                     try:
-                                        result = exchange.cancel_order(
-                                            algo_id,
-                                            symbol=symbol_check,
-                                            params={"algoClOrdId": algo_id}
-                                        )
+                                        result = exchange.private_post_trade_cancel_algos({
+                                            "algoIds": [algo_id]
+                                        })
                                         logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
                                     except Exception as cancel_err:
                                         logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
                         except Exception as fetch_err:
-                            logging.error(f"❌ Lỗi khi fetch lệnh stop-market: {fetch_err}")
-            
-                        continue  # ✅ Sau khi xử lý xong 1 symbol thì thoát vòng lặp
+                            logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
+                        continue  # ✅ Sau khi xử lý xong 1 symbol thì qua symbol khác
             except Exception as e:
                 logging.error(f"❌ Lỗi kiểm tra vị thế để huỷ TP/SL: {e}")
 
