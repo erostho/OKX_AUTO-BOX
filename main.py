@@ -378,11 +378,13 @@ def run_bot():
                 for pos in all_positions:
                     pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
                     margin_mode = pos.get('marginMode', '').lower()
-                    pos_qty = float(pos.get("contracts", 0))
+                    contracts_val = pos.get("info", {}).get("contracts", 0)
+                    pos_qty = float(contracts_val)
                     side_open = pos.get("side", "").lower()
                     symbol_pos = pos.get("symbol", "").upper()
                     logging.debug(f"[DEBUG] ↪ pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos = {pos}")
+                    logging.debug(f"[CHECK] ↪ contracts_val = {contracts_val} → pos_qty = {pos_qty}")
                     logging.debug(f"[DEBUG] ↪ contracts = {pos.get('contracts')} | pos = {pos.get('pos')} | side = {side_open}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
