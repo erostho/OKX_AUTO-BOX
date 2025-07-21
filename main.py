@@ -306,7 +306,12 @@ def run_bot():
                 
             # --- Đặt TP ---
             try:
+                if tp_price is None or math.isnan(tp_price):
+                    logging.error(f"❌ TP bị lỗi (NaN/None): tp_price = {tp_price}")
+                    return
+            
                 logging.debug(f"📤 [TP Order] Gửi TP cho {symbol} @ {round(tp_price, 6)}")
+            
                 tp_order = exchange.private_post_trade_order_algo({
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
@@ -314,18 +319,25 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'tpTtriggerPx': str(round(tp_price, 6)),
-                    'tpOrderPx': '-1',
+                    'tpTriggerPx': str(round(tp_price, 6)),
+                    'tpOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
                 })
-                logging.info(f"✅ [TP Created] SL đã được đặt: {TP_order}")
+            
+                logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
+            
             except Exception as ex:
                 logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
                 
             # --- Đặt SL ---
             try:
+                if sl_price is None or math.isnan(sl_price):
+                    logging.error(f"❌ SL bị lỗi (NaN/None): sl_price = {sl_price}")
+                    return
+            
                 logging.debug(f"📤 [SL Order] Gửi SL cho {symbol} @ {round(sl_price, 6)}")
+            
                 sl_order = exchange.private_post_trade_order_algo({
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
@@ -333,14 +345,16 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'slTtriggerPx': str(round(sl_price, 6)),
-                    'slOrderPx': '-1',
+                    'slTriggerPx': str(round(sl_price, 6)),
+                    'slOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
                 })
+            
                 logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
+            
             except Exception as ex:
-                logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}")   
+                logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
