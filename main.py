@@ -341,7 +341,6 @@ def run_bot():
                         "triggerPx": str(round(tp_price, 6)),
                         "triggerPxType": "last",
                         "orderPx": str(round(tp_price, 6)),
-                        "reduceOnly": True
                     }
                     logging.debug(f"📦 TP payload: {tp_payload}")
                     tp_order = exchange.private_post_trade_order_algo(tp_payload)
@@ -362,7 +361,6 @@ def run_bot():
                         "triggerPx": str(round(sl_price, 6)),
                         "triggerPxType": "last",
                         "orderPx": str(round(sl_price, 6)),
-                        "reduceOnly": True
                     }
                     logging.debug(f"📦 SL payload: {sl_payload}")
                     sl_order = exchange.private_post_trade_order_algo(sl_payload)
