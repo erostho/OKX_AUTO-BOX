@@ -311,8 +311,7 @@ def run_bot():
                     return
             
                 logging.debug(f"📤 [TP Order] Gửi TP cho {symbol} @ {round(tp_price, 6)}")
-            
-                tp_order = exchange.private_post_trade_order_algo({
+                tp_payload = {
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
                     'side': side_tp_sl,
@@ -322,12 +321,9 @@ def run_bot():
                     'tpTriggerPx': round(tp_price, 6),
                     'triggerPxType': 'last',
                     'reduceOnly': True
-                })
-            
-                logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
-            
-            except Exception as ex:
-                logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
+                }
+                
+                tp_order = exchange.private_post_trade_order_algo(tp_payload)
                 
             # --- Đặt SL ---
             try:
@@ -336,8 +332,7 @@ def run_bot():
                     return
             
                 logging.debug(f"📤 [SL Order] Gửi SL cho {symbol} @ {round(sl_price, 6)}")
-            
-                sl_order = exchange.private_post_trade_order_algo({
+                sl_payload = {
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
                     'side': side_tp_sl,
@@ -347,12 +342,9 @@ def run_bot():
                     'slTriggerPx': round(sl_price, 6),
                     'triggerPxType': 'last',
                     'reduceOnly': True
-                })
-            
-                logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
-            
-            except Exception as ex:
-                logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}")
+                }
+                
+                sl_order = exchange.private_post_trade_order_algo(sl_payload)
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
