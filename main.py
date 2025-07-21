@@ -306,55 +306,51 @@ def run_bot():
                 sl_price = None
         
             # Đặt TP (Take Profit)
-            def place_tp_sl_stop_market(exchange, symbol, side, size, tp_price, sl_price):
-                """
-                Đặt lệnh TP/SL kiểu stop-market (trigger order) cho futures trên OKX
-                """
-                # ✅ Xác định opposite side
-                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
+            # ✅ Xác định opposite side
+            opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
             
-                logging.debug(f"📊 [TP/SL] symbol={symbol}, size={size}, side={side}, opposite_side={opposite_side}")
-                logging.debug(f"📈 TP Trigger Px = {tp_price}, 📉 SL Trigger Px = {sl_price}")
+            logging.debug(f"📊 [TP/SL] symbol={symbol}, size={size}, side={side}, opposite_side={opposite_side}")
+            logging.debug(f"📈 TP Trigger Px = {tp_price}, 📉 SL Trigger Px = {sl_price}")
             
-                # ✅ Đặt TP nếu giá hợp lệ
-                if tp_price and not math.isnan(tp_price):
-                    try:
-                        tp_order = exchange.private_post_trade_order_algo({
-                            'instId': symbol.replace("/", "-"),
-                            'tdMode': 'isolated',
-                            'side': opposite_side,
-                            'ordType': 'trigger',
-                            'sz': str(size),
-                            'ccy': 'USDT',
-                            'triggerPx': str(round(tp_price, 6)),
-                            'triggerPxType': 'last',
-                            'reduceOnly': True
-                        })
-                        logging.info(f"✅ TP Created cho {symbol}: {tp_order}")
-                    except Exception as e:
-                        logging.error(f"❌ TP Failed cho {symbol}: {e}")
-                else:
-                    logging.warning(f"⚠️ TP price không hợp lệ => Không đặt TP cho {symbol}")
+            # ✅ Đặt TP nếu giá hợp lệ
+            if tp_price and not math.isnan(tp_price):
+                try:
+                    tp_order = exchange.private_post_trade_order_algo({
+                        'instId': symbol.replace("/", "-"),
+                        'tdMode': 'isolated',
+                        'side': opposite_side,
+                        'ordType': 'trigger',
+                        'sz': str(size),
+                        'ccy': 'USDT',
+                        'triggerPx': str(round(tp_price, 6)),
+                        'triggerPxType': 'last',
+                        'reduceOnly': True
+                    })
+                    logging.info(f"✅ TP Created cho {symbol}: {tp_order}")
+                except Exception as e:
+                    logging.error(f"❌ TP Failed cho {symbol}: {e}")
+            else:
+                logging.warning(f"⚠️ TP price không hợp lệ => Không đặt TP cho {symbol}")
             
-                # ✅ Đặt SL nếu giá hợp lệ
-                if sl_price and not math.isnan(sl_price):
-                    try:
-                        sl_order = exchange.private_post_trade_order_algo({
-                            'instId': symbol.replace("/", "-"),
-                            'tdMode': 'isolated',
-                            'side': opposite_side,
-                            'ordType': 'trigger',
-                            'sz': str(size),
-                            'ccy': 'USDT',
-                            'triggerPx': str(round(sl_price, 6)),
-                            'triggerPxType': 'last',
-                            'reduceOnly': True
-                        })
-                        logging.info(f"✅ SL Created cho {symbol}: {sl_order}")
-                    except Exception as e:
-                        logging.error(f"❌ SL Failed cho {symbol}: {e}")
-                else:
-                    logging.warning(f"⚠️ SL price không hợp lệ => Không đặt SL cho {symbol}")
+            # ✅ Đặt SL nếu giá hợp lệ
+            if sl_price and not math.isnan(sl_price):
+                try:
+                    sl_order = exchange.private_post_trade_order_algo({
+                        'instId': symbol.replace("/", "-"),
+                        'tdMode': 'isolated',
+                        'side': opposite_side,
+                        'ordType': 'trigger',
+                        'sz': str(size),
+                        'ccy': 'USDT',
+                        'triggerPx': str(round(sl_price, 6)),
+                        'triggerPxType': 'last',
+                        'reduceOnly': True
+                    })
+                    logging.info(f"✅ SL Created cho {symbol}: {sl_order}")
+                except Exception as e:
+                    logging.error(f"❌ SL Failed cho {symbol}: {e}")
+            else:
+                logging.warning(f"⚠️ SL price không hợp lệ => Không đặt SL cho {symbol}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
