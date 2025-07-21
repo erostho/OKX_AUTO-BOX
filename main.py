@@ -381,7 +381,7 @@ def run_bot():
                     pos_qty = float(pos.get("contracts", 0))
                     margin_mode = info.get('marginMode', '').lower()
                     side = info.get("side", "").lower()
-                    side_open = pos.get("posSide", "").lower()
+                    side_open = info.get("posSide", "").lower()
                     logging.debug(f"[DEBUG] ↪ pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos = {pos}")
                     logging.debug(f"[DEBUG] ↪ contracts = {pos.get('contracts')} | pos = {pos.get('pos')} | side = {side_open}")
