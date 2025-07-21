@@ -42,43 +42,7 @@ def fetch_sheet():
     except Exception as e:
         logging.error(f"❌ Không thể tải Google Sheet: {e}")
         return []
-def place_tp_sl_stop_market(exchange, symbol, side, size, tp_price, sl_price):
-    opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
 
-    logging.debug(f"📊 [TP/SL] symbol={symbol}, size={size}, side={side}, opposite_side={opposite_side}")
-    logging.debug(f"📈 TP Trigger Px = {tp_price}, 📉 SL Trigger Px = {sl_price}")
-
-    if tp_price:
-        try:
-            tp_order = exchange.private_post_trade_order_algo({
-                'instId': symbol.replace("/", "-"),
-                'tdMode': 'isolated',
-                'side': opposite_side,
-                'ordType': 'trigger',
-                'sz': str(size),
-                'triggerPx': str(round(tp_price, 6)),
-                'triggerPxType': 'last',
-                'reduceOnly': True
-            })
-            logging.info(f"✅ TP Created cho {symbol}: {tp_order}")
-        except Exception as e:
-            logging.error(f"❌ TP Failed cho {symbol}: {e}")
-
-    if sl_price:
-        try:
-            sl_order = exchange.private_post_trade_order_algo({
-                'instId': symbol.replace("/", "-"),
-                'tdMode': 'isolated',
-                'side': opposite_side,
-                'ordType': 'trigger',
-                'sz': str(size),
-                'triggerPx': str(round(sl_price, 6)),
-                'triggerPxType': 'last',
-                'reduceOnly': True
-            })
-            logging.info(f"✅ SL Created cho {symbol}: {sl_order}")
-        except Exception as e:
-            logging.error(f"❌ SL Failed cho {symbol}: {e}")
 def run_bot():
     now = datetime.utcnow()
     rows = fetch_sheet()
@@ -343,18 +307,55 @@ def run_bot():
             if sl_price is None or math.isnan(sl_price):
                 logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
                 sl_price = None
-            # ✅ Gọi hàm đặt TP/SL
+            # 🧠 Đảm bảo TP/SL là giá hợp lệ
             try:
-                place_tp_sl_stop_market(
-                    exchange=exchange,
-                    symbol=symbol,
-                    side=side,
-                    size=size,
-                    tp_price=tp_price,
-                    sl_price=sl_price
-                )
+                tp_price = float(tp_price)
+                sl_price = float(sl_price)
             except Exception as e:
-                logging.error(f"❌ Lỗi khi gọi hàm TP/SL cho {symbol}: {e}")
+                logging.warning(f"⚠️ Giá TP/SL không hợp lệ: {e}")
+                tp_price = None
+                sl_price = None
+            
+            # 🧨 Lấy opposite side để đặt TP/SL
+            side_tp_sl = 'buy' if side.lower() == 'sell' else 'sell'
+            
+            # 🟢 Đặt Take Profit nếu có
+            if tp_price:
+                try:
+                    logging.info(f"[TP] Đặt TP triggerPx={tp_price} cho {symbol} với size={size}")
+                    tp_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol.replace("/", "-"),
+                        "tdMode": "isolated",
+                        "side": side_tp_sl,
+                        "ordType": "trigger",
+                        "sz": str(size),
+                        "triggerPx": str(round(tp_price, 6)),
+                        "triggerPxType": "last",
+                        "ccy": "USDT",
+                        "reduceOnly": True
+                    })
+                    logging.info(f"✅ TP OK: {tp_order}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi đặt TP: {e}")
+            
+            # 🔴 Đặt Stop Loss nếu có
+            if sl_price:
+                try:
+                    logging.info(f"[SL] Đặt SL triggerPx={sl_price} cho {symbol} với size={size}")
+                    sl_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol.replace("/", "-"),
+                        "tdMode": "isolated",
+                        "side": side_tp_sl,
+                        "ordType": "trigger",
+                        "sz": str(size),
+                        "triggerPx": str(round(sl_price, 6)),
+                        "triggerPxType": "last",
+                        "ccy": "USDT",
+                        "reduceOnly": True
+                    })
+                    logging.info(f"✅ SL OK: {sl_order}")
+                except Exception as e:
+                    logging.error(f"❌ Lỗi đặt SL: {e}")
                 
             # ✅ Gửi lệnh lên OKX
             logging.debug(f"[ORDER PAYLOAD] => {order_payload}")
