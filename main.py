@@ -329,7 +329,7 @@ def run_bot():
                         "side": side_tp_sl,
                         "ordType": "trigger",
                         "sz": str(size),
-                        "triggerPx": str(round(tp_price, 6)),
+                        "triggerPx": round(tp_price, 6),
                         "triggerPxType": "last",
                         "ccy": "USDT",
                         "reduceOnly": True
@@ -348,7 +348,7 @@ def run_bot():
                         "side": side_tp_sl,
                         "ordType": "trigger",
                         "sz": str(size),
-                        "triggerPx": str(round(sl_price, 6)),
+                        "triggerPx": round(sl_price, 6),
                         "triggerPxType": "last",
                         "ccy": "USDT",
                         "reduceOnly": True
@@ -356,11 +356,6 @@ def run_bot():
                     logging.info(f"✅ SL OK: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt SL: {e}")
-                
-            # ✅ Gửi lệnh lên OKX
-            logging.debug(f"[ORDER PAYLOAD] => {order_payload}")
-            response = exchange.private_post_trade_order(order_payload)
-            logging.info(f"✅ Lệnh entry + TP/SL OK: {response}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
