@@ -377,7 +377,7 @@ def run_bot():
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
-                    size = float(pos.get('size', 0))
+                    pos_qty = float(pos.get("pos",0))
                     margin_mode = pos.get('marginMode', '').lower()
                     
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
@@ -386,7 +386,7 @@ def run_bot():
                     
                     if (
                         pos_symbol_check == symbol_check
-                        and float(pos.get("size", 0)) == 0
+                        and abs(pos_qty) == 0
                         and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
