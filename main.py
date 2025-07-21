@@ -319,7 +319,7 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'tpTriggerPx': str(round(tp_price, 6)),
+                    'tpTriggerPx': round(tp_price, 6),
                     'tpOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
@@ -345,7 +345,7 @@ def run_bot():
                     'ordType': 'conditional',
                     'sz': str(size),
                     'ccy': 'USDT',
-                    'slTriggerPx': str(round(sl_price, 6)),
+                    'slTriggerPx': round(sl_price, 6),
                     'slOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
