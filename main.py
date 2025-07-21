@@ -371,18 +371,19 @@ def run_bot():
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
             symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
-            side_open = pos.get("side", "")
-            pos_symbol_check = pos.get('instId', '').upper() # FXS-USDT-SWAP
-            logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
-            logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
-            logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
+            # ✅ Duyệt vị thế hiện tại
+
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    pos_symbol_check = pos.get('instId', '').upper() # FXS-USDT-SWAP
+                    pos_symbol_check = pos.get('instId', '') # FXS-USDT-SWAP
                     size = float(pos.get('size', 0))
                     margin_mode = pos.get('marginMode', '').lower()
-            
+                    
+                    logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
+                    logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
+                    logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
+                    
                     if (
                         pos_symbol_check == symbol_check
                         and float(pos.get("size", 0)) == 0
