@@ -307,7 +307,7 @@ def run_bot():
             if tp_price is not None:
                 try:
                     tp_payload = {
-                        'instId': symbol_okx,
+                        'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': opposite_side,
                         'ordType': 'conditional',
@@ -328,7 +328,7 @@ def run_bot():
             if sl_price is not None:
                 try:
                     sl_payload = {
-                        'instId': symbol_okx,
+                        'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': opposite_side,
                         'ordType': 'conditional',
