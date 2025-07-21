@@ -168,7 +168,7 @@ def run_bot():
                 continue
         
             # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
-            market = exchange.markets.get(symbol_ccxt)
+            market = exchange.markets.get(symbol_check)
         
             if not market:
                 logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
