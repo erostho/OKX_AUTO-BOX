@@ -307,7 +307,9 @@ def run_bot():
         
             # Đặt TP (Take Profit)
             def place_tp_sl_stop_market(exchange, symbol, side, size, tp_price, sl_price):
-                Đặt lệnh TP/SL kiểu stop-market (trigger order) cho futures trên OKX           
+                """
+                Đặt lệnh TP/SL kiểu stop-market (trigger order) cho futures trên OKX
+                """
                 # ✅ Xác định opposite side
                 opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
             
