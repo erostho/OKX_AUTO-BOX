@@ -380,6 +380,7 @@ def run_bot():
                     pos_qty = float(pos.get("contracts",0) or pos.get("size",0) or 0)
                     contracts = float(pos.get("pos", 0))
                     margin_mode = pos.get('marginMode', '').lower()
+                    pos_side = pos.get("posSide",  "").lower()
                     logging.debug(f"[CHECK] 🔍 pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
@@ -388,6 +389,7 @@ def run_bot():
                     
                     if (
                         pos_symbol_check == symbol_check
+                        and pos_side == "net"
                         and abs(contracts) < 0.0000001
                         and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
