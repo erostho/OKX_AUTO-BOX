@@ -230,8 +230,6 @@ def run_bot():
                         except Exception as e:
                             logging.warning(f"[Retry {i+1}] ❌ Lỗi fetch vị thế: {e}")
                         time.sleep(3)  # chờ rồi thử lại
-                        # ✅ Gọi hàm đặt TP/SL sau khi lệnh chính đã đặt xong
-                        place_entry_with_tp_sl(exchange, symbol, side, size, tp_price, sl_price)
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
 
@@ -280,16 +278,6 @@ def run_bot():
                 ):
                     logging.info(f"✅ [Position] Tìm thấy vị thế hợp lệ để đặt TP/SL cho {symbol_check}")
                     size = float(pos_size)
-                    # ✅ Gọi hàm đặt TP/SL kiểu stop-market
-                    place_entry_with_tp_sl(
-                        exchange=exchange,
-                        symbol=symbol,
-                        side=side,
-                        size=size,
-                        entry_price=entry_price,  # hoặc market_price nếu bạn đã lấy
-                        tp_price=tp_price,
-                        sl_price=sl_price
-                    )
                     break
             if size == 0:
                 logging.warning(f"⚠️ [Position] Không tìm được vị thế phù hợp để đặt TP/SL cho {symbol}")
@@ -311,6 +299,7 @@ def run_bot():
                 sl_price = market_price * 1.05
                 side_tp_sl = 'buy'
                 opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
+                
             # ✅ Kiểm tra TP/SL có hợp lệ không
             if tp_price is None or math.isnan(tp_price):
                 logging.warning(f"⚠️ TP bị lỗi (None/NaN): tp_price = {tp_price}")
@@ -318,61 +307,54 @@ def run_bot():
             if sl_price is None or math.isnan(sl_price):
                 logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
                 sl_price = None
-            
+            # ✅ Gọi hàm đặt TP/SL
+            try:
+                place_tp_sl_stop_market(exchange, symbol, side, amount, tp_price, sl_price)
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi gọi hàm TP/SL cho {symbol}: {e}")
+
             # Đặt TP (Take Profit)           
-            def place_entry_with_tp_sl(exchange, symbol, side, size, entry_price=None, tp_price=None, sl_price=None):
-                """
-                Đặt lệnh vào futures (market hoặc limit) kèm TP/SL dạng stop-market trên OKX
-                """
-                try:
-                    symbol_okx = symbol.replace("/", "-")
-                    order_payload = {
-                        'instId': symbol_okx,
-                        'tdMode': 'isolated',
-                        'side': side.lower(),                    # 'buy' hoặc 'sell'
-                        'ordType': 'market' if not entry_price else 'limit',
-                        'sz': str(size),
-                        'reduceOnly': False
-                    }
+            def place_tp_sl_stop_market(exchange, symbol, side, size, tp_price, sl_price):
+                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
             
-                    # Nếu là lệnh limit thì thêm giá
-                    if entry_price:
-                        order_payload['px'] = str(round(entry_price, 6))
+                logging.debug(f"📊 [TP/SL] symbol={symbol}, size={size}, side={side}, opposite_side={opposite_side}")
+                logging.debug(f"📈 TP Trigger Px = {tp_price}, 📉 SL Trigger Px = {sl_price}")
             
-                    # Gắn TP/SL theo dạng trigger (stop-market)
-                    attach_algo = []
-            
-                    # ✅ TP
-                    if tp_price and not math.isnan(tp_price):
-                        attach_algo.append({
-                            'tpTriggerPx': str(round(tp_price, 6)),
-                            'tpTriggerPxType': 'last',
-                            'tpOrdPx': '-1'   # market
+                if tp_price:
+                    try:
+                        tp_order = exchange.private_post_trade_order_algo({
+                            'instId': symbol.replace("/", "-"),
+                            'tdMode': 'isolated',
+                            'side': opposite_side,
+                            'ordType': 'trigger',
+                            'sz': str(size),
+                            'triggerPx': str(round(tp_price, 6)),
+                            'triggerPxType': 'last',
+                            'reduceOnly': True
                         })
-                    else:
-                        logging.warning(f"⚠️ Không có TP hoặc TP invalid cho {symbol}")
+                        logging.info(f"✅ TP Created cho {symbol}: {tp_order}")
+                    except Exception as e:
+                        logging.error(f"❌ TP Failed cho {symbol}: {e}")
             
-                    # ✅ SL
-                    if sl_price and not math.isnan(sl_price):
-                        attach_algo.append({
-                            'slTriggerPx': str(round(sl_price, 6)),
-                            'slTriggerPxType': 'last',
-                            'slOrdPx': '-1'
+                if sl_price:
+                    try:
+                        sl_order = exchange.private_post_trade_order_algo({
+                            'instId': symbol.replace("/", "-"),
+                            'tdMode': 'isolated',
+                            'side': opposite_side,
+                            'ordType': 'trigger',
+                            'sz': str(size),
+                            'triggerPx': str(round(sl_price, 6)),
+                            'triggerPxType': 'last',
+                            'reduceOnly': True
                         })
-                    else:
-                        logging.warning(f"⚠️ Không có SL hoặc SL invalid cho {symbol}")
-            
-                    if attach_algo:
-                        order_payload['attachAlgoOrds'] = attach_algo
-                        logging.debug(f"[attachAlgoOrds] => {attach_algo}")
-            
+                        logging.info(f"✅ SL Created cho {symbol}: {sl_order}")
+                    except Exception as e:
+                        logging.error(f"❌ SL Failed cho {symbol}: {e}")
                     # ✅ Gửi lệnh lên OKX
                     logging.debug(f"[ORDER PAYLOAD] => {order_payload}")
                     response = exchange.private_post_trade_order(order_payload)
                     logging.info(f"✅ Lệnh entry + TP/SL OK: {response}")
-            
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi đặt entry + TP/SL cho {symbol}: {e}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
