@@ -379,7 +379,7 @@ def run_bot():
                     pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
                     pos_qty = float(pos.get("pos",0))
                     margin_mode = pos.get('marginMode', '').lower()
-                    
+                    logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
                     logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
                     logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
