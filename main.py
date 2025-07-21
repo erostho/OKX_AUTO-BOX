@@ -367,7 +367,42 @@ def run_bot():
                     logging.info(f"✅ Đặt SL thành công: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt SL: {e}")
-
+                    
+            # Đặt xong TP hoặc SL
+            # Gọi hàm huỷ nếu vị thế đã đóng
+            cancel_all_tp_sl_orders_if_position_closed(exchange, symbol_check)
+            def cancel_all_tp_sl_orders_if_position_closed(exchange, symbol_check):
+                try:
+                    # ✅ Kiểm tra tất cả vị thế
+                    all_positions = exchange.fetch_positions()
+                    for pos in all_positions:
+                        pos_symbol = pos.get('symbol', '').upper()
+                        size = float(pos.get('size', 0))
+            
+                        if pos_symbol == symbol_check and size == 0:
+                            logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — tiến hành huỷ TP/SL còn lại")
+            
+                            # ✅ Fetch các lệnh điều kiện (stop-market TP/SL)
+                            open_algo_orders = exchange.fetch_open_orders(
+                                symbol=symbol_check,
+                                params={"algoType": "conditional"}
+                            )
+            
+                            for order in open_algo_orders:
+                                if order.get('type') == 'stop_market':
+                                    algo_id = order.get('id')
+                                    try:
+                                        result = exchange.cancel_order(
+                                            algo_id,
+                                            symbol=symbol_check,
+                                            params={"algoClOrdId": algo_id}
+                                        )
+                                        logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
+                                    except Exception as cancel_err:
+                                        logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
+                            break  # Đã tìm thấy vị thế khớp => không cần duyệt tiếp
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi kiểm tra & huỷ TP/SL: {e}")
 
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
