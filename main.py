@@ -291,12 +291,12 @@ def run_bot():
                 tp_price = market_price * 1.10
                 sl_price = market_price * 0.95
                 side_tp_sl = 'sell'
-                opposite_side = side_tp_sl.lower()
+                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
             else:
                 tp_price = market_price * 0.90
                 sl_price = market_price * 1.05
                 side_tp_sl = 'buy'
-                opposite_side = side_tp_sl.lower()
+                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
             # ✅ Kiểm tra TP/SL có hợp lệ không
             if tp_price is None or math.isnan(tp_price):
                 logging.warning(f"⚠️ TP bị lỗi (None/NaN): tp_price = {tp_price}")
@@ -305,47 +305,36 @@ def run_bot():
                 logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
                 sl_price = None
         
-            # --- TP ---
-            if tp_price is not None:
-                try:
-                    tp_payload = {
-                        'instId': symbol.replace("/", "-"),
-                        'tdMode': 'isolated',
-                        'side': opposite_side,
-                        'ordType': 'conditional',
-                        'sz': str(size),
-                        'ccy': 'USDT',
-                        'tpTriggerPx': round(tp_price, 6),
-                        'tpOrdPx': '-1',  # MARKET
-                        'tpTriggerPxType': 'last',
-                        'reduceOnly': True
-                    }
-                    logging.debug(f"📤 TP Payload: {tp_payload}")
-                    tp_order = exchange.private_post_trade_order_algo(tp_payload)
-                    logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
-                except Exception as ex:
-                    logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
+            # Đặt TP (Take Profit)
+                tp_order = exchange.private_post_trade_order_algo({
+                    'instId': symbol.replace("/", "-"),
+                    'tdMode': 'isolated',
+                    'side': opposite_side,
+                    'ordType': 'trigger',
+                    'sz': str(size),
+                    'triggerPx': str(round(tp_price, 6)),
+                    'triggerPxType': 'last',
+                    'reduceOnly': True
+                })
+                logging.info(f"✅ TP Created: {tp_order}")
+            except Exception as e:
+                logging.error(f"❌ TP Failed: {e}")
         
-            # --- SL ---
-            if sl_price is not None:
-                try:
-                    sl_payload = {
-                        'instId': symbol.replace("/", "-"),
-                        'tdMode': 'isolated',
-                        'side': opposite_side,
-                        'ordType': 'conditional',
-                        'sz': str(size),
-                        'ccy': 'USDT',
-                        'slTriggerPx': round(sl_price, 6),
-                        'slOrdPx': '-1',  # MARKET
-                        'slTriggerPxType': 'last',
-                        'reduceOnly': True
-                    }
-                    logging.debug(f"📤 SL Payload: {sl_payload}")
-                    sl_order = exchange.private_post_trade_order_algo(sl_payload)
-                    logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
-                except Exception as ex:
-                    logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}")
+            try:
+                # Đặt SL (Stop Loss)
+                sl_order = exchange.private_post_trade_order_algo({
+                    'instId': symbol.replace("/", "-"),
+                    'tdMode': 'isolated',
+                    'side': opposite_side,
+                    'ordType': 'trigger',
+                    'sz': str(size),
+                    'triggerPx': str(round(sl_price, 6)),
+                    'triggerPxType': 'last',
+                    'reduceOnly': True
+                })
+                logging.info(f"✅ SL Created: {sl_order}")
+            except Exception as e:
+                logging.error(f"❌ SL Failed: {e}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
