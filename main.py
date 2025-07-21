@@ -324,7 +324,8 @@ def run_bot():
             # Xác định lệnh ngược lại
             position_side = pos.get("side")
             opposite_side = "sell" if position_side == "long" else "buy"
-            
+            side = side.lower()
+            close_side = 'sell' if side == 'buy' else 'buy'
             # Debug giá TP/SL
             logging.debug(f"📈 TP = {tp_price}, 📉 SL = {sl_price}, 🔁 opposite_side = {opposite_side}")
 
