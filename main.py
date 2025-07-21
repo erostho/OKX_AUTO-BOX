@@ -370,19 +370,16 @@ def run_bot():
                     
             # Đặt xong TP hoặc SL
             # Gọi hàm huỷ nếu vị thế đã đóng
-            cancel_all_tp_sl_orders_if_position_closed(exchange, symbol_check)
-            def cancel_all_tp_sl_orders_if_position_closed(exchange, symbol_check):
-                try:
-                    # ✅ Kiểm tra tất cả vị thế
-                    all_positions = exchange.fetch_positions()
-                    for pos in all_positions:
-                        pos_symbol = pos.get('symbol', '').upper()
-                        size = float(pos.get('size', 0))
+            try:
+                all_positions = exchange.fetch_positions()
+                for pos in all_positions:
+                    pos_symbol = pos.get('symbol', '').upper()
+                    size = float(pos.get('size', 0))
             
-                        if pos_symbol == symbol_check and size == 0:
-                            logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — tiến hành huỷ TP/SL còn lại")
+                    if pos_symbol == symbol_check and size == 0:
+                        logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
-                            # ✅ Fetch các lệnh điều kiện (stop-market TP/SL)
+                        try:
                             open_algo_orders = exchange.fetch_open_orders(
                                 symbol=symbol_check,
                                 params={"algoType": "conditional"}
@@ -400,9 +397,12 @@ def run_bot():
                                         logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
                                     except Exception as cancel_err:
                                         logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
-                            break  # Đã tìm thấy vị thế khớp => không cần duyệt tiếp
-                except Exception as e:
-                    logging.error(f"❌ Lỗi khi kiểm tra & huỷ TP/SL: {e}")
+                        except Exception as fetch_err:
+                            logging.error(f"❌ Lỗi khi fetch lệnh stop-market: {fetch_err}")
+            
+                        continue  # ✅ Sau khi xử lý xong 1 symbol thì thoát vòng lặp
+            except Exception as e:
+                logging.error(f"❌ Lỗi kiểm tra vị thế để huỷ TP/SL: {e}")
 
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
