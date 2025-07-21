@@ -306,6 +306,7 @@ def run_bot():
                 sl_price = None
         
             # Đặt TP (Take Profit)
+            try:
                 tp_order = exchange.private_post_trade_order_algo({
                     'instId': symbol.replace("/", "-"),
                     'tdMode': 'isolated',
