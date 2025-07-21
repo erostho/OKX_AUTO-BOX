@@ -377,46 +377,43 @@ def run_bot():
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
-                    pos_qty = float(pos.get("contracts",0))
                     margin_mode = pos.get('marginMode', '').lower()
+                    pos_qty = float(pos.get("contracts", 0))
+                    side_open = pos.get("side", "").lower()
+                    symbol_pos = pos.get("symbol", "").upper()
                     logging.debug(f"[DEBUG] ↪ pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos = {pos}")
+                    logging.debug(f"[DEBUG] ↪ contracts = {pos.get('contracts')} | pos = {pos.get('pos')} | side = {side_open}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
                     logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
                     logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
                     
                     if (
-                        pos_symbol_check == symbol_check
-                        and abs(pos_qty) < 0.0000001
-                        and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
+                        symbol_pos == symbol_check and
+                        margin_mode in ["isolated", "cross"]
                     ):
-                        logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
-            
-                        try:
-                            # ✅ fetch open TP/SL
-                            open_algo_orders = exchange.private_get_trade_orders_pending({
-                                "instId": symbol_check,
-                                "algoType": "conditional"
-                            })
+                        if pos_qty < 0.000001:
+                            logging.warning(f"⚠️ Vị thế {symbol_check} KHÔNG có size mở (contracts = {pos_qty}) — hủy TP/SL nếu còn")
                             
-                            data = open_algo_orders.get("data", [])
-                            if not data:
-                                logging.warning(f"⚠️ Không có TP/SL nào cần huỷ cho {symbol_check}")
-                            else:
-                                for order in data:
+                            # Fetch + cancel all algo TP/SL
+                            try:
+                                open_algo_orders = exchange.private_get_trade_orders_pending({
+                                    "instId": symbol_check,
+                                    "algoType": "conditional"
+                                })
+                                for order in open_algo_orders.get("data", []):
                                     if order.get("type") == "stop-market":
                                         algo_id = order.get("algoId")
                                         try:
                                             result = exchange.private_post_trade_cancel_algos({
-                                                "algoIds": [algo_id]  # ✅ LUÔN dùng list
+                                                "algoIds": [algo_id]
                                             })
-                                            logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
-                                            logging.debug(f"[OKX-CANCEL] Response: {result}")
+                                            logging.info(f"✅ Đã hủy lệnh stop-market: {algo_id}")
                                         except Exception as cancel_err:
-                                            logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
-                        except Exception as fetch_err:
-                            logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
+                                            logging.warning(f"⚠️ Không thể hủy lệnh {algo_id}: {cancel_err}")
+                            except Exception as fetch_err:
+                                logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
                         continue  # ✅ Sau khi xử lý xong 1 symbol thì qua symbol khác
             except Exception as e:
                 logging.error(f"❌ Lỗi kiểm tra vị thế để huỷ TP/SL: {e}")
