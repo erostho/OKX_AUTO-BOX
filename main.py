@@ -42,7 +42,43 @@ def fetch_sheet():
     except Exception as e:
         logging.error(f"❌ Không thể tải Google Sheet: {e}")
         return []
+def place_tp_sl_stop_market(exchange, symbol, side, size, tp_price, sl_price):
+    opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
 
+    logging.debug(f"📊 [TP/SL] symbol={symbol}, size={size}, side={side}, opposite_side={opposite_side}")
+    logging.debug(f"📈 TP Trigger Px = {tp_price}, 📉 SL Trigger Px = {sl_price}")
+
+    if tp_price:
+        try:
+            tp_order = exchange.private_post_trade_order_algo({
+                'instId': symbol.replace("/", "-"),
+                'tdMode': 'isolated',
+                'side': opposite_side,
+                'ordType': 'trigger',
+                'sz': str(size),
+                'triggerPx': str(round(tp_price, 6)),
+                'triggerPxType': 'last',
+                'reduceOnly': True
+            })
+            logging.info(f"✅ TP Created cho {symbol}: {tp_order}")
+        except Exception as e:
+            logging.error(f"❌ TP Failed cho {symbol}: {e}")
+
+    if sl_price:
+        try:
+            sl_order = exchange.private_post_trade_order_algo({
+                'instId': symbol.replace("/", "-"),
+                'tdMode': 'isolated',
+                'side': opposite_side,
+                'ordType': 'trigger',
+                'sz': str(size),
+                'triggerPx': str(round(sl_price, 6)),
+                'triggerPxType': 'last',
+                'reduceOnly': True
+            })
+            logging.info(f"✅ SL Created cho {symbol}: {sl_order}")
+        except Exception as e:
+            logging.error(f"❌ SL Failed cho {symbol}: {e}")
 def run_bot():
     now = datetime.utcnow()
     rows = fetch_sheet()
