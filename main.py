@@ -372,11 +372,11 @@ def run_bot():
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
             symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
             # ✅ Duyệt vị thế hiện tại
-
+            logging.debug(f"[CHECK] ↪ pos = {pos}")
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    pos_symbol_check = pos.get('instId', '') # FXS-USDT-SWAP
+                    pos_symbol_check = pos.get("info", {}.get("instId", "").upper() # FXS-USDT-SWAP
                     size = float(pos.get('size', 0))
                     margin_mode = pos.get('marginMode', '').lower()
                     
