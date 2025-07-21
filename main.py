@@ -341,7 +341,6 @@ def run_bot():
                             'stopLossTriggerPrice': None,
                             'takeProfitTriggerPrice': tp_price,
                             'reduceOnly': True,
-                            'posSide': 'short' if position_side == 'short' else 'long',
                             'triggerPxType': 'last',  # hoặc 'mark' tuỳ bạn chọn
                             'tpTriggerPx': str(round(tp_price, 6)),
                         }
@@ -361,7 +360,6 @@ def run_bot():
                         params={
                             'stopLossTriggerPrice': sl_price,
                             'reduceOnly': True,
-                            'posSide': 'short' if position_side == 'short' else 'long',
                             'triggerPxType': 'last',
                             'slTriggerPx': str(round(sl_price, 6)),
                         }
@@ -374,37 +372,31 @@ def run_bot():
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
             symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
             # ✅ Duyệt vị thế hiện tại
-            
+            logging.debug(f"[CHECK] ↪ pos = {pos}")
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    info = pos.get("info", {})
-                    pos_symbol_check = info.get("instId", "").upper() # FXS-USDT-SWAP
-                    pos_qty = float(info.get("contracts", 0))
-                    margin_mode = info.get('marginMode', '').lower()
-                    side = info.get("side", "").lower()
-                    side_open = info.get("posSide", "").lower()
-                    logging.debug(f"[DEBUG] ↪ pos keys = {list(pos.keys())}")
-                    logging.debug(f"[CHECK] ↪ pos = {pos}")
-                    logging.debug(f"[DEBUG] ↪ contracts = {pos.get('contracts')} | pos = {pos.get('pos')} | side = {side_open}")
+                    pos_symbol_check = pos.get("info", {}).get("instId", "").upper() # FXS-USDT-SWAP
+                    pos_qty = float(pos.get("pos",0))
+                    margin_mode = pos.get('marginMode', '').lower()
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
                     logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
                     logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
                     
                     if (
-                        pos_symbol_check == symbol_check and
-                        abs(pos_qty) < 0.000001 and
-                        margin_mode in ["isolated", "cross"]
+                        pos_symbol_check == symbol_check
+                        and abs(pos_qty) < 0.0000001
+                        and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
-                        logging.warning(f"⚠️ Vị thế {symbol_check} KHÔNG có size mở (contracts = {pos_qty}) — hủy TP/SL nếu còn")
-                            
-                        # Fetch + cancel all algo TP/SL
+                        logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
+            
                         try:
                             open_algo_orders = exchange.private_get_trade_orders_pending({
                                 "instId": symbol_check,
                                 "algoType": "conditional"
                             })
+                        
                             for order in open_algo_orders.get("data", []):
                                 if order.get("type") == "stop-market":
                                     algo_id = order.get("algoId")
@@ -412,9 +404,9 @@ def run_bot():
                                         result = exchange.private_post_trade_cancel_algos({
                                             "algoIds": [algo_id]
                                         })
-                                        logging.info(f"✅ Đã hủy lệnh stop-market: {algo_id}")
+                                        logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
                                     except Exception as cancel_err:
-                                        logging.warning(f"⚠️ Không thể hủy lệnh {algo_id}: {cancel_err}")
+                                        logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
                         except Exception as fetch_err:
                             logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
                         continue  # ✅ Sau khi xử lý xong 1 symbol thì qua symbol khác
