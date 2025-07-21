@@ -370,14 +370,16 @@ def run_bot():
                     
             # Đặt xong TP hoặc SL
             # Gọi hàm huỷ nếu vị thế đã đóng
-            symbol_check_raw = symbol_raw.replace("-", "/")  # BTC/USDT
+            symbol_check_raw = symbol_raw.strip().upper()  # Ví dụ: FXS-USDT
+            pos_symbol_raw = pos.get('symbol', '')  # Ví dụ: FXS/USDT:USDT
+            pos_symbol_check = pos_symbol_raw.split(":")[0].replace("/", "-").upper()
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol = pos.get('symbol', '').upper()
                     size = float(pos.get('size', 0))
             
-                    if pos_symbol.replace(":USDT", "") == symbol_check_raw and size == 0:
+                    if pos_symbol_check == symbol_check_raw and size == 0:
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
