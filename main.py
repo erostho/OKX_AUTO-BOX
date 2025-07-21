@@ -168,7 +168,7 @@ def run_bot():
                 continue
         
             # ✅ Bước 2: Check trong exchange.markets xem symbol có tồn tại và đúng loại không
-            market = exchange.markets.get(symbol_okx)
+            market = exchange.markets.get(symbol_ccxt)
         
             if not market:
                 logging.error(f"❌ Symbol {symbol_ccxt} không tồn tại trong exchange.markets!")
@@ -324,7 +324,7 @@ def run_bot():
             if tp_price:
                 try:
                     tp_payload = {
-                        "instId": symbol.replace("/", "-"),
+                        "instId": symbol_check,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
@@ -345,7 +345,7 @@ def run_bot():
             if sl_price:
                 try:
                     sl_payload = {
-                        "instId": symbol.replace("/", "-"),
+                        "instId": symbol_check,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
