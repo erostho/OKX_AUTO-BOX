@@ -296,61 +296,54 @@ def run_bot():
                 sl_price = market_price * 1.05
                 side_tp_sl = 'buy'
             # ✅ Kiểm tra TP/SL có hợp lệ không
-            if (
-                tp_price is None or sl_price is None or
-                math.isnan(tp_price) or math.isnan(sl_price)
-            ):
-                logging.error(f"❌ TP hoặc SL bị lỗi (NaN/None): TP={tp_price}, SL={sl_price} => Không đặt lệnh TP/SL")
-                return    
-            logging.debug(f"📊 [TP/SL Calc] TP = {tp_price}, SL = {sl_price}, Opposite Side = {side_tp_sl}")
-                
-            # --- Đặt TP ---
-            try:
-                if tp_price is None or math.isnan(tp_price):
-                    logging.error(f"❌ TP bị lỗi (NaN/None): tp_price = {tp_price}")
-                    return
-            
-                logging.debug(f"📤 [TP Order] Gửi TP cho {symbol} @ {round(tp_price, 6)}")
-                tp_payload = {
-                    'instId': symbol.replace("/", "-"),
-                    'tdMode': 'isolated',
-                    'side': side_tp_sl,
-                    'ordType': 'conditional',
-                    'sz': str(size),
-                    'ccy': 'USDT',
-                    'tpTriggerPx': round(tp_price, 6),
-                    'triggerPxType': 'last',
-                    'reduceOnly': True
-                }
-                
-                tp_order = exchange.private_post_trade_order_algo(tp_payload)
-                logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
-            except Exception as ex:
-                logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
-                
-            # --- Đặt SL ---
-            try:
-                if sl_price is None or math.isnan(sl_price):
-                    logging.error(f"❌ SL bị lỗi (NaN/None): sl_price = {sl_price}")
-                    return
-            
-                logging.debug(f"📤 [SL Order] Gửi SL cho {symbol} @ {round(sl_price, 6)}")
-                sl_payload = {
-                    'instId': symbol.replace("/", "-"),
-                    'tdMode': 'isolated',
-                    'side': side_tp_sl,
-                    'ordType': 'conditional',
-                    'sz': str(size),
-                    'ccy': 'USDT',
-                    'slTriggerPx': round(sl_price, 6),
-                    'triggerPxType': 'last',
-                    'reduceOnly': True
-                }
-                
-                sl_order = exchange.private_post_trade_order_algo(sl_payload)
-                logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
-            except Exception as ex:
-                logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}") 
+            if tp_price is None or math.isnan(tp_price):
+                logging.warning(f"⚠️ TP bị lỗi (None/NaN): tp_price = {tp_price}")
+                tp_price = None
+            if sl_price is None or math.isnan(sl_price):
+                logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
+                sl_price = None
+        
+            # --- TP ---
+            if tp_price is not None:
+                try:
+                    tp_payload = {
+                        'instId': symbol_okx,
+                        'tdMode': 'isolated',
+                        'side': opposite_side,
+                        'ordType': 'conditional',
+                        'sz': str(size),
+                        'ccy': 'USDT',
+                        'tpTriggerPx': round(tp_price, 6),
+                        'tpOrdPx': '-1',  # MARKET
+                        'tpTriggerPxType': 'last',
+                        'reduceOnly': True
+                    }
+                    logging.debug(f"📤 TP Payload: {tp_payload}")
+                    tp_order = exchange.private_post_trade_order_algo(tp_payload)
+                    logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
+                except Exception as ex:
+                    logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol_okx}: {ex}")
+        
+            # --- SL ---
+            if sl_price is not None:
+                try:
+                    sl_payload = {
+                        'instId': symbol_okx,
+                        'tdMode': 'isolated',
+                        'side': opposite_side,
+                        'ordType': 'conditional',
+                        'sz': str(size),
+                        'ccy': 'USDT',
+                        'slTriggerPx': round(sl_price, 6),
+                        'slOrdPx': '-1',  # MARKET
+                        'slTriggerPxType': 'last',
+                        'reduceOnly': True
+                    }
+                    logging.debug(f"📤 SL Payload: {sl_payload}")
+                    sl_order = exchange.private_post_trade_order_algo(sl_payload)
+                    logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
+                except Exception as ex:
+                    logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol_okx}: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
