@@ -371,15 +371,14 @@ def run_bot():
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
             symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
-            pos_symbol_check = pos.get('instId', '').upper() # FXS-USDT-SWAP
-            margin_mode = pos.get("marginMode", "")
             side_open = pos.get("side", "")
-            size = float(pos.get("size", 0))
-
+            logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
+            logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
+            logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    pos_symbol = pos.get('instId', '')
+                    pos_symbol_check = pos.get('instId', '').upper() # FXS-USDT-SWAP
                     size = float(pos.get('size', 0))
                     margin_mode = pos.get('marginMode', '').lower()
             
