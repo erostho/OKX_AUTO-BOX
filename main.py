@@ -370,7 +370,7 @@ def run_bot():
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
-            symbol_check = f"{symbol_raw.strip().upper()}-SWAP"  # ví dụ: FXS-USDT-SWAP
+            symbol_check = symbol_raw.replace("-", "/").upper()  # FXS-USDT → FXS/USDT
             pos_symbol_raw = pos.get('symbol', '')  # FXS/USDT:USDT
             pos_symbol_check = pos_symbol_raw.split(":")[0].replace("/", "-").upper() + "-SWAP"
             margin_mode = pos.get("marginMode", "")
