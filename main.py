@@ -319,10 +319,11 @@ def run_bot():
                         'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': opposite_side,
-                        'ordType': 'trigger',
+                        'ordType': 'take_profit',
                         'sz': str(size),
                         'ccy': 'USDT',
                         'triggerPx': str(round(tp_price, 6)),
+                        "tpOrdPx": "-1"
                         'triggerPxType': 'last',
                         'reduceOnly': True
                     })
@@ -339,10 +340,11 @@ def run_bot():
                         'instId': symbol.replace("/", "-"),
                         'tdMode': 'isolated',
                         'side': opposite_side,
-                        'ordType': 'trigger',
+                        'ordType': 'stop_loss',
                         'sz': str(size),
                         'ccy': 'USDT',
                         'triggerPx': str(round(sl_price, 6)),
+                        "slOrdPx": "-1"
                         'triggerPxType': 'last',
                         'reduceOnly': True
                     })
