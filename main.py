@@ -329,6 +329,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "sz": str(size),
+                        'ccy': 'USDT',
                         "triggerPx": str(round(tp_price, 6)),
                         "triggerPxType": "last",
                         "reduceOnly": True
@@ -348,6 +349,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "sz": str(size),
+                        'ccy': 'USDT',
                         "triggerPx": str(round(sl_price, 6)),
                         "triggerPxType": "last",
                         "reduceOnly": True
