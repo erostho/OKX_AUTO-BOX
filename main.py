@@ -291,10 +291,12 @@ def run_bot():
                 tp_price = market_price * 1.10
                 sl_price = market_price * 0.95
                 side_tp_sl = 'sell'
+                opposite_side = side_tp_sl.lower()
             else:
                 tp_price = market_price * 0.90
                 sl_price = market_price * 1.05
                 side_tp_sl = 'buy'
+                opposite_side = side_tp_sl.lower()
             # ✅ Kiểm tra TP/SL có hợp lệ không
             if tp_price is None or math.isnan(tp_price):
                 logging.warning(f"⚠️ TP bị lỗi (None/NaN): tp_price = {tp_price}")
