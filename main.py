@@ -316,6 +316,7 @@ def run_bot():
             # 🟢 Đặt Take Profit nếu có
             if tp_price:
                 try:
+                    logging.debug(f"📦 TP payload: {{'instId': {symbol.replace('/', '-')}, 'side': {side_tp_sl}, 'triggerPx': {str(round(tp_price, 6))}, 'sz': {str(size)} }}")
                     logging.info(f"[TP] Đặt TP triggerPx={tp_price} cho {symbol} với size={size}")
                     tp_order = exchange.private_post_trade_order_algo({
                         "instId": symbol.replace("/", "-"),
@@ -336,6 +337,7 @@ def run_bot():
             # 🔴 Đặt Stop Loss nếu có
             if sl_price:
                 try:
+                    logging.debug(f"📦 TP payload: {{'instId': {symbol.replace('/', '-')}, 'side': {side_tp_sl}, 'triggerPx': {str(round(tp_price, 6))}, 'sz': {str(size)} }}")
                     logging.info(f"[SL] Đặt SL triggerPx={sl_price} cho {symbol} với size={size}")
                     sl_order = exchange.private_post_trade_order_algo({
                         "instId": symbol.replace("/", "-"),
