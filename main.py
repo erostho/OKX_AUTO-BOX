@@ -324,7 +324,7 @@ def run_bot():
             if tp_price:
                 try:
                     tp_payload = {
-                        "instId": symbol_check,
+                        "instId": inst_id,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
@@ -345,7 +345,7 @@ def run_bot():
             if sl_price:
                 try:
                     sl_payload = {
-                        "instId": symbol_check,
+                        "instId": inst_id,
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
