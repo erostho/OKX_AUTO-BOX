@@ -386,7 +386,7 @@ def run_bot():
                     
                     if (
                         pos_symbol_check == symbol_check
-                        and abs(pos_qty) == 0
+                        and abs(pos_qty) < 0.0000001
                         and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
