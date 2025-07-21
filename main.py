@@ -380,8 +380,9 @@ def run_bot():
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    pos_symbol = pos.get('symbol', '').upper()
+                    pos_symbol = pos.get('instId', '')
                     size = float(pos.get('size', 0))
+                    margin_mode = pos.get('marginMode', '').lower()
             
                     if (
                         pos_symbol_check == symbol_check
