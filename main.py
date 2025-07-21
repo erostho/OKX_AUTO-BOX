@@ -322,7 +322,7 @@ def run_bot():
                     tp_order = exchange.private_post_trade_order_algo(tp_payload)
                     logging.info(f"✅ [TP Created] TP đã được đặt: {tp_order}")
                 except Exception as ex:
-                    logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol_okx}: {ex}")
+                    logging.error(f"❌ [TP Failed] Không thể đặt TP cho {symbol}: {ex}")
         
             # --- SL ---
             if sl_price is not None:
@@ -343,7 +343,7 @@ def run_bot():
                     sl_order = exchange.private_post_trade_order_algo(sl_payload)
                     logging.info(f"✅ [SL Created] SL đã được đặt: {sl_order}")
                 except Exception as ex:
-                    logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol_okx}: {ex}")
+                    logging.error(f"❌ [SL Failed] Không thể đặt SL cho {symbol}: {ex}")
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
