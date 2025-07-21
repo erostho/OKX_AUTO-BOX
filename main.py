@@ -320,7 +320,6 @@ def run_bot():
                     'sz': str(size),
                     'ccy': 'USDT',
                     'tpTriggerPx': round(tp_price, 6),
-                    'tpOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
                 })
@@ -346,7 +345,6 @@ def run_bot():
                     'sz': str(size),
                     'ccy': 'USDT',
                     'slTriggerPx': round(sl_price, 6),
-                    'slOrderPx': '-1',               # Dùng giá market khi chạm trigger
                     'triggerPxType': 'last',
                     'reduceOnly': True
                 })
