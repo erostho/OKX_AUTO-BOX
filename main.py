@@ -42,7 +42,10 @@ def fetch_sheet():
     except Exception as e:
         logging.error(f"❌ Không thể tải Google Sheet: {e}")
         return []
-
+def place_entry_with_tp_sl(exchange, symbol, side, size, entry_price=None, tp_price=None, sl_price=None):
+    """
+    Đặt lệnh vào futures (market hoặc limit) kèm TP/SL dạng stop-market trên OKX
+    """
 def run_bot():
     now = datetime.utcnow()
     rows = fetch_sheet()
