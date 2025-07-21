@@ -325,7 +325,7 @@ def run_bot():
                         "ordType": "trigger",
                         "sz": str(size),
                         "triggerPx": str(round(tp_price, 6)),
-                        "triggerType": "market",
+                        "triggerPxType": "mark",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
@@ -345,7 +345,7 @@ def run_bot():
                         "ordType": "trigger",
                         "sz": str(size),
                         "triggerPx": str(round(sl_price, 6)),
-                        "triggerType": "market",
+                        triggerPxType": "mark",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
