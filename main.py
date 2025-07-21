@@ -378,7 +378,7 @@ def run_bot():
                 for pos in all_positions:
                     info = pos.get("info", {})
                     pos_symbol_check = info.get("instId", "").upper() # FXS-USDT-SWAP
-                    pos_qty = float(info.get("contracts", 0))
+                    pos_qty = float(pos.get("contracts", 0))
                     margin_mode = info.get('marginMode', '').lower()
                     side = info.get("side", "").lower()
                     side_open = pos.get("side", "").lower()
