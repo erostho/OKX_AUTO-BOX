@@ -307,6 +307,8 @@ def run_bot():
             if sl_price is None or math.isnan(sl_price):
                 logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
                 sl_price = None
+            print("📌 DEBUG SL Price:", sl_price)
+            print("📌 DEBUG TP Price:", tp_price)
             # 🧠 Đảm bảo TP/SL là giá hợp lệ
             try:
                 tp_price = float(tp_price)
