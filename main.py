@@ -313,45 +313,50 @@ def run_bot():
             # 🧨 Lấy opposite side để đặt TP/SL
             side_tp_sl = 'buy' if side.lower() == 'sell' else 'sell'
             
-            # 🟢 Đặt Take Profit nếu có
+            # Xác định lệnh ngược lại
+            opposite_side = "sell" if position_side == "long" else "buy"
+            
+            # Debug giá TP/SL
+            logging.debug(f"📈 TP = {tp_price}, 📉 SL = {sl_price}, 🔁 opposite_side = {opposite_side}")
+            
+            # TP
             if tp_price:
                 try:
-                    logging.debug(f"📦 TP payload: {{'instId': {symbol.replace('/', '-')}, 'side': {side_tp_sl}, 'triggerPx': {str(round(tp_price, 6))}, 'sz': {str(size)} }}")
-                    logging.info(f"[TP] Đặt TP triggerPx={tp_price} cho {symbol} với size={size}")
-                    tp_order = exchange.private_post_trade_order_algo({
+                    tp_payload = {
                         "instId": symbol.replace("/", "-"),
                         "tdMode": "isolated",
-                        "side": side_tp_sl,
+                        "side": opposite_side,
                         "ordType": "trigger",
                         "sz": str(size),
                         "triggerPx": str(round(tp_price, 6)),
-                        "triggerPxType": 'mark',
-                        "ccy": "USDT",
+                        "triggerPxType": "last",
                         "reduceOnly": True
-                    })
-                    logging.info(f"✅ TP OK: {tp_order}")
+                    }
+                    logging.debug(f"📦 TP payload: {tp_payload}")
+                    tp_order = exchange.private_post_trade_order_algo(tp_payload)
+                    logging.info(f"✅ TP Created: {tp_order}")
                 except Exception as e:
-                    logging.error(f"❌ Lỗi đặt TP: {e}")
+                    logging.error(f"❌ Lỗi tạo TP: {e}")
             
-            # 🔴 Đặt Stop Loss nếu có
+            # SL
             if sl_price:
                 try:
-                    logging.debug(f"📦 TP payload: {{'instId': {symbol.replace('/', '-')}, 'side': {side_tp_sl}, 'triggerPx': {str(round(tp_price, 6))}, 'sz': {str(size)} }}")
-                    logging.info(f"[SL] Đặt SL triggerPx={sl_price} cho {symbol} với size={size}")
-                    sl_order = exchange.private_post_trade_order_algo({
+                    sl_payload = {
                         "instId": symbol.replace("/", "-"),
                         "tdMode": "isolated",
-                        "side": side_tp_sl,
+                        "side": opposite_side,
                         "ordType": "trigger",
                         "sz": str(size),
                         "triggerPx": str(round(sl_price, 6)),
-                        triggerPxType": "mark",
-                        "ccy": "USDT",
+                        "triggerPxType": "last",
                         "reduceOnly": True
-                    })
-                    logging.info(f"✅ SL OK: {sl_order}")
+                    }
+                    logging.debug(f"📦 SL payload: {sl_payload}")
+                    sl_order = exchange.private_post_trade_order_algo(sl_payload)
+                    logging.info(f"✅ SL Created: {sl_order}")
                 except Exception as e:
-                    logging.error(f"❌ Lỗi đặt SL: {e}")
+                    logging.error(f"❌ Lỗi tạo SL: {e}")
+
         except Exception as e:
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
