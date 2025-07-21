@@ -392,10 +392,10 @@ def run_bot():
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
-                            open_algo_orders = exchange.fetch_open_orders(
-                                symbol=symbol_check,
-                                params={"algoType": "conditional"}
-                            )
+                            open_algo_orders = exchange.private_get_trade_orders_pending({
+                                "instId": symbol_check,
+                                "algoType": "conditional"
+                            })
             
                             for order in open_algo_orders:
                                 if order.get('type') == 'stop_market':
