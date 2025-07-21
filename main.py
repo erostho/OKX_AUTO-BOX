@@ -326,7 +326,6 @@ def run_bot():
                         "sz": str(size),
                         "triggerPx": str(round(tp_price, 6)),
                         "triggerPxType": "last",
-                        "orderPx": "0",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
@@ -347,7 +346,6 @@ def run_bot():
                         "sz": str(size),
                         "triggerPx": str(round(sl_price, 6)),
                         "triggerPxType": "last",
-                        "orderPx": "0",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
