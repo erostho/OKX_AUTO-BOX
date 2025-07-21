@@ -378,6 +378,7 @@ def run_bot():
                 for pos in all_positions:
                     pos_symbol_check = pos.get("symbol", "").upper().replace("/", "-") + "-SWAP" # FXS-USDT-SWAP
                     pos_qty = float(pos.get("contracts",0) or pos.get("size",0) or 0)
+                    contracts = float(pos.get("pos", 0))
                     margin_mode = pos.get('marginMode', '').lower()
                     logging.debug(f"[CHECK] 🔍 pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
@@ -387,7 +388,7 @@ def run_bot():
                     
                     if (
                         pos_symbol_check == symbol_check
-                        and contracts < 0.0000001
+                        and abs(contracts) < 0.0000001
                         and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
