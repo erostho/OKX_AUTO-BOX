@@ -370,16 +370,24 @@ def run_bot():
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
-            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
-            pos_symbol_raw = pos.get('symbol', '')  # Ví dụ: BTC/USDT:USDT
+            symbol_check = f"{symbol_raw.strip().upper()}-SWAP"  # ví dụ: FXS-USDT-SWAP
+            pos_symbol_raw = pos.get('symbol', '')  # FXS/USDT:USDT
             pos_symbol_check = pos_symbol_raw.split(":")[0].replace("/", "-").upper() + "-SWAP"
+            margin_mode = pos.get("marginMode", "")
+            side_open = pos.get("side", "")
+            size = float(pos.get("size", 0))
+
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol = pos.get('symbol', '').upper()
                     size = float(pos.get('size', 0))
             
-                    if pos_symbol_check == symbol_check and size == 0:
+                    if (
+                        pos_symbol_check == symbol_check
+                        and size == 0
+                        and margin_mode == "isolated" # hoặc "cross", tuỳ bạn đang dùng
+                    ):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
