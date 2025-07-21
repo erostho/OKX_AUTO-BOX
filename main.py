@@ -396,8 +396,9 @@ def run_bot():
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
+                            symbol_instId = symbol_check.replace("-SWAP", "")  # chuyển từ DOGE-USDT-SWAP => DOGE-USDT
                             open_algo_orders = exchange.private_get_trade_orders_pending({
-                                "instId": symbol_check,
+                                "instId": symbol_instId,
                                 "algoType": "conditional"
                             })
                         
