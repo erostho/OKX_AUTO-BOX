@@ -42,10 +42,7 @@ def fetch_sheet():
     except Exception as e:
         logging.error(f"❌ Không thể tải Google Sheet: {e}")
         return []
-def place_entry_with_tp_sl(exchange, symbol, side, size, entry_price=None, tp_price=None, sl_price=None):
-    """
-    Đặt lệnh vào futures (market hoặc limit) kèm TP/SL dạng stop-market trên OKX
-    """
+
 def run_bot():
     now = datetime.utcnow()
     rows = fetch_sheet()
@@ -233,8 +230,11 @@ def run_bot():
                         except Exception as e:
                             logging.warning(f"[Retry {i+1}] ❌ Lỗi fetch vị thế: {e}")
                         time.sleep(3)  # chờ rồi thử lại
+                        # ✅ Gọi hàm đặt TP/SL sau khi lệnh chính đã đặt xong
+                        place_entry_with_tp_sl(exchange, symbol, side, size, tp_price, sl_price)
                 except Exception as e2:
                     logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
+
                     continue    
             # ✅ Bắt đầu đặt SL/TP 
             # --- Lấy market price ---
