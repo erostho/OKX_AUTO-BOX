@@ -392,21 +392,27 @@ def run_bot():
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
+                            # ✅ fetch open TP/SL
                             open_algo_orders = exchange.private_get_trade_orders_pending({
                                 "instId": symbol_check,
                                 "algoType": "conditional"
                             })
-                        
-                            for order in open_algo_orders.get("data", []):
-                                if order.get("type") == "stop-market":
-                                    algo_id = order.get("algoId")
-                                    try:
-                                        result = exchange.private_post_trade_cancel_algos({
-                                            "algoIds": [algo_id]
-                                        })
-                                        logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
-                                    except Exception as cancel_err:
-                                        logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
+                            
+                            data = open_algo_orders.get("data", [])
+                            if not data:
+                                logging.warning(f"⚠️ Không có TP/SL nào cần huỷ cho {symbol_check}")
+                            else:
+                                for order in data:
+                                    if order.get("type") == "stop-market":
+                                        algo_id = order.get("algoId")
+                                        try:
+                                            result = exchange.private_post_trade_cancel_algos({
+                                                "algoIds": [algo_id]  # ✅ LUÔN dùng list
+                                            })
+                                            logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
+                                            logging.debug(f"[OKX-CANCEL] Response: {result}")
+                                        except Exception as cancel_err:
+                                            logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
                         except Exception as fetch_err:
                             logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
                         continue  # ✅ Sau khi xử lý xong 1 symbol thì qua symbol khác
