@@ -308,15 +308,7 @@ def run_bot():
                 logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
                 sl_price = None
             print("📌 DEBUG SL Price:", sl_price)
-            print("📌 DEBUG TP Price:", tp_price)
-            # 🧠 Đảm bảo TP/SL là giá hợp lệ
-            try:
-                tp_price = float(tp_price)
-                sl_price = float(sl_price)
-            except Exception as e:
-                logging.warning(f"⚠️ Giá TP/SL không hợp lệ: {e}")
-                tp_price = None
-                sl_price = None
+            print("📌 DEBUG TP Price:", tp_price)           
             
             # 🧨 Lấy opposite side để đặt TP/SL
             side_tp_sl = 'buy' if side.lower() == 'sell' else 'sell'
@@ -333,6 +325,7 @@ def run_bot():
                         "sz": str(size),
                         "triggerPx": round(tp_price, 6),
                         "triggerPxType": "last",
+                        "orderPx": "0",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
@@ -352,6 +345,7 @@ def run_bot():
                         "sz": str(size),
                         "triggerPx": round(sl_price, 6),
                         "triggerPxType": "last",
+                        "orderPx": "0",
                         "ccy": "USDT",
                         "reduceOnly": True
                     })
