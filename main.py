@@ -297,38 +297,38 @@ def run_bot():
                         opposite_side = 'buy'
             
                     # ✅ Đặt TP
-                    try:
-                        tp_order = exchange.private_post_trade_order_algo({
-                            "instId": symbol_instId,
-                            "tdMode": "isolated",
-                            "side": opposite_side,
-                            "ordType": "conditional",
-                            "posSide": side_check,
-                            "sz": str(pos_size),
-                            "triggerPx": str(round(tp_price, 6)),
-                            "triggerPxType": "last",
-                            "ordPx": "-1"
-                        })
-                        logging.info(f"✅ Đặt TP Algo thành công: {tp_order}")
-                    except Exception as e:
-                        logging.error(f"❌ Lỗi đặt TP Algo: {e}")
-            
+                    if tp_price:
+                        logging.debug(f"🟢 GỌI ĐẶT TP: instId={symbol_instId}, side={opposite_side}, tp_price={tp_price}")
+                        try:
+                            tp_order = exchange.private_post_trade_order_algo({
+                                "instId": symbol_instId,
+                                "tdMode": "isolated",
+                                "side": opposite_side,
+                                "ordType": "trigger",
+                                "triggerPx": str(tp_price),
+                                "sz": str(pos_size),  # hoặc "auto"
+                                "reduceOnly": True
+                            })
+                            logging.info(f"✅ TP Order Response: {tp_order}")
+                        except Exception as e:
+                            logging.error(f"❌ LỖI đặt TP: {e}")
+                    
                     # ✅ Đặt SL
-                    try:
-                        sl_order = exchange.private_post_trade_order_algo({
-                            "instId": symbol_instId,
-                            "tdMode": "isolated",
-                            "side": opposite_side,
-                            "ordType": "conditional",
-                            "posSide": side_check,
-                            "sz": str(pos_size),
-                            "triggerPx": str(round(sl_price, 6)),
-                            "triggerPxType": "last",
-                            "ordPx": "-1"
-                        })
-                        logging.info(f"✅ Đặt SL Algo thành công: {sl_order}")
-                    except Exception as e:
-                        logging.error(f"❌ Lỗi đặt SL Algo: {e}")
+                    if sl_price:
+                        logging.debug(f"🔴 GỌI ĐẶT SL: instId={symbol_instId}, side={opposite_side}, sl_price={sl_price}")
+                        try:
+                            sl_order = exchange.private_post_trade_order_algo({
+                                "instId": symbol_instId,
+                                "tdMode": "isolated",
+                                "side": opposite_side,
+                                "ordType": "trigger",
+                                "triggerPx": str(sl_price),
+                                "sz": str(pos_size),  # hoặc "auto"
+                                "reduceOnly": True
+                            })
+                            logging.info(f"✅ SL Order Response: {sl_order}")
+                        except Exception as e:
+                            logging.error(f"❌ LỖI đặt SL: {e}")
             
                     return  # Sau khi đặt TP/SL xong thì thoát vòng lặp
 
