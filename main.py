@@ -255,114 +255,77 @@ def run_bot():
             symbol_check = symbol.replace("-", "/").upper()
             side_check = side.lower()
             size = 0
-                
+            # đoạn xử lý SL/TP
             for pos in positions:
-                logging.debug(f"🔍 [Position] Kiểm tra từng vị thế: {pos}")
+                logging.debug(f"[Position] Kiểm tra từng vị thế: {pos}")
             
                 pos_symbol = pos.get('symbol', '').upper().replace(':USDT', '')
-                pos_side = pos.get('posSide', '').lower()  # ✅ Dùng 'posSide' thay vì 'side'
+                pos_side = pos.get('posSide', '').lower()
                 margin_mode = pos.get('marginMode', '')
-                pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos') or pos.get('notionalUsd') or 0
+                pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos')
             
                 logging.debug(
-                    f"🔁 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                    f"🔍 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
                     f"mode={margin_mode}, size={pos_size} "
                     f"với symbol_check={symbol_check}, side_check={side_check}"
-                    f"[DEBUG] size kiểm tra từ pos = {pos_size}"
                 )
             
                 if (
                     pos_symbol == symbol_check and
+                    pos_side == side_check and
                     margin_mode == 'isolated' and
                     float(pos_size) > 0
                 ):
-                    logging.info(f"✅ [Position] Tìm thấy vị thế hợp lệ để đặt TP/SL cho {symbol_check}")
-                    size = float(pos_size)
-                    break
-            if size == 0:
-                logging.warning(f"⚠️ [Position] Không tìm được vị thế phù hợp để đặt TP/SL cho {symbol}")
-                return
-                
-            # --- Tính toán giá TP / SL ---
-            # ✅ Kiểm tra market_price hợp lệ
-            if market_price is None or market_price <= 0:
-                logging.error(f"❌ Lỗi: market_price không hợp lệ ({market_price}) => Không đặt TP/SL")
-                return
+                    logging.info(f"✅ [Position] Tìm thấy vị thế phù hợp để đặt TP/SL cho {symbol_check}")
             
-            if side.lower() == 'buy':
-                tp_price = market_price * 1.10
-                sl_price = market_price * 0.95
-                side_tp_sl = 'sell'
-                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
-            else:
-                tp_price = market_price * 0.90
-                sl_price = market_price * 1.05
-                side_tp_sl = 'buy'
-                opposite_side = 'buy' if side.lower() == 'sell' else 'sell'
-                
-            # ✅ Kiểm tra TP/SL có hợp lệ không
-            if tp_price is None or math.isnan(tp_price):
-                logging.warning(f"⚠️ TP bị lỗi (None/NaN): tp_price = {tp_price}")
-                tp_price = None
-            if sl_price is None or math.isnan(sl_price):
-                logging.warning(f"⚠️ SL bị lỗi (None/NaN): sl_price = {sl_price}")
-                sl_price = None
-            print("📌 DEBUG SL Price:", sl_price)
-            print("📌 DEBUG TP Price:", tp_price)           
+                    # 🔄 Chuẩn hóa instId để gọi API Algo
+                    symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
             
-            # 🧨 Lấy opposite side để đặt TP/SL
-            side_tp_sl = 'buy' if side.lower() == 'sell' else 'sell'
-            # ✅ Lấy dòng từ Google Sheet
-            symbol_raw = row[0].strip().upper()  # BTC-USDT (in hoa)
+                    # 📈 Tính giá TP/SL
+                    if side_check == 'long':
+                        tp_price = market_price * 1.10
+                        sl_price = market_price * 0.95
+                        opposite_side = 'sell'
+                    else:
+                        tp_price = market_price * 0.90
+                        sl_price = market_price * 1.05
+                        opposite_side = 'buy'
             
-            # ✅ instId chuẩn hóa đúng format của OKX
-            symbol_check = f"{symbol_raw}-SWAP"  # BTC-USDT-SWAP
+                    # ✅ Đặt TP
+                    try:
+                        tp_order = exchange.private_post_trade_order_algo({
+                            "instId": symbol_instId,
+                            "tdMode": "isolated",
+                            "side": opposite_side,
+                            "ordType": "conditional",
+                            "posSide": side_check,
+                            "sz": str(pos_size),
+                            "triggerPx": str(round(tp_price, 6)),
+                            "triggerPxType": "last",
+                            "ordPx": "-1"
+                        })
+                        logging.info(f"✅ Đặt TP Algo thành công: {tp_order}")
+                    except Exception as e:
+                        logging.error(f"❌ Lỗi đặt TP Algo: {e}")
             
-            # ✅ Dành cho CCXT (dùng ở fetch_positions)
-            symbol_ccxt = f"{symbol_raw.replace('-', '/')}/USDT"  # BTC/USDT:USDT
-
-            # Xác định lệnh ngược lại
-            position_side = pos.get("side")
-            opposite_side = "sell" if position_side == "long" else "buy"
-            side = side.lower()
-            symbol_instId = symbol_check
-            close_side = 'sell' if side == 'buy' else 'buy'
-            # Debug giá TP/SL
-            logging.debug(f"📈 TP = {tp_price}, 📉 SL = {sl_price}, 🔁 opposite_side = {opposite_side}")
-
-            # --- Đặt TAKE PROFIT ---
-            if tp_price:
-                try:
-                    tp_order = exchange.private_post_trade_order_algo({
-                        "instId": symbol_instId,
-                        "tdMode": "isolated",
-                        "side": close_side,              # opposite của entry side
-                        "ordType": "trigger",            # loại trigger
-                        "triggerPx": str(tp_price),      # giá kích hoạt
-                        "triggerPxType": "last",         # hoặc "mark"
-                        "sz": str(size),
-                        "posSide": entry_pos_side        # "long" hoặc "short"
-                    })
-                    logging.info(f"✅ Đặt TP thành công: {tp_order}")
-                except Exception as e:
-                    logging.error(f"❌ Lỗi đặt TP: {e}")
-        
-            # --- Đặt STOP LOSS ---
-            if sl_price:
-                try:
-                    sl_order = exchange.private_post_trade_order_algo({
-                        "instId": symbol_instId,
-                        "tdMode": "isolated",
-                        "side": close_side,
-                        "ordType": "trigger",
-                        "triggerPx": str(sl_price),
-                        "triggerPxType": "last",
-                        "sz": str(size),
-                        "posSide": entry_pos_side
-                    })
-                    logging.info(f"✅ Đặt SL thành công: {sl_order}")
-                except Exception as e:
-                    logging.error(f"❌ Lỗi đặt SL: {e}")
+                    # ✅ Đặt SL
+                    try:
+                        sl_order = exchange.private_post_trade_order_algo({
+                            "instId": symbol_instId,
+                            "tdMode": "isolated",
+                            "side": opposite_side,
+                            "ordType": "conditional",
+                            "posSide": side_check,
+                            "sz": str(pos_size),
+                            "triggerPx": str(round(sl_price, 6)),
+                            "triggerPxType": "last",
+                            "ordPx": "-1"
+                        })
+                        logging.info(f"✅ Đặt SL Algo thành công: {sl_order}")
+                    except Exception as e:
+                        logging.error(f"❌ Lỗi đặt SL Algo: {e}")
+            
+                    return  # Sau khi đặt TP/SL xong thì thoát vòng lặp
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
