@@ -413,26 +413,35 @@ def run_bot():
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng — huỷ TP/SL còn chờ")
             
                         try:
-                            symbol_instId = pos.get("instId", symbol_check.replace("-SWAP", "") + "-SWAP")  # fallback nếu không có instId
-                            orders_to_cancel = fetch_algo_orders_retry(symbol_instId)
-                            logging.debug(f"[CANCEL TP/SL] ↪ Using instId = {symbol_instId}")
-                            time.sleep(5)
+                            symbol_instId = pos.get("instId", symbol_check.replace("-SWAP", "") + "-SWAP")
+                            logging.warning(f"⚠️ Vị thế {symbol_instId} đã đóng — tìm và huỷ lệnh TP/SL (debug chi tiết)")
                             
-                            open_algo_orders = exchange.private_get_trade_orders_pending({
-                                "instId": symbol_instId,
-                                "algoType": "conditional"
-                            })
-                            logging.debug(f"[CANCEL TP/SL] ↪ Order returned: {open_algo_orders}")
-                            for order in open_algo_orders.get("data", []):
-                                if order.get("type") == "stop-market":
+                            orders_to_cancel = fetch_algo_orders_retry(symbol_instId, retries=5, delay=2)
+                            
+                            if not orders_to_cancel:
+                                logging.warning(f"[CANCEL TP/SL] ❌ Không tìm thấy lệnh nào chờ theo instId = {symbol_instId}")
+                            else:
+                                for idx, order in enumerate(orders_to_cancel):
+                                    logging.debug(f"[CANCEL TP/SL] 🔍 Lệnh #{idx+1}: {order}")
+                            
                                     algo_id = order.get("algoId")
-                                    try:
-                                        result = exchange.private_post_trade_cancel_algos({
-                                            "algoIds": [algo_id]
-                                        })
-                                        logging.info(f"✅ Đã huỷ lệnh stop-market: {algo_id}")
-                                    except Exception as cancel_err:
-                                        logging.warning(f"⚠️ Không thể huỷ lệnh {algo_id}: {cancel_err}")
+                                    ord_type = order.get("type")
+                                    trigger_price = order.get("triggerPx")
+                                    order_price = order.get("ordPx")
+                                    state = order.get("state")
+                            
+                                    logging.info(
+                                        f"[CANCEL TP/SL] ➤ ID={algo_id} | type={ord_type} | trigger={trigger_price} | price={order_price} | state={state}"
+                                    )
+                            
+                                    if ord_type == "stop-market":
+                                        try:
+                                            result = exchange.private_post_trade_cancel_algos({
+                                                "algoIds": [algo_id]
+                                            })
+                                            logging.info(f"✅ Đã huỷ TP/SL: {algo_id}")
+                                        except Exception as cancel_err:
+                                            logging.warning(f"⚠️ Không thể huỷ TP/SL {algo_id}: {cancel_err}")
                         except Exception as fetch_err:
                             logging.error(f"❌ Lỗi khi fetch TP/SL: {fetch_err}")
                         continue  # ✅ Sau khi xử lý xong 1 symbol thì qua symbol khác
