@@ -373,6 +373,23 @@ def run_bot():
             symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
             # ✅ Duyệt vị thế hiện tại
             logging.debug(f"[CHECK] ↪ pos = {pos}")
+            def fetch_algo_orders_retry(symbol_instId, retries=5, delay=2):
+                for i in range(retries):
+                    try:
+                        result = exchange.private_get_trade_orders_pending({
+                            "instId": symbol_instId,
+                            "algoType": "conditional"
+                        })
+                        data = result.get("data", [])
+                        logging.debug(f"[CANCEL TP/SL] ↪ Attempt {i+1}/{retries}, Orders returned: {data}")
+                        if data:
+                            return data
+                        else:
+                            time.sleep(delay)
+                    except Exception as e:
+                        logging.warning(f"[CANCEL TP/SL] ❌ Lỗi khi fetch TP/SL lần {i+1}: {e}")
+                        time.sleep(5)
+                return []
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
@@ -397,8 +414,9 @@ def run_bot():
             
                         try:
                             symbol_instId = pos.get("instId", symbol_check.replace("-SWAP", "") + "-SWAP")  # fallback nếu không có instId
+                            orders_to_cancel = fetch_algo_orders_retry(symbol_instId)
                             logging.debug(f"[CANCEL TP/SL] ↪ Using instId = {symbol_instId}")
-                            time.sleep(2)
+                            time.sleep(5)
                             
                             open_algo_orders = exchange.private_get_trade_orders_pending({
                                 "instId": symbol_instId,
