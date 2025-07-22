@@ -398,11 +398,13 @@ def run_bot():
                         try:
                             symbol_instId = pos.get("instId", symbol_check.replace("-SWAP", "") + "-SWAP")  # fallback nếu không có instId
                             logging.debug(f"[CANCEL TP/SL] ↪ Using instId = {symbol_instId}")
+                            time.sleep(2)
+                            
                             open_algo_orders = exchange.private_get_trade_orders_pending({
                                 "instId": symbol_instId,
                                 "algoType": "conditional"
                             })
-                        
+                            logging.debug(f"[CANCEL TP/SL] ↪ Order returned: {open_algo_orders}")
                             for order in open_algo_orders.get("data", []):
                                 if order.get("type") == "stop-market":
                                     algo_id = order.get("algoId")
