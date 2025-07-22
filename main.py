@@ -5,6 +5,7 @@ import logging
 import requests
 from datetime import datetime
 import ccxt
+import threading
 import time
 import sys
 import math
