@@ -384,12 +384,13 @@ def run_bot():
                     logging.debug(f"[CHECK] 🔍 pos keys = {list(pos.keys())}")
                     logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
                     logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
+                    logging.debug(f"[CHECK] ↪ pos_side = {pos_side}, pos_mode = {pos.get('posMode')}")
                     logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
                     logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
                     
                     if (
                         pos_symbol_check == symbol_check
-                        and pos_side == "net"
+                        and (pos_side == "onewway" or pos_side == "net")
                         and abs(contracts) < 0.0000001
                         and pos.get("marginMode", "").lower() in ["isolated", "cross"] # tuỳ bạn đang dùng
                     ):
