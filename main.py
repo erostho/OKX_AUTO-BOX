@@ -305,7 +305,7 @@ def run_bot():
                         "tdMode": "isolated",
                         "side": opposite_side,
                         "ordType": "trigger",
-                        "triggerPx": str(tp_price),
+                        "triggerPx": str(round(tp_price, 6)),
                         "sz": str(pos_size),  # hoặc "auto"
                         "reduceOnly": True
                     })
@@ -321,8 +321,8 @@ def run_bot():
                         "instId": symbol_instId,
                         "tdMode": "isolated",
                         "side": opposite_side,
-                        "ordType": "trigger",
-                        "triggerPx": str(sl_price),
+                        "ordType": 'last',  # hoặc 'mark' tuỳ bạn chọn
+                        "triggerPx": str(round(sl_price, 6)),
                         "sz": str(pos_size),  # hoặc "auto"
                         "reduceOnly": True
                     })
