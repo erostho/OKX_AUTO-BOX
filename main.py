@@ -233,7 +233,7 @@ def run_bot():
                 ]
                 if pos:
                     pos_size = float(pos[0]['size'])
-                    break
+                    continue
                 time.sleep(5) 
                     
             # ✅ Bắt đầu đặt SL/TP 
