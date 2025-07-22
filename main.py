@@ -97,7 +97,7 @@ def cancel_sibling_algo_if_triggered(exchange):
 
         if not history:
             logging.info("📜 Không có lệnh TP/SL nào đã khớp")
-            continue
+            return
 
         triggered_instIds = set(order["instId"] for order in history)
 
