@@ -36,12 +36,18 @@ exchange = ccxt.okx({
 
 def auto_tp_sl_watcher():
     while True:
-        cancel_tp_sl_if_position_closed(exchange)
+        try:
+            logging.info("🔁 Đang kiểm tra TP/SL tự động...")
+            cancel_tp_sl_if_position_closed(exchange)
+            cancel_sibling_algo_if_triggered(exchange)
+        except Exception as e:
+            logging.error(f"❌ Lỗi trong vòng kiểm tra auto TP/SL: {e}")
         time.sleep(180)
+        
 def cancel_tp_sl_if_position_closed(exchange):
     try:
         positions = exchange.fetch_positions()
-        logging.info(f"[WATCHER] ✅ Tổng số vị thế: {len(positions)}")
+        logging.info(f"[CLOSE_CHECK] Tổng số vị thế: {len(positions)}")
 
         for pos in positions:
             symbol = pos.get("symbol", "")
@@ -49,40 +55,79 @@ def cancel_tp_sl_if_position_closed(exchange):
             margin_mode = pos.get("marginMode", "")
             instId = pos.get("info", {}).get("instId", "")
 
-            logging.debug(f"[CHECK] ↪ symbol={symbol}, instId={instId}, size={size}, margin={margin_mode}")
+            logging.debug(f"[CHECK] ↪ {symbol} | instId={instId} | size={size} | margin={margin_mode}")
 
-            # Kiểm tra nếu vị thế đã đóng (size = 0), bất kể isolated hay cross
             if size == 0 and margin_mode in ["isolated", "cross"]:
                 if not instId:
-                    logging.warning(f"⚠️ Không tìm được instId cho {symbol}, bỏ qua")
+                    logging.warning(f"⚠️ Thiếu instId cho {symbol}, bỏ qua")
                     continue
 
-                logging.info(f"🧹 Đã đóng vị thế {instId} ({margin_mode}) — kiểm tra lệnh SL/TP")
+                logging.info(f"🧹 Đã đóng vị thế {instId} → kiểm tra lệnh TP/SL")
 
                 try:
-                    # Tìm các lệnh điều kiện (TP/SL)
                     orders = exchange.private_get_trade_orders_pending({
                         "instId": instId,
                         "algoType": "conditional"
                     }).get("data", [])
 
                     if not orders:
-                        logging.info(f"✅ Không có lệnh TP/SL đang treo trên {instId}")
+                        logging.info(f"✅ Không còn lệnh TP/SL nào trên {instId}")
                         continue
 
                     for order in orders:
                         algo_id = order.get("algoId")
                         if algo_id:
-                            logging.warning(f"🛑 Huỷ SL/TP trên {instId} (algoId: {algo_id})")
+                            logging.warning(f"🛑 Huỷ lệnh TP/SL (algoId={algo_id}) trên {instId}")
                             exchange.private_post_trade_cancel_algos({
                                 "algoId": algo_id,
                                 "instId": instId
                             })
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi huỷ SL/TP cho {instId}: {e}")
+                    logging.error(f"❌ Lỗi khi huỷ SL/TP {instId}: {e}")
 
     except Exception as e:
-        logging.error(f"❌ Lỗi khi fetch vị thế: {e}")
+        logging.error(f"❌ Lỗi khi fetch positions: {e}")
+
+def cancel_sibling_algo_if_triggered(exchange):
+    try:
+        history = exchange.private_get_trade_order_algo_history({
+            "algoType": "conditional",
+            "state": "triggered"
+        }).get("data", [])
+
+        if not history:
+            logging.info("📜 Không có lệnh TP/SL nào đã khớp")
+            return
+
+        triggered_instIds = set(order["instId"] for order in history)
+
+        for instId in triggered_instIds:
+            logging.info(f"🔍 {instId} đã khớp TP hoặc SL → kiểm tra lệnh còn lại")
+
+            try:
+                pending = exchange.private_get_trade_orders_pending({
+                    "instId": instId,
+                    "algoType": "conditional"
+                }).get("data", [])
+
+                if not pending:
+                    logging.info(f"✅ Không còn lệnh nào đang treo trên {instId}")
+                    continue
+
+                for order in pending:
+                    algo_id = order.get("algoId")
+                    if algo_id:
+                        logging.warning(f"🛑 Huỷ lệnh còn lại (algoId={algo_id}) trên {instId}")
+                        exchange.private_post_trade_cancel_algos({
+                            "algoId": algo_id,
+                            "instId": instId
+                        })
+
+            except Exception as e:
+                logging.error(f"❌ Lỗi khi huỷ lệnh còn lại của {instId}: {e}")
+
+    except Exception as e:
+        logging.error(f"❌ Lỗi khi fetch history TP/SL: {e}")
 
 def fetch_sheet():
     try:
@@ -476,6 +521,5 @@ def run_bot():
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
-
     # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
     threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
