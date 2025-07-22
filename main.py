@@ -41,31 +41,48 @@ def auto_tp_sl_watcher():
 def cancel_tp_sl_if_position_closed(exchange):
     try:
         positions = exchange.fetch_positions()
+        logging.info(f"[WATCHER] ✅ Tổng số vị thế: {len(positions)}")
+
         for pos in positions:
             symbol = pos.get("symbol", "")
-            size = float(pos.get("size", 0))
+            size = float(pos.get("size") or 0)
             margin_mode = pos.get("marginMode", "")
-            if size == 0 and margin_mode == "isolated":
-                instId = pos.get("info", {}).get("instId", "")
-                if instId:
-                    logging.info(f"🧹 No position on {instId} — checking for TP/SL to cancel")
-                    try:
-                        orders = exchange.private_get_trade_orders_pending({
-                            "instId": instId,
-                            "algoType": "conditional"
-                        }).get("data", [])
-                        for order in orders:
-                            algo_id = order.get("algoId")
-                            if algo_id:
-                                logging.warning(f"🛑 Canceling SL/TP for {instId} (algoId: {algo_id})")
-                                exchange.private_post_trade_cancel_algos({
-                                    "algoId": algo_id,
-                                    "instId": instId
-                                })
-                    except Exception as e:
-                        logging.error(f"❌ Error fetching/canceling orders for {instId}: {e}")
+            instId = pos.get("info", {}).get("instId", "")
+
+            logging.debug(f"[CHECK] ↪ symbol={symbol}, instId={instId}, size={size}, margin={margin_mode}")
+
+            # Kiểm tra nếu vị thế đã đóng (size = 0), bất kể isolated hay cross
+            if size == 0 and margin_mode in ["isolated", "cross"]:
+                if not instId:
+                    logging.warning(f"⚠️ Không tìm được instId cho {symbol}, bỏ qua")
+                    continue
+
+                logging.info(f"🧹 Đã đóng vị thế {instId} ({margin_mode}) — kiểm tra lệnh SL/TP")
+
+                try:
+                    # Tìm các lệnh điều kiện (TP/SL)
+                    orders = exchange.private_get_trade_orders_pending({
+                        "instId": instId,
+                        "algoType": "conditional"
+                    }).get("data", [])
+
+                    if not orders:
+                        logging.info(f"✅ Không có lệnh TP/SL đang treo trên {instId}")
+                        continue
+
+                    for order in orders:
+                        algo_id = order.get("algoId")
+                        if algo_id:
+                            logging.warning(f"🛑 Huỷ SL/TP trên {instId} (algoId: {algo_id})")
+                            exchange.private_post_trade_cancel_algos({
+                                "algoId": algo_id,
+                                "instId": instId
+                            })
+                except Exception as e:
+                    logging.error(f"❌ Lỗi khi huỷ SL/TP cho {instId}: {e}")
+
     except Exception as e:
-        logging.error(f"❌ Error fetching positions: {e}")
+        logging.error(f"❌ Lỗi khi fetch vị thế: {e}")
 
 def fetch_sheet():
     try:
