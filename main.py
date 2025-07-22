@@ -7,7 +7,6 @@ from datetime import datetime
 import ccxt
 import threading
 import time
-import schedule
 import sys
 import math
 import pandas as pd
