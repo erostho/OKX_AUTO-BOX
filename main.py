@@ -296,41 +296,39 @@ def run_bot():
                         sl_price = market_price * 1.05
                         opposite_side = 'buy'
             
-                    # ✅ Đặt TP
-                    if tp_price:
-                        logging.debug(f"🟢 GỌI ĐẶT TP: instId={symbol_instId}, side={opposite_side}, tp_price={tp_price}")
-                        try:
-                            tp_order = exchange.private_post_trade_order_algo({
-                                "instId": symbol_instId,
-                                "tdMode": "isolated",
-                                "side": opposite_side,
-                                "ordType": "trigger",
-                                "triggerPx": str(tp_price),
-                                "sz": str(pos_size),  # hoặc "auto"
-                                "reduceOnly": True
-                            })
-                            logging.info(f"✅ TP Order Response: {tp_order}")
-                        except Exception as e:
-                            logging.error(f"❌ LỖI đặt TP: {e}")
+            # ✅ Đặt TP
+            if tp_price:
+                logging.debug(f"🟢 GỌI ĐẶT TP: instId={symbol_instId}, side={opposite_side}, tp_price={tp_price}")
+                try:
+                    tp_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol_instId,
+                        "tdMode": "isolated",
+                        "side": opposite_side,
+                        "ordType": "trigger",
+                        "triggerPx": str(tp_price),
+                        "sz": str(pos_size),  # hoặc "auto"
+                        "reduceOnly": True
+                    })
+                    logging.info(f"✅ TP Order Response: {tp_order}")
+                except Exception as e:
+                    logging.error(f"❌ LỖI đặt TP: {e}")
                     
-                    # ✅ Đặt SL
-                    if sl_price:
-                        logging.debug(f"🔴 GỌI ĐẶT SL: instId={symbol_instId}, side={opposite_side}, sl_price={sl_price}")
-                        try:
-                            sl_order = exchange.private_post_trade_order_algo({
-                                "instId": symbol_instId,
-                                "tdMode": "isolated",
-                                "side": opposite_side,
-                                "ordType": "trigger",
-                                "triggerPx": str(sl_price),
-                                "sz": str(pos_size),  # hoặc "auto"
-                                "reduceOnly": True
-                            })
-                            logging.info(f"✅ SL Order Response: {sl_order}")
-                        except Exception as e:
-                            logging.error(f"❌ LỖI đặt SL: {e}")
-            
-                    return  # Sau khi đặt TP/SL xong thì thoát vòng lặp
+            # ✅ Đặt SL
+            if sl_price:
+                logging.debug(f"🔴 GỌI ĐẶT SL: instId={symbol_instId}, side={opposite_side}, sl_price={sl_price}")
+                try:
+                    sl_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol_instId,
+                        "tdMode": "isolated",
+                        "side": opposite_side,
+                        "ordType": "trigger",
+                        "triggerPx": str(sl_price),
+                        "sz": str(pos_size),  # hoặc "auto"
+                        "reduceOnly": True
+                    })
+                    logging.info(f"✅ SL Order Response: {sl_order}")
+                except Exception as e:
+                    logging.error(f"❌ LỖI đặt SL: {e}")
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
