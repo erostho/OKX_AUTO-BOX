@@ -179,7 +179,7 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 continue
 
-            usdt_limit = 40
+            usdt_limit = 30
             coin_amount = round(usdt_limit /ask_price, 6)
             estimated_value = coin_amount * ask_price
 
