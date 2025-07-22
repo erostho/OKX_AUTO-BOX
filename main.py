@@ -287,7 +287,7 @@ def run_bot():
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
                     side=side,
-                    amount=coin_amount
+                    amount=coin_amount,
                     params={
                         "tdMode": "isolated",
                         "ccy": "USDT",
