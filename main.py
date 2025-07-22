@@ -330,7 +330,7 @@ def run_bot():
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                     })
-                    logging.info(f"✅ TP Order Response: {tp_order}")
+                    logging.info(f"✅ SL Order Response: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt SL: {e}")
 
