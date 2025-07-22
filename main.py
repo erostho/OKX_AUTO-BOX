@@ -248,7 +248,7 @@ def run_bot():
                     return list(set(symbols))  # Loại trùng
                 except Exception as e:
                     logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
-                    continue []
+                    return []
             
             # ✅ Lấy danh sách symbols từ API OKX (Futures)
             futures_symbols_okx = fetch_okx_usdt_futures_symbols()
