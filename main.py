@@ -420,6 +420,28 @@ def run_bot():
                             
                             if not orders_to_cancel:
                                 logging.warning(f"[CANCEL TP/SL] ❌ Không tìm thấy lệnh nào chờ theo instId = {symbol_instId}")
+                            
+                                # 🩻 Fallback gọi tất cả lệnh chờ nếu fetch theo instId không thấy
+                                try:
+                                    fallback_orders = exchange.private_get_trade_orders_pending({
+                                        "algoType": "conditional"
+                                    })
+                                    all_data = fallback_orders.get("data", [])
+                                    logging.debug(f"[CANCEL TP/SL] 🩻 Fallback gọi toàn bộ conditional: {all_data}")
+                            
+                                    for o in all_data:
+                                        inst_id = o.get("instId", "")
+                                        order_type = o.get("type", "")
+                                        state = o.get("state", "")
+                                        algo_id = o.get("algoId", "")
+                            
+                                        logging.debug(f"[CANCEL TP/SL] 🔍 Lệnh: instId={inst_id}, type={order_type}, state={state}, algoId={algo_id}")
+                            
+                                        # Lọc đúng symbol và loại lệnh stop
+                                        if inst_id == symbol_instId and order_type == "stop-market":
+                                            orders_to_cancel.append(o)
+                                except Exception as e:
+                                    logging.warning(f"[CANCEL TP/SL] ❌ Lỗi khi fallback gọi all: {e}")
                             else:
                                 for idx, order in enumerate(orders_to_cancel):
                                     logging.debug(f"[CANCEL TP/SL] 🔍 Lệnh #{idx+1}: {order}")
