@@ -336,7 +336,7 @@ def run_bot():
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
-            symbol_check = symbol_raw.strip().upper().replace("/", "-") + "-SWAP"  # FXS-USDT-SWAP
+            symbol_check = symbol_raw.strip().upper().replace("/", "-").replace(":USDT", "-") + "-SWAP"  # FXS-USDT-SWAP
             # ✅ Duyệt vị thế hiện tại
             logging.debug(f"[CHECK] ↪ pos = {pos}")
             def fetch_algo_orders_retry(symbol_instId, retries=5, delay=2):
@@ -360,46 +360,42 @@ def run_bot():
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol_check = pos.get("symbol", "").upper().replace("/", "-").replace(":USDT", "") + "-SWAP"
-                    pos_qty = float(pos.get("contracts", 0) or pos.get("size", 0) or 0)
-                    contracts = float(pos.get("pos", 0))
+                    pos_qty = float(pos.get("size", 0))  # chính xác hơn contracts
                     margin_mode = pos.get("marginMode", "").lower()
-            
+                
                     logging.debug(f"[CHECK] ↪ symbol_check={symbol_check}, pos_symbol_check={pos_symbol_check}")
-                    logging.debug(f"[CHECK] ↪ contracts={contracts}, pos_qty={pos_qty}, margin_mode={margin_mode}")
-            
-                    if (
-                        pos_symbol_check == symbol_check and
-                        contracts <= 0.000001 and  # Cho phép sai số nhỏ
-                        margin_mode in ["isolated", "cross"]
-                    ):
+                    logging.debug(f"[CHECK] ↪ pos_qty={pos_qty}, margin_mode={margin_mode}")
+                
+                    if pos_symbol_check == symbol_check and pos_qty <= 0 and margin_mode == 'isolated':
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng → huỷ TP/SL nếu còn treo")
-
-                        try:
-                            # ✅ Chuẩn hóa instId
-                            symbol_instId = pos.get("instId")
-                            if not symbol_instId:
-                                # Nếu không có instId thì mới tạo lại từ symbol_check
-                                symbol_instId = symbol_check.replace("/", "-")
-                                if not symbol_instId.endswith("-SWAP"):
-                                    symbol_instId += "-SWAP"
                 
-                            # ✅ Fetch TP/SL đang chờ theo instId
-                            def fetch_algo_orders_retry(symbol_instId, retries=5, delay=2):
-                                for i in range(retries):
-                                    try:
-                                        res = exchange.private_get_trade_orders_pending({
-                                            "instId": symbol_instId,
-                                            "algoType": "conditional"
-                                        })
-                                        data = res.get("data", [])
-                                        if data:
-                                            return data
-                                    except Exception as e:
-                                        logging.warning(f"❌ Lỗi khi fetch TP/SL lần {i+1}: {e}")
-                                    time.sleep(delay)
-                                return []
+                        symbol_instId = pos.get("instId")
+                        if not symbol_instId:
+                            symbol_instId = symbol_check.replace("/", "-")
+                            if not symbol_instId.endswith("-SWAP"):
+                                symbol_instId += "-SWAP"
                 
-                            orders_to_cancel = fetch_algo_orders_retry(symbol_instId)
+                        # fetch TP/SL pending
+                        tp_sl_orders = fetch_algo_orders_retry(symbol_instId)
+                        ...
+                
+                        # ✅ Fetch TP/SL đang chờ theo instId
+                        def fetch_algo_orders_retry(symbol_instId, retries=5, delay=2):
+                            for i in range(retries):
+                                try:
+                                    res = exchange.private_get_trade_orders_pending({
+                                        "instId": symbol_instId,
+                                        "algoType": "conditional"
+                                    })
+                                    data = res.get("data", [])
+                                    if data:
+                                        return data
+                                except Exception as e:
+                                    logging.warning(f"❌ Lỗi khi fetch TP/SL lần {i+1}: {e}")
+                                time.sleep(delay)
+                            return []
+                
+                        orders_to_cancel = fetch_algo_orders_retry(symbol_instId)
                 
                             if not orders_to_cancel:
                                 # ✅ Fallback nếu không fetch được theo instId
