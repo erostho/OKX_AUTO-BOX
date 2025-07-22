@@ -38,12 +38,7 @@ def auto_tp_sl_watcher():
     while True:
         cancel_tp_sl_if_position_closed(exchange)
         time.sleep(180)
-if __name__ == "__main__":
-    logging.info("🚀 Bắt đầu chạy script main.py")
-    run_bot()
 
-    # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
-    threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
 def cancel_tp_sl_if_position_closed(exchange):
     try:
         positions = exchange.fetch_positions()
@@ -460,5 +455,5 @@ def run_bot():
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
-# 🔁 Khởi động vòng lặp kiểm tra tự động TP/SL
-threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
+    # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
+    threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
