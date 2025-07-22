@@ -283,18 +283,18 @@ def run_bot():
                 ):
                     logging.info(f"✅ [Position] Tìm thấy vị thế phù hợp để đặt TP/SL cho {symbol_check}")
             
-                    # 🔄 Chuẩn hóa instId để gọi API Algo
-                    symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
+            # 🔄 Chuẩn hóa instId để gọi API Algo
+            symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
             
-                    # 📈 Tính giá TP/SL
-                    if side_check == 'long':
-                        tp_price = market_price * 1.10
-                        sl_price = market_price * 0.95
-                        opposite_side = 'sell'
-                    else:
-                        tp_price = market_price * 0.90
-                        sl_price = market_price * 1.05
-                        opposite_side = 'buy'
+            # 📈 Tính giá TP/SL
+            if side_check == 'long':
+                tp_price = market_price * 1.10
+                sl_price = market_price * 0.95
+                opposite_side = 'sell'
+            else:
+                tp_price = market_price * 0.90
+                sl_price = market_price * 1.05
+                opposite_side = 'buy'
             
             # ✅ Đặt TP
             if tp_price:
