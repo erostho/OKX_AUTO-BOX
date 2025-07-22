@@ -313,7 +313,6 @@ def run_bot():
                         "sz": str(pos_size),
                         "reduceOnly": True
                     })
-                    })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt TP: {e}")
