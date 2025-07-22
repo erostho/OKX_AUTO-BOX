@@ -339,12 +339,12 @@ def run_bot():
             
             # 📈 Tính giá TP/SL
             if side_check == 'long':
-                tp_price = market_price * 1.10
-                sl_price = market_price * 0.95
+                tp_price = market_price * 1.05
+                sl_price = market_price * 0.97
                 opposite_side = 'sell'
             elif side_check == 'short':
-                tp_price = market_price * 0.90
-                sl_price = market_price * 1.05
+                tp_price = market_price * 0.95
+                sl_price = market_price * 1.07
                 opposite_side = 'buy'
             else:
                 logging.error(f"❌ SIDE không hợp lệ: {side_check}")
