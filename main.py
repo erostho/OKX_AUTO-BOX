@@ -3,8 +3,7 @@ import os
 import csv
 import logging
 import requests
-from datetime import timedelta
-import datetime
+from datetime import timedelta, datetime
 import ccxt
 import threading
 import time
