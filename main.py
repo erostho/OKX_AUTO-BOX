@@ -313,7 +313,6 @@ def run_bot():
                         "orderPx": "-1",                      # Giá khớp: -1 = thị trường
                         "triggerPxType": "last",              # Có thể là "last", "index", "mark"
                         "sz": str(pos_size),                  # Khối lượng chốt lời
-                        "reduceOnly": True                    # ✅ BẮT BUỘC để tự cancel khi đóng vị thế
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
@@ -331,7 +330,6 @@ def run_bot():
                         "orderPx": "-1",
                         "triggerPxType": "last",
                         "sz": str(pos_size),
-                        "reduceOnly": True
                     })
                     logging.info(f"✅ SL Order Response: {sl_order}")
                 except Exception as e:
