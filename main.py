@@ -309,7 +309,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(tp_price, 6)),
-                        "orderPx": "-1"
+                        "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
@@ -327,7 +327,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(sl_price, 6)),
-                        "orderPx": "-1"
+                        "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
