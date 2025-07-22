@@ -5,7 +5,9 @@ import logging
 import requests
 from datetime import datetime
 import ccxt
+import threading
 import time
+import schedule
 import sys
 import math
 import pandas as pd
@@ -33,6 +35,51 @@ exchange = ccxt.okx({
     }
 })
 
+def auto_tp_sl_watcher():
+    while True:
+        cancel_tp_sl_if_position_closed(exchange)
+        time.sleep(180)
+if __name__ == "__main__":
+    logging.info("🚀 Bắt đầu chạy script main.py")
+    run_bot()
+
+    # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
+    threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
+def cancel_tp_sl_if_position_closed(exchange):
+    try:
+        positions = exchange.fetch_positions()
+        for pos in positions:
+            symbol = pos.get("symbol", "")
+            size = float(pos.get("size", 0))
+            margin_mode = pos.get("marginMode", "")
+            if size == 0 and margin_mode == "isolated":
+                instId = pos.get("info", {}).get("instId", "")
+                if instId:
+                    logging.info(f"🧹 No position on {instId} — checking for TP/SL to cancel")
+                    try:
+                        orders = exchange.private_get_trade_orders_pending({
+                            "instId": instId,
+                            "algoType": "conditional"
+                        }).get("data", [])
+                        for order in orders:
+                            algo_id = order.get("algoId")
+                            if algo_id:
+                                logging.warning(f"🛑 Canceling SL/TP for {instId} (algoId: {algo_id})")
+                                exchange.private_post_trade_cancel_algos({
+                                    "algoId": algo_id,
+                                    "instId": instId
+                                })
+                    except Exception as e:
+                        logging.error(f"❌ Error fetching/canceling orders for {instId}: {e}")
+    except Exception as e:
+        logging.error(f"❌ Error fetching positions: {e}")
+
+
+# 🌀 Chạy liên tục mỗi 3 phút
+while True:
+    cancel_tp_sl_if_position_closed(exchange)
+    time.sleep(180)
+    
 def fetch_sheet():
     try:
         csv_url = SPREADSHEET_URL.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -414,3 +461,5 @@ def run_bot():
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
+# 🔁 Khởi động vòng lặp kiểm tra tự động TP/SL
+threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
