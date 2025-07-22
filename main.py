@@ -180,12 +180,8 @@ def run_bot():
                 continue
 
             usdt_limit = 30
-            coin_amount = round(usdt_limit /ask_price, 6)
-            estimated_value = coin_amount * ask_price
-
-            if estimated_value > usdt_limit:
-                coin_amount = round((usdt_limit * 0.999) /ask_price, 6)
-                estimated_value  = coin_amount * ask_price
+            leverage = 4
+            coin_amount = round((usdt_limit*leverage) /ask_price, 6)
 
             # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
             symbol_check = symbol.replace("-", "/").upper()
