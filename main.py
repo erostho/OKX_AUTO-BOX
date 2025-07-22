@@ -220,20 +220,20 @@ def run_bot():
                     logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
                     # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
                     max_retries = 5
-                    positions = []
                     for i in range(max_retries):
-                        try:
-                            positions = exchange.fetch_positions()
-                            logging.debug(f"[Retry {i+1}] ✅ Fetch được {len(positions)} vị thế")
-                            if positions:
-                                break
-                        except Exception as e:
-                            logging.warning(f"[Retry {i+1}] ❌ Lỗi fetch vị thế: {e}")
-                        time.sleep(3)  # chờ rồi thử lại
-                except Exception as e2:
-                    logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
-
-                    continue    
+                        positions = exchange.fetch_positions()
+                        pos = [
+                            p for p in positions
+                            if p['symbol'] == symbol_check and
+                               p['side'] == side_check and
+                               p['marginMode'] == 'isolated' and
+                               float(p['size']) > 0
+                        ]
+                        if pos:
+                            pos_size = float(pos[0]['size'])
+                            break
+                        time.sleep(2) 
+                    
             # ✅ Bắt đầu đặt SL/TP 
             # --- Lấy market price ---
             try:
@@ -298,39 +298,40 @@ def run_bot():
             else:
                 logging.error(f"❌ SIDE không hợp lệ: {side_check}")
                 continue
-            
-            # ✅ Đặt TP
-            # Đặt TP
+
+            # ✅ Đặt TP (chốt lời) - kiểu Trigger Market
             if tp_price:
                 try:
                     tp_order = exchange.private_post_trade_order_algo({
-                        "instId": symbol_instId,
+                        "instId": symbol_instId,              # Ví dụ: "PI-USDT-SWAP"
                         "tdMode": "isolated",
-                        "side": opposite_side,
+                        "side": opposite_side,                # Ngược với vị thế đang mở
                         "ordType": "trigger",
-                        "triggerPx": str(round(tp_price, 6)),
-                        "orderPx": "-1",
-                        "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
-                        "sz": str(pos_size),
+                        "triggerPx": str(round(tp_price, 6)), # Giá kích hoạt
+                        "orderPx": "-1",                      # Giá khớp: -1 = thị trường
+                        "triggerPxType": "last",              # Có thể là "last", "index", "mark"
+                        "sz": str(pos_size),                  # Khối lượng chốt lời
+                        "reduceOnly": True                    # ✅ BẮT BUỘC để tự cancel khi đóng vị thế
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt TP: {e}")
-                    
-            # ✅ Đặt SL
-            if tp_price:
+
+            # ✅ Đặt SL (cắt lỗ) - kiểu Trigger Market
+            if sl_price:
                 try:
-                    tp_order = exchange.private_post_trade_order_algo({
+                    sl_order = exchange.private_post_trade_order_algo({
                         "instId": symbol_instId,
                         "tdMode": "isolated",
-                        "side": opposite_side,
+                        "side": opposite_side,                # Ngược với vị thế đang mở
                         "ordType": "trigger",
-                        "triggerPx": str(round(sl_price, 6)),
+                        "triggerPx": str(round(sl_price, 6)), # Giá kích hoạt
                         "orderPx": "-1",
-                        "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
+                        "triggerPxType": "last",
                         "sz": str(pos_size),
+                        "reduceOnly": True
                     })
-                    logging.info(f"✅ SL Order Response: {tp_order}")
+                    logging.info(f"✅ SL Order Response: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt SL: {e}")
 
