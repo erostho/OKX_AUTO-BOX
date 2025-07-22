@@ -217,14 +217,14 @@ def run_bot():
                             "lever": "4"
                         }
                     )
-                    logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
+
                     # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
                     max_retries = 5
                     positions = []
                     for i in range(max_retries):
                         try:
                             positions = exchange.fetch_positions()
-                            logging.debug(f"[Retry {i+1}] ✅ Fetch được {len(positions)} vị thế")
+
                             if positions:
                                 break
                         except Exception as e:
@@ -239,7 +239,6 @@ def run_bot():
             try:
                 ticker = exchange.fetch_ticker(symbol)
                 market_price = float(ticker['last'])
-                logging.debug(f"✅ [Market Price] Giá thị trường hiện tại của {symbol} = {market_price}")
             except Exception as e:
                 logging.error(f"❌ [Market Price] Không lấy được giá hiện tại cho {symbol}: {e}")
                 return
@@ -266,22 +265,12 @@ def run_bot():
                 margin_mode = pos.get('marginMode', '')
                 pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos')
             
-                logging.debug(
-                    f"🔍 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
-                    f"mode={margin_mode}, size={pos_size} "
-                    f"với symbol_check={symbol_check}, side_check={side_check}"
-                )
-                logging.debug(
-                    f"[DEBUG MATCH] So sánh với: symbol_check={symbol_check}, side_check={side_check} "
-                    f"vs pos_symbol={pos_symbol}, pos_side={pos_side}, margin_mode={margin_mode}, size={pos_size}"
-                )
                 if (
                     pos_symbol == symbol_check and
                     pos_side == side_check and
                     margin_mode == 'isolated' and
                     float(pos_size) > 0
                 ):
-                    logging.info(f"✅ [Position] Tìm thấy vị thế phù hợp để đặt TP/SL cho {symbol_check}")
             
             # 🔄 Chuẩn hóa instId để gọi API Algo
             symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
@@ -360,13 +349,13 @@ def run_bot():
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
                     pos_symbol_check = pos.get("symbol", "").upper().replace("/", "-").replace(":USDT", "") + "-SWAP"
-                    pos_qty = float(pos.get("size", 0))  # chính xác hơn contracts
+                    contracts = float(pos.get("contracts", 0))
                     margin_mode = pos.get("marginMode", "").lower()
                 
                     logging.debug(f"[CHECK] ↪ symbol_check={symbol_check}, pos_symbol_check={pos_symbol_check}")
-                    logging.debug(f"[CHECK] ↪ pos_qty={pos_qty}, margin_mode={margin_mode}")
+                    logging.debug(f"[CHECK] pos={pos}, contracts={contracts}, pos.get('pos')={pos.get('pos')}")
                 
-                    if pos_symbol_check == symbol_check and pos_qty <= 0 and margin_mode == 'isolated':
+                    if pos_symbol_check == symbol_check and contracts <= 0.0000001 and margin_mode in ["isolated", "cross")
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng → huỷ TP/SL nếu còn treo")
                 
                         symbol_instId = pos.get("instId")
