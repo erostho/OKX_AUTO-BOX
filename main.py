@@ -312,7 +312,6 @@ def run_bot():
                         "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
-                        "reduceOnly": True
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
@@ -330,7 +329,6 @@ def run_bot():
                         "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
-                        "reduceOnly": True
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
