@@ -329,41 +329,36 @@ def run_bot():
             # Debug giá TP/SL
             logging.debug(f"📈 TP = {tp_price}, 📉 SL = {sl_price}, 🔁 opposite_side = {opposite_side}")
 
-            # TP - Take Profit
+            # --- Đặt TAKE PROFIT ---
             if tp_price:
                 try:
-                    tp_order = exchange.create_order(
-                        symbol=symbol_check,
-                        type='stop_market',
-                        side=close_side,
-                        amount=size,
-                        params={
-                            'stopLossTriggerPrice': None,
-                            'takeProfitTriggerPrice': tp_price,
-                            'reduceOnly': True,
-                            'triggerPxType': 'last',  # hoặc 'mark' tuỳ bạn chọn
-                            'tpTriggerPx': str(round(tp_price, 6)),
-                        }
-                    )
+                    tp_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol_instId,
+                        "tdMode": "isolated",
+                        "side": close_side,              # opposite của entry side
+                        "ordType": "trigger",            # loại trigger
+                        "triggerPx": str(tp_price),      # giá kích hoạt
+                        "triggerPxType": "last",         # hoặc "mark"
+                        "sz": str(size),
+                        "posSide": entry_pos_side        # "long" hoặc "short"
+                    })
                     logging.info(f"✅ Đặt TP thành công: {tp_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt TP: {e}")
         
-            # SL - Stop Loss
+            # --- Đặt STOP LOSS ---
             if sl_price:
                 try:
-                    sl_order = exchange.create_order(
-                        symbol=symbol_check,
-                        type='stop_market',
-                        side=close_side,
-                        amount=size,
-                        params={
-                            'stopLossTriggerPrice': sl_price,
-                            'reduceOnly': True,
-                            'triggerPxType': 'last',
-                            'slTriggerPx': str(round(sl_price, 6)),
-                        }
-                    )
+                    sl_order = exchange.private_post_trade_order_algo({
+                        "instId": symbol_instId,
+                        "tdMode": "isolated",
+                        "side": close_side,
+                        "ordType": "trigger",
+                        "triggerPx": str(sl_price),
+                        "triggerPxType": "last",
+                        "sz": str(size),
+                        "posSide": entry_pos_side
+                    })
                     logging.info(f"✅ Đặt SL thành công: {sl_order}")
                 except Exception as e:
                     logging.error(f"❌ Lỗi đặt SL: {e}")
