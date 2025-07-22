@@ -4,6 +4,7 @@ import csv
 import logging
 import requests
 from datetime import timedelta
+import datetime
 import ccxt
 import threading
 import time
