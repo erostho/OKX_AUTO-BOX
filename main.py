@@ -218,21 +218,23 @@ def run_bot():
                         }
                     )
                     logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                    # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
-                    max_retries = 5
-                    for i in range(max_retries):
-                        positions = exchange.fetch_positions()
-                        pos = [
-                            p for p in positions
-                            if p['symbol'] == symbol_check and
-                               p['side'] == side_check and
-                               p['marginMode'] == 'isolated' and
-                               float(p['size']) > 0
-                        ]
-                        if pos:
-                            pos_size = float(pos[0]['size'])
-                            break
-                        time.sleep(2) 
+                    except Exception as e2:
+                        logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
+            # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
+            max_retries = 5
+            for i in range(max_retries):
+                positions = exchange.fetch_positions()
+                pos = [
+                    p for p in positions
+                    if p['symbol'] == symbol_check and
+                        p['side'] == side_check and
+                        p['marginMode'] == 'isolated' and
+                        float(p['size']) > 0
+                ]
+                if pos:
+                    pos_size = float(pos[0]['size'])
+                    break
+                time.sleep(5) 
                     
             # ✅ Bắt đầu đặt SL/TP 
             # --- Lấy market price ---
