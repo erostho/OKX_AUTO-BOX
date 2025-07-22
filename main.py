@@ -97,7 +97,7 @@ def cancel_sibling_algo_if_triggered(exchange):
 
         if not history:
             logging.info("📜 Không có lệnh TP/SL nào đã khớp")
-            return
+            continue
 
         triggered_instIds = set(order["instId"] for order in history)
 
@@ -177,7 +177,7 @@ def run_bot():
             
             if ask_price <= 0:
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
-                return
+                continue
 
             usdt_limit = 40
             coin_amount = round(usdt_limit /ask_price, 6)
@@ -196,7 +196,7 @@ def run_bot():
             
             if side_check is None:
                 logging.error(f"❌ SIDE không hợp lệ: {side}")
-                return
+                continue
             
             # ✅ Fetch tất cả vị thế hiện tại
             try:
@@ -248,7 +248,7 @@ def run_bot():
                     return list(set(symbols))  # Loại trùng
                 except Exception as e:
                     logging.error(f"❌ Không thể fetch Futures symbols từ OKX: {e}")
-                    return []
+                    continue []
             
             # ✅ Lấy danh sách symbols từ API OKX (Futures)
             futures_symbols_okx = fetch_okx_usdt_futures_symbols()
@@ -345,7 +345,7 @@ def run_bot():
                 logging.debug(f"✅ [Positions] Đã fetch vị thế: {positions}")
             except Exception as e:
                 logging.error(f"❌ [Positions] Không thể fetch vị thế: {e}")
-                return
+                continue
                 
             symbol_check = symbol.replace("-", "/").upper()
             side_input = side.lower()
