@@ -399,7 +399,7 @@ def run_bot():
                     logging.debug(f"[CHECK] ↪ symbol_check={symbol_check}, pos_symbol_check={pos_symbol_check}")
   
                 
-                    if pos_symbol_check == symbol_check and contracts <= 0.0000001 and margin_mode in ["isolated", "cross")
+                    if pos_symbol_check == symbol_check and contracts <= 0.0000001 and margin_mode in ["isolated", "cross"):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng → huỷ TP/SL nếu còn treo")
                 
                         symbol_instId = pos.get("instId")
