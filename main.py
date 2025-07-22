@@ -397,14 +397,14 @@ def run_bot():
                 
                         orders_to_cancel = fetch_algo_orders_retry(symbol_instId)
                 
-                            if not orders_to_cancel:
-                                # ✅ Fallback nếu không fetch được theo instId
-                                fallback_orders = exchange.private_get_trade_orders_pending({
-                                    "algoType": "conditional"
-                                })
-                                all_data = fallback_orders.get("data", [])
-                                for o in all_data:
-                                    if o.get("instId") == symbol_instId and o.get("type") == "stop-market":
+                        if not orders_to_cancel:
+                            # ✅ Fallback nếu không fetch được theo instId
+                            fallback_orders = exchange.private_get_trade_orders_pending({
+                                "algoType": "conditional"
+                            })
+                            all_data = fallback_orders.get("data", [])
+                            for o in all_data:
+                                if o.get("instId") == symbol_instId and o.get("type") == "stop-market":
                                         orders_to_cancel.append(o)
                 
                             # ✅ Huỷ từng lệnh TP/SL
@@ -417,8 +417,6 @@ def run_bot():
                                     logging.info(f"✅ Đã huỷ TP/SL: {algo_id}")
                                 except Exception as e:
                                     logging.warning(f"❌ Lỗi huỷ TP/SL {algo_id}: {e}")
-                        except Exception as e:
-                            logging.warning(f"❌ Lỗi tổng khi huỷ TP/SL: {e}")
                         continue  # Qua symbol khác
             except Exception as e:
                 logging.error(f"❌ Lỗi kiểm tra vị thế để huỷ TP/SL: {e}")
