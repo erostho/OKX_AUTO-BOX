@@ -376,7 +376,12 @@ def run_bot():
 
                         try:
                             # ✅ Chuẩn hóa instId
-                            symbol_instId = pos.get("instId") or symbol_check.replace("/", "-") + "-SWAP"
+                            symbol_instId = pos.get("instId")
+                            if not symbol_instId:
+                                # Nếu không có instId thì mới tạo lại từ symbol_check
+                                symbol_instId = symbol_check.replace("/", "-")
+                                if not symbol_instId.endswith("-SWAP"):
+                                    symbol_instId += "-SWAP"
                 
                             # ✅ Fetch TP/SL đang chờ theo instId
                             def fetch_algo_orders_retry(symbol_instId, retries=5, delay=2):
