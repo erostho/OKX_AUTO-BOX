@@ -5,7 +5,6 @@ import logging
 import requests
 from datetime import datetime
 import ccxt
-import threading
 import time
 import sys
 import math
@@ -38,7 +37,6 @@ def auto_tp_sl_watcher():
     while True:
         cancel_tp_sl_if_position_closed(exchange)
         time.sleep(180)
-
 def cancel_tp_sl_if_position_closed(exchange):
     try:
         positions = exchange.fetch_positions()
@@ -68,12 +66,6 @@ def cancel_tp_sl_if_position_closed(exchange):
     except Exception as e:
         logging.error(f"❌ Error fetching positions: {e}")
 
-
-# 🌀 Chạy liên tục mỗi 3 phút
-while True:
-    cancel_tp_sl_if_position_closed(exchange)
-    time.sleep(180)
-    
 def fetch_sheet():
     try:
         csv_url = SPREADSHEET_URL.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -258,14 +250,14 @@ def run_bot():
                             "lever": "4"
                         }
                     )
-
+                    logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
                     # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
                     max_retries = 5
                     positions = []
                     for i in range(max_retries):
                         try:
                             positions = exchange.fetch_positions()
-
+                            logging.debug(f"[Retry {i+1}] ✅ Fetch được {len(positions)} vị thế")
                             if positions:
                                 break
                         except Exception as e:
@@ -280,6 +272,7 @@ def run_bot():
             try:
                 ticker = exchange.fetch_ticker(symbol)
                 market_price = float(ticker['last'])
+                logging.debug(f"✅ [Market Price] Giá thị trường hiện tại của {symbol} = {market_price}")
             except Exception as e:
                 logging.error(f"❌ [Market Price] Không lấy được giá hiện tại cho {symbol}: {e}")
                 return
@@ -306,6 +299,15 @@ def run_bot():
                 margin_mode = pos.get('marginMode', '')
                 pos_size = pos.get('contracts') or pos.get('size') or pos.get('positionAmt') or pos.get('pos')
             
+                logging.debug(
+                    f"🔍 So sánh: pos_symbol={pos_symbol}, pos_side={pos_side}, "
+                    f"mode={margin_mode}, size={pos_size} "
+                    f"với symbol_check={symbol_check}, side_check={side_check}"
+                )
+                logging.debug(
+                    f"[DEBUG MATCH] So sánh với: symbol_check={symbol_check}, side_check={side_check} "
+                    f"vs pos_symbol={pos_symbol}, pos_side={pos_side}, margin_mode={margin_mode}, size={pos_size}"
+                )
                 if (
                     pos_symbol == symbol_check and
                     pos_side == side_check and
@@ -313,6 +315,7 @@ def run_bot():
                     float(pos_size) > 0
                 ):
                     logging.info(f"✅ [Position] Tìm thấy vị thế phù hợp để đặt TP/SL cho {symbol_check}")
+            
             # 🔄 Chuẩn hóa instId để gọi API Algo
             symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
             
@@ -394,9 +397,9 @@ def run_bot():
                     margin_mode = pos.get("marginMode", "").lower()
                 
                     logging.debug(f"[CHECK] ↪ symbol_check={symbol_check}, pos_symbol_check={pos_symbol_check}")
-                    logging.debug(f"[CHECK] pos={pos}, contracts={contracts}, pos.get('pos')={pos.get('pos')}")
+  
                 
-                    if pos_symbol_check == symbol_check and contracts <= 0.0000001 and margin_mode in ["isolated", "cross"]:
+                    if pos_symbol_check == symbol_check and contracts <= 0.0000001 and margin_mode in ["isolated", "cross")
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng → huỷ TP/SL nếu còn treo")
                 
                         symbol_instId = pos.get("instId")
@@ -455,5 +458,6 @@ def run_bot():
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
     run_bot()
+
     # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
     threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
