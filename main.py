@@ -359,25 +359,21 @@ def run_bot():
             try:
                 all_positions = exchange.fetch_positions()
                 for pos in all_positions:
-                    pos_symbol_check = pos.get("symbol", "").upper().replace("/", "-").replace(":USDT", "") + "-SWAP"  # FXS-USDT-SWAP
-                    pos_qty = float(pos.get("contracts",0) or pos.get("size",0) or 0)
+                    pos_symbol_check = pos.get("symbol", "").upper().replace("/", "-").replace(":USDT", "") + "-SWAP"
+                    pos_qty = float(pos.get("contracts", 0) or pos.get("size", 0) or 0)
                     contracts = float(pos.get("pos", 0))
-                    margin_mode = pos.get('marginMode', '').lower()
-                    pos_side = pos.get("posSide",  "").lower()
-                    logging.debug(f"[CHECK] 🔍 pos keys = {list(pos.keys())}")
-                    logging.debug(f"[CHECK] ↪ pos_qty = {pos_qty} → abs(pos_qty) = {abs(pos_qty)}")
-                    logging.debug(f"[CHECK] ↪ symbol_check = {symbol_check}")
-                    logging.debug(f"[CHECK] ↪ pos_side = {pos_side}, pos_mode = {pos.get('posMode')}")
-                    logging.debug(f"[CHECK] ↪ pos_symbol_check = {pos_symbol_check}")
-                    logging.debug(f"[CHECK] ↪ margin_mode = {pos.get('marginMode', '')}, size = {size}")
-                    
+                    margin_mode = pos.get("marginMode", "").lower()
+            
+                    logging.debug(f"[CHECK] ↪ symbol_check={symbol_check}, pos_symbol_check={pos_symbol_check}")
+                    logging.debug(f"[CHECK] ↪ contracts={contracts}, pos_qty={pos_qty}, margin_mode={margin_mode}")
+            
                     if (
-                        pos_symbol == symbol_check and
+                        pos_symbol_check == symbol_check and
                         contracts <= 0.000001 and  # Cho phép sai số nhỏ
                         margin_mode in ["isolated", "cross"]
                     ):
                         logging.warning(f"⚠️ Vị thế {symbol_check} đã đóng → huỷ TP/SL nếu còn treo")
-                
+
                         try:
                             # ✅ Chuẩn hóa instId
                             symbol_instId = pos.get("instId") or symbol_check.replace("/", "-") + "-SWAP"
