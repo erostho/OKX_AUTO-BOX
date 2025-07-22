@@ -253,8 +253,10 @@ def run_bot():
                 return
                 
             symbol_check = symbol.replace("-", "/").upper()
-            side_check = side.lower()
+            side_input = side.lower()
+            side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else None
             size = 0
+            
             # đoạn xử lý SL/TP
             for pos in positions:
                 logging.debug(f"[Position] Kiểm tra từng vị thế: {pos}")
@@ -269,7 +271,10 @@ def run_bot():
                     f"mode={margin_mode}, size={pos_size} "
                     f"với symbol_check={symbol_check}, side_check={side_check}"
                 )
-            
+                logging.debug(
+                    f"[DEBUG MATCH] So sánh với: symbol_check={symbol_check}, side_check={side_check} "
+                    f"vs pos_symbol={pos_symbol}, pos_side={pos_side}, margin_mode={margin_mode}, size={pos_size}"
+                )
                 if (
                     pos_symbol == symbol_check and
                     pos_side == side_check and
