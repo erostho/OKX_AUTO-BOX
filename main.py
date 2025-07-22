@@ -309,6 +309,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(tp_price, 6)),
+                        "orderPx": "-1"
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
@@ -326,13 +327,14 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(sl_price, 6)),
+                        "orderPx": "-1"
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
-                    logging.error(f"❌ Lỗi đặt TP: {e}")
+                    logging.error(f"❌ Lỗi đặt SL: {e}")
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
