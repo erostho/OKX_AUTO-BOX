@@ -218,8 +218,8 @@ def run_bot():
                         }
                     )
                     logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                    except Exception as e2:
-                        logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
+                except Exception as e2:
+                    logging.error(f"❌ Lỗi khi gửi lệnh fallback {symbol} | side={side}: {e2}")
             # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
             max_retries = 5
             for i in range(max_retries):
