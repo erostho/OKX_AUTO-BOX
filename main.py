@@ -309,9 +309,10 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(tp_price, 6)),
-                        "triggerPxType": "last",  # hoặc "mark" nếu muốn
+                        "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
+                    })
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
@@ -326,7 +327,7 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(sl_price, 6)),
-                        "triggerPxType": "last",  # hoặc "mark" nếu muốn
+                        "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
                         "sz": str(pos_size),
                         "reduceOnly": True
                     })
