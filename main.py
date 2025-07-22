@@ -291,10 +291,13 @@ def run_bot():
                 tp_price = market_price * 1.10
                 sl_price = market_price * 0.95
                 opposite_side = 'sell'
-            else:
+            elif side_check == 'short':
                 tp_price = market_price * 0.90
                 sl_price = market_price * 1.05
                 opposite_side = 'buy'
+            else:
+                logging.error(f"❌ SIDE không hợp lệ: {side_check}")
+                continue
             
             # ✅ Đặt TP
             if tp_price:
