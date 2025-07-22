@@ -300,8 +300,8 @@ def run_bot():
                 continue
             
             # ✅ Đặt TP
+            # Đặt TP
             if tp_price:
-                logging.debug(f"🟢 GỌI ĐẶT TP: instId={symbol_instId}, side={opposite_side}, tp_price={tp_price}")
                 try:
                     tp_order = exchange.private_post_trade_order_algo({
                         "instId": symbol_instId,
@@ -309,29 +309,30 @@ def run_bot():
                         "side": opposite_side,
                         "ordType": "trigger",
                         "triggerPx": str(round(tp_price, 6)),
-                        "sz": str(pos_size),  # hoặc "auto"
+                        "triggerPxType": "last",  # hoặc "mark" nếu muốn
+                        "sz": str(pos_size),
                         "reduceOnly": True
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
-                    logging.error(f"❌ LỖI đặt TP: {e}")
+                    logging.error(f"❌ Lỗi đặt TP: {e}")
                     
             # ✅ Đặt SL
-            if sl_price:
-                logging.debug(f"🔴 GỌI ĐẶT SL: instId={symbol_instId}, side={opposite_side}, sl_price={sl_price}")
+            if tp_price:
                 try:
-                    sl_order = exchange.private_post_trade_order_algo({
+                    tp_order = exchange.private_post_trade_order_algo({
                         "instId": symbol_instId,
                         "tdMode": "isolated",
                         "side": opposite_side,
-                        "ordType": 'last',  # hoặc 'mark' tuỳ bạn chọn
+                        "ordType": "trigger",
                         "triggerPx": str(round(sl_price, 6)),
-                        "sz": str(pos_size),  # hoặc "auto"
+                        "triggerPxType": "last",  # hoặc "mark" nếu muốn
+                        "sz": str(pos_size),
                         "reduceOnly": True
                     })
-                    logging.info(f"✅ SL Order Response: {sl_order}")
+                    logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
-                    logging.error(f"❌ LỖI đặt SL: {e}")
+                    logging.error(f"❌ Lỗi đặt TP: {e}")
 
             # Gọi hàm huỷ nếu vị thế đã đóng
             # ✅ Chuẩn hoá thành COIN-USDT-SWAP
