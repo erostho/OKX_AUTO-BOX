@@ -271,7 +271,7 @@ def run_bot():
                     margin_mode == 'isolated' and
                     float(pos_size) > 0
                 ):
-            
+                    logging.info(f"✅ [Position] Tìm thấy vị thế phù hợp để đặt TP/SL cho {symbol_check}")
             # 🔄 Chuẩn hóa instId để gọi API Algo
             symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
             
