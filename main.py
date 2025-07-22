@@ -3,7 +3,7 @@ import os
 import csv
 import logging
 import requests
-from datetime import datetime
+from datetime import timedelta
 import ccxt
 import threading
 import time
@@ -158,8 +158,7 @@ def run_bot():
             sl = float(sl_str.strip('%')) / 100
             tp = float(tp_str.strip('%')) / 100
             interval = int(interval)
-            created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H:%M:%S")
-
+            created_at = datetime.strptime(created_at_str.strip(), "%Y-%m-%d %H:%M:%S") - timedelta(hours=7)
             elapsed_minutes = (now - created_at).total_seconds() / 60
             if elapsed_minutes > interval:
                 logging.info(f"⏱ Lệnh quá hạn: {symbol}")
