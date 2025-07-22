@@ -286,11 +286,12 @@ def run_bot():
 
             symbol_for_order = market['id']
             # ✅ Vào lệnh — ưu tiên dùng symbol_for_order
+            # coin_amount
             try:
                 order = exchange.create_market_order(
                     symbol=symbol_for_order,
                     side=side,
-                    amount=usdt_limit     # coin_amount
+                    amount=usdt_limit
                     params={
                         "tdMode": "isolated",
                         "ccy": "USDT",
