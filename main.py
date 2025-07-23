@@ -99,44 +99,34 @@ def cancel_tp_sl_if_position_closed(exchange):
 
 def cancel_sibling_algo_if_triggered(exchange):
     try:
-        history = exchange.private_get_trade_order_algo_history({
-            "algoType": "conditional",
-            "state": "triggered"
-        }).get("data", [])
+        # ✅ Fetch toàn bộ lệnh TP/SL dạng conditional
+        all_algo_orders = exchange.fetch_algo_orders(params={"algoType": "conditional"})
+        logging.info(f"🧹 Đang kiểm tra {len(all_algo_orders)} lệnh TP/SL đang treo...")
 
-        if not history:
-            logging.info("📜 Không có lệnh TP/SL nào đã khớp")
-            return
+        # ✅ Lấy danh sách instId của các vị thế đang mở
+        open_positions = exchange.fetch_positions()
+        open_inst_ids = {
+            pos.get("info", {}).get("instId", "")
+            for pos in open_positions
+            if float(pos.get("size", 0)) > 0
+        }
 
-        triggered_instIds = set(order["instId"] for order in history)
+        # ✅ Duyệt từng lệnh đang treo
+        for order in all_algo_orders:
+            inst_id = order.get("instId", "")
+            algo_id = order.get("algoId", "")
 
-        for instId in triggered_instIds:
-            logging.info(f"🔍 {instId} đã khớp TP hoặc SL → kiểm tra lệnh còn lại")
-
-            try:
-                pending = exchange.private_get_trade_orders_pending({
-                    "instId": instId,
-                    "algoType": "conditional"
-                }).get("data", [])
-
-                if not pending:
-                    logging.info(f"✅ Không còn lệnh nào đang treo trên {instId}")
-                    continue
-
-                for order in pending:
-                    algo_id = order.get("algoId")
-                    if algo_id:
-                        logging.warning(f"🛑 Huỷ lệnh còn lại (algoId={algo_id}) trên {instId}")
-                        exchange.private_post_trade_cancel_algos({
-                            "algoId": algo_id,
-                            "instId": instId
-                        })
-
-            except Exception as e:
-                logging.error(f"❌ Lỗi khi huỷ lệnh còn lại của {instId}: {e}")
+            # Nếu inst_id không thuộc danh sách vị thế đang mở → HUỶ
+            if inst_id not in open_inst_ids:
+                logging.info(f"🔻 Huỷ lệnh TP/SL mồ côi (instId={inst_id})")
+                try:
+                    exchange.cancel_order(algo_id, params={"algoId": algo_id})
+                    logging.info(f"✅ Đã huỷ TP/SL: {algo_id}")
+                except Exception as e:
+                    logging.warning(f"❌ Lỗi huỷ TP/SL ({algo_id}): {e}")
 
     except Exception as e:
-        logging.error(f"❌ Lỗi khi fetch history TP/SL: {e}")
+        logging.error(f"❌ Lỗi xử lý huỷ lệnh TP/SL treo: {e}")
 
 def fetch_sheet():
     try:
