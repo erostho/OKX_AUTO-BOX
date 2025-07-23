@@ -171,7 +171,9 @@ def run_bot():
             side = "buy" if signal == "LONG" else "sell"
             pos_side = "long" if signal == "LONG" else "SHORT"
             
-            # Tính khối lượng dựa trên 20 USDT vốn thật và đòn bẩy x5
+            # Tính khối lượng dựa trên 30 USDT vốn thật và đòn bẩy x5
+            usdt_limit = 30
+            leverage = 4
             ticker = exchange.fetch_ticker(symbol)
             ask_price = float(ticker.get('ask') or 0)          
             
@@ -179,13 +181,17 @@ def run_bot():
                 logging.error(f"⚠️ Không lấy được giá hợp lệ cho {symbol}")
                 continue
 
-            usdt_limit = 30
-            leverage = 4
-            coin_amount = round((usdt_limit*leverage) /ask_price, 6)
-
-            # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
+            # ✅ Lấy lotSize từ exchange.markets
             symbol_check = symbol.replace("-", "/").upper()
             market = exchange.markets.get(symbol_check)
+            lot_size = market['limits']['amount']['min'] or 0.001
+            
+            # ✅ Tính và làm tròn về đúng bội số
+            raw_amount = (usdt_limit * leverage) / ask_price
+            coin_amount = round(raw_amount / lot_size) * lot_size
+            coin_amount = float(f"{coin_amount:.6f}")  # đảm bảo định dạng
+
+            # ✅ Chuẩn hóa SYMBOL và SIDE từ đầu vào
             symbol_for_order = market['id']
             side_input = side.lower()
             side_check = 'long' if side_input == 'buy' else 'short' if side_input == 'sell' else None
