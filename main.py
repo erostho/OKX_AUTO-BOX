@@ -530,8 +530,6 @@ def run_bot():
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
-    threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
     run_bot()
-    # 🔁 Giữ chương trình sống
-    while True:
-        time.sleep(60)
+    # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
+    threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
