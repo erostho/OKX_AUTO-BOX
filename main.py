@@ -100,7 +100,9 @@ def cancel_tp_sl_if_position_closed(exchange):
 def cancel_sibling_algo_if_triggered(exchange):
     try:
         # ✅ Fetch toàn bộ lệnh TP/SL dạng conditional
-        all_algo_orders = exchange.fetch_algo_orders(params={"algoType": "conditional"})
+        all_algo_orders = exchange.private_get_trade_orders_algo_pending({
+            "algoType": "conditional"
+        }).get("data", [])
         logging.info(f"🧹 Đang kiểm tra {len(all_algo_orders)} lệnh TP/SL đang treo...")
 
         # ✅ Lấy danh sách instId của các vị thế đang mở
