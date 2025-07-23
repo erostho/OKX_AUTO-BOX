@@ -48,7 +48,8 @@ def auto_tp_sl_watcher():
 def cancel_tp_sl_if_position_closed(exchange):
     try:
         positions = exchange.fetch_positions()
-        logging.info(f"[CLOSE_CHECK] Tổng số vị thế: {len(positions)}")
+        for pos in positions:
+            logging.debug(f"[POSITION] ↪ symbol={pos.get('symbol')} | instId={pos.get('info', {}).get('instId')}")
 
         for pos in positions:
             size = float(pos.get("size") or 0)
