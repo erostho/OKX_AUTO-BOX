@@ -383,12 +383,13 @@ def run_bot():
             
             # 🔄 Chuẩn hóa instId để gọi API Algo
             symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
+            
             # Lấy lot size từ thị trường
             market = exchange.market(symbol_check)
             lot_size = market['limits']['amount']['min'] or 0.001
             
             # Làm tròn size về đúng bội số
-            adjusted_size = round(pos_size / lot_size) * lot_size
+            adjusted_size = math.ceil(pos_size / lot_size) * lot_size
             adjusted_size = float(f"{adjusted_size:.6f}")
 
             # 📈 Tính giá TP/SL
