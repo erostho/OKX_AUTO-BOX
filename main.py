@@ -51,25 +51,28 @@ def cancel_tp_sl_if_position_closed(exchange):
         logging.info(f"[CLOSE_CHECK] Tổng số vị thế: {len(positions)}")
 
         for pos in positions:
-            symbol = pos.get("symbol", "")
             size = float(pos.get("size") or 0)
             margin_mode = pos.get("marginMode", "")
             instId = pos.get("info", {}).get("instId", "")
 
-            logging.debug(f"[CHECK] ↪ {symbol} | instId={instId} | size={size} | margin={margin_mode}")
+            logging.debug(
+                f"[CHECK] ↪ instId={instId} | size={size} | margin={margin_mode}"
+            )
 
             if size == 0 and margin_mode in ["isolated", "cross"]:
                 if not instId:
-                    logging.warning(f"⚠️ Thiếu instId cho {symbol}, bỏ qua")
+                    logging.warning("⚠️ Thiếu instId, bỏ qua vị thế")
                     continue
 
-                logging.info(f"🧹 Đã đóng vị thế {instId} → kiểm tra lệnh TP/SL")
+                logging.info(f"📉 Đã đóng vị thế {instId} ➝ kiểm tra lệnh TP/SL")
 
                 try:
-                    orders = exchange.private_get_trade_orders_pending({
-                        "instId": instId,
-                        "algoType": "conditional"
-                    }).get("data", [])
+                    # Fetch all algo orders thuộc instId đó
+                    result = exchange.private_get_trade_orders_pending({
+                        'instId': instId,
+                        'algoType': 'conditional'  # TP/SL trên OKX futures
+                    })
+                    orders = result.get("data", [])
 
                     if not orders:
                         logging.info(f"✅ Không còn lệnh TP/SL nào trên {instId}")
@@ -77,17 +80,21 @@ def cancel_tp_sl_if_position_closed(exchange):
 
                     for order in orders:
                         algo_id = order.get("algoId")
-                        if algo_id:
-                            logging.warning(f"🛑 Huỷ lệnh TP/SL (algoId={algo_id}) trên {instId}")
-                            exchange.private_post_trade_cancel_algos({
-                                "algoId": algo_id,
-                                "instId": instId
+                        try:
+                            cancel_result = exchange.private_post_trade_cancel_algos({
+                                "algos": [algo_id]
                             })
+                            logging.info(f"✅ Đã huỷ TP/SL: {algo_id}")
+                        except Exception as e:
+                            logging.warning(f"❌ Lỗi huỷ TP/SL {algo_id}: {e}")
+                            continue
+
                 except Exception as e:
-                    logging.error(f"❌ Lỗi khi huỷ SL/TP {instId}: {e}")
+                    logging.error(f"❌ Lỗi kiểm tra TP/SL của {instId}: {e}")
+                    continue
 
     except Exception as e:
-        logging.error(f"❌ Lỗi khi fetch positions: {e}")
+        logging.error(f"❌ Lỗi xử lý auto cancel TP/SL: {e}")
 
 def cancel_sibling_algo_if_triggered(exchange):
     try:
