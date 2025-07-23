@@ -8,6 +8,7 @@ import ccxt
 import threading
 import time
 import sys
+import json
 import math
 import pandas as pd
 # Logging setup
@@ -530,6 +531,13 @@ def run_bot():
             logging.error(f"❌ Lỗi xử lý dòng: {e}")
 if __name__ == "__main__":
     logging.info("🚀 Bắt đầu chạy script main.py")
-    run_bot()
-    # 🔁 Auto kiểm tra TP/SL mỗi 3 phút
+
+    # ✅ Khởi động thread trước
     threading.Thread(target=auto_tp_sl_watcher, daemon=True).start()
+    logging.info("✅ Đã tạo thread auto_tp_sl_watcher")
+    # ✅ Gọi bot xử lý sheet
+    run_bot()
+
+    # ✅ Giữ chương trình sống (để thread không bị kill)
+    while True:
+        time.sleep(60)
