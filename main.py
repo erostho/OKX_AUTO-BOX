@@ -99,14 +99,14 @@ def cancel_tp_sl_if_position_closed(exchange):
 
 def cancel_sibling_algo_if_triggered(exchange):
     try:
-        # ✅ Fetch toàn bộ lệnh TP/SL dạng conditional
+        # 🟢 Fetch toàn bộ lệnh TP/SL dạng conditional còn đang treo
         all_algo_orders = exchange.private_get_trade_orders_algo_pending({
-            "instType": "SWAP",
+            "instType": "SWAP",  # futures perpetual
             "algoType": "conditional"
         }).get("data", [])
-        logging.info(f"🧹 Đang kiểm tra {len(all_algo_orders)} lệnh TP/SL đang treo...")
+        logging.info(f"📋 Đang kiểm tra {len(all_algo_orders)} lệnh TP/SL đang treo...")
 
-        # ✅ Lấy danh sách instId của các vị thế đang mở
+        # 🟢 Lấy danh sách instId của các vị thế đang mở
         open_positions = exchange.fetch_positions()
         open_inst_ids = {
             pos.get("info", {}).get("instId", "")
@@ -114,22 +114,28 @@ def cancel_sibling_algo_if_triggered(exchange):
             if float(pos.get("size", 0)) > 0
         }
 
-        # ✅ Duyệt từng lệnh đang treo
+        # 🔁 Duyệt từng lệnh đang treo
         for order in all_algo_orders:
             inst_id = order.get("instId", "")
             algo_id = order.get("algoId", "")
+            side = order.get("side", "")
+            tp_or_sl = order.get("tag", "TP/SL")
 
-            # Nếu inst_id không thuộc danh sách vị thế đang mở → HUỶ
+            # Nếu không còn vị thế của instId này thì huỷ
             if inst_id not in open_inst_ids:
-                logging.info(f"🔻 Huỷ lệnh TP/SL mồ côi (instId={inst_id})")
+                logging.info(f"⚠️ instId={inst_id} không còn mở, huỷ lệnh {tp_or_sl} [{side}]...")
+
                 try:
-                    exchange.cancel_order(algo_id, params={"algoId": algo_id})
-                    logging.info(f"✅ Đã huỷ TP/SL: {algo_id}")
+                    response = exchange.private_post_trade_cancel_algos({
+                        "algoId": algo_id,
+                        "instId": inst_id
+                    })
+                    logging.info(f"✅ Huỷ thành công lệnh TP/SL: {algo_id} - {inst_id}")
                 except Exception as e:
-                    logging.warning(f"❌ Lỗi huỷ TP/SL ({algo_id}): {e}")
+                    logging.error(f"❌ Lỗi huỷ TP/SL {algo_id}: {e}")
 
     except Exception as e:
-        logging.error(f"❌ Lỗi xử lý huỷ lệnh TP/SL treo: {e}")
+        logging.error(f"❌ Lỗi xử lý auto cancel TP/SL: {e}")
 
 def fetch_sheet():
     try:
