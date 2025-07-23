@@ -310,21 +310,9 @@ def run_bot():
                     }
                 )
             except Exception as e:
-                logging.warning(f"⚠️ Lỗi với symbol_for_order. Thử lại với symbol: {e}")
-                try:
-                    order = exchange.create_market_order(
-                        symbol=symbol,
-                        side=side,
-                        amount=coin_amount,
-                        params={
-                            "tdMode": "isolated",
-                            "ccy": "USDT",
-                            "reduceOnly": False,
-                            "lever": "4"
-                        }
-                    )
-                    logging.info(f"✅ [TP/SL] Bắt đầu xử lý cho {symbol} - SIDE: {side}")
-                    # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
+                logging.warning(f"⚠️ Lỗi với symbol_for_order. {e}")
+                    
+                # ✅ Đợi và retry fetch vị thế sau khi vào lệnh
                     max_retries = 5
                     positions = []
                     for i in range(max_retries):
