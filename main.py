@@ -383,7 +383,14 @@ def run_bot():
             
             # 🔄 Chuẩn hóa instId để gọi API Algo
             symbol_instId = f"{symbol_raw.strip().upper()}-SWAP"
+            # Lấy lot size từ thị trường
+            market = exchange.market(symbol_check)
+            lot_size = market['limits']['amount']['min'] or 0.001
             
+            # Làm tròn size về đúng bội số
+            adjusted_size = round(pos_size / lot_size) * lot_size
+            adjusted_size = float(f"{adjusted_size:.6f}")
+
             # 📈 Tính giá TP/SL
             if side_check == 'long':
                 tp_price = market_price * 1.05
@@ -409,7 +416,7 @@ def run_bot():
                         "triggerPx": str(round(tp_price, 6)),
                         "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
-                        "sz": str(pos_size),
+                        "sz": str(adjusted_size),
                     })
                     logging.info(f"✅ TP Order Response: {tp_order}")
                 except Exception as e:
@@ -426,7 +433,7 @@ def run_bot():
                         "triggerPx": str(round(sl_price, 6)),
                         "orderPx": "-1",
                         "triggerPxType": "last",  # BỔ SUNG DÒNG NÀY
-                        "sz": str(pos_size),
+                        "sz": str(adjusted_size),
                     })
                     logging.info(f"✅ SL Order Response: {tp_order}")
                 except Exception as e:
